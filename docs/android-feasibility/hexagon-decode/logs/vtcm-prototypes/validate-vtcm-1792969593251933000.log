@@ -1,0 +1,4 @@
+Inference routing: Mojo Adreno layers; vocabulary head GPU=233984 Hexagon=14336 rows
+Device allocations: 507.90 MiB; context capacity: 128
+GPU: QUALCOMM Adreno(TM) 840
+FAIL: Hexagon head: Mojo HMX projection: 18

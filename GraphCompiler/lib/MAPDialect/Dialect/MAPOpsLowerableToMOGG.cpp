@@ -160,7 +160,7 @@ LogicalResult lowerInvokeShapeFuncToMOGG(MO::InvokeShapeFuncOp shapeFuncOp,
   Block *body = builder.createBlock(&kernel.getBody());
   SmallVector<BlockArgument> inputPtrs;
   for (size_t i = 0, e = inputs.size(); i < e; ++i)
-    inputPtrs.push_back(body->addArgument(MOGG::PointerType::get(ctx), loc));
+    inputPtrs.push_back(body->addArgument(MOGG::StorageType::get(ctx), loc));
   for (auto &[dim, blockArg] : state.dimArgs)
     blockArg = body->addArgument(
         MOGG::DimType::get(ctx, dyn_cast<KGEN::ParamDeclRefAttr>(dim)), loc);
@@ -519,7 +519,7 @@ LogicalResult IterEpilogueOp::lowerToMOGG(MAPToMOGGState &state) {
   if (!intermediateTensor)
     return emitOpError("MAPToMOGG: epilogue has no source tensor");
   Value outputPtr = MOGG::TensorGetPtrOp::create(
-      state.builder, loc, MOGG::PointerType::get(ctx),
+      state.builder, loc, MOGG::StorageType::get(ctx),
       state.mapping.lookup(intermediateTensor));
 
   auto epilogueOp = MOGG::TensorCreateEpilogueOp::create(
@@ -944,7 +944,7 @@ LogicalResult IterOpaqueOp::lowerToMOGG(MAPToMOGGState &state) {
   Block *body = builder.createBlock(&kernel.getBody());
   auto addBodyArg = [&](Type ty) {
     return body->addArgument(
-        isa<MO::OpaqueType>(ty) ? ty : Type(MOGG::PointerType::get(ctx)), loc);
+        isa<MO::OpaqueType>(ty) ? ty : Type(MOGG::StorageType::get(ctx)), loc);
   };
   SmallVector<BlockArgument> inputArgs;
   // Indexed by result number; null for a by-value opaque or the chain.

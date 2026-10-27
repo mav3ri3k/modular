@@ -1,0 +1,199 @@
+{
+  "serial": "DEVICE_SERIAL",
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "prompt": "What is the opposite of hot? Answer in one word.",
+  "prompt_tokens": 24,
+  "output_tokens": 96,
+  "repeats": 3,
+  "validation_included": false,
+  "token_ids_validated": true,
+  "profiling": false,
+  "cooldown_seconds": 8.0,
+  "hexagon_rows": {
+    "dram": 12288,
+    "vtcm": 12288
+  },
+  "hexagon_artifact_sha256": {
+    "dram": {
+      "HexagonProjection.so": "52cfb7731ceda0e94ad307a4c36b4faddaa251d1fa1ff176c67f41fabd12b4ab",
+      "libmodular_hexagon.so": "091a5904449e906060bf10885cb2e56603555ff9129ec20a09ed99f18f615b81"
+    },
+    "vtcm": {
+      "HexagonProjection.so": "52cfb7731ceda0e94ad307a4c36b4faddaa251d1fa1ff176c67f41fabd12b4ab",
+      "libmodular_hexagon.so": "c8b899a7ea1c8c2debeaeb963930ccc8fde0abcdc841ec3c97dfa05a7367caf3"
+    }
+  },
+  "variants": {
+    "gpu": "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-final",
+    "dram": "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-final",
+    "vtcm": "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-final"
+  },
+  "artifact_sha256": {
+    "gpu": {
+      "runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "dram": {
+      "runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "vtcm": {
+      "runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    }
+  },
+  "runs": [
+    {
+      "variant": "gpu",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.357,
+      "tokens_per_second": 70.03,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/000-gpu.log"
+    },
+    {
+      "variant": "dram",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.334,
+      "tokens_per_second": 71.22,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/001-dram.log"
+    },
+    {
+      "variant": "vtcm",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.279,
+      "tokens_per_second": 74.3,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/002-vtcm.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.379,
+      "tokens_per_second": 68.87,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/003-gpu.log"
+    },
+    {
+      "variant": "dram",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.35,
+      "tokens_per_second": 70.37,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/004-dram.log"
+    },
+    {
+      "variant": "vtcm",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.353,
+      "tokens_per_second": 70.22,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/005-vtcm.log"
+    },
+    {
+      "variant": "vtcm",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.336,
+      "tokens_per_second": 71.11,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/006-vtcm.log"
+    },
+    {
+      "variant": "dram",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.326,
+      "tokens_per_second": 71.63,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/007-dram.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.388,
+      "tokens_per_second": 68.43,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/008-gpu.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.366,
+      "tokens_per_second": 69.54,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/009-gpu.log"
+    },
+    {
+      "variant": "dram",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.334,
+      "tokens_per_second": 71.2,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/010-dram.log"
+    },
+    {
+      "variant": "vtcm",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.346,
+      "tokens_per_second": 70.57,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/vtcm-comparison/011-vtcm.log"
+    }
+  ],
+  "median_tokens_per_second": {
+    "gpu": 68.87,
+    "dram": 71.2,
+    "vtcm": 70.57
+  }
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.005363,
+    "samples_ms": [
+      0.005363
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "group_word",
+    "median_mean_ms": 0.005308,
+    "samples_ms": [
+      0.005308
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "word_group",
+    "median_mean_ms": 0.005249,
+    "samples_ms": [
+      0.005249
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "group_word_planes",
+    "median_mean_ms": 0.005281,
+    "samples_ms": [
+      0.005281
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "word_group_planes",
+    "median_mean_ms": 0.00526,
+    "samples_ms": [
+      0.00526
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "group_major",
+    "median_mean_ms": 0.005249,
+    "samples_ms": [
+      0.005249
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.011574,
+    "samples_ms": [
+      0.011574
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "group_word",
+    "median_mean_ms": 0.011206,
+    "samples_ms": [
+      0.011206
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "word_group",
+    "median_mean_ms": 0.01119,
+    "samples_ms": [
+      0.01119
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "group_word_planes",
+    "median_mean_ms": 0.011229,
+    "samples_ms": [
+      0.011229
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "word_group_planes",
+    "median_mean_ms": 0.011198,
+    "samples_ms": [
+      0.011198
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "group_major",
+    "median_mean_ms": 0.011541,
+    "samples_ms": [
+      0.011541
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.008514,
+    "samples_ms": [
+      0.008514
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "group_word",
+    "median_mean_ms": 0.00839,
+    "samples_ms": [
+      0.00839
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.008389,
+    "samples_ms": [
+      0.008389
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "group_word_planes",
+    "median_mean_ms": 0.008358,
+    "samples_ms": [
+      0.008358
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "word_group_planes",
+    "median_mean_ms": 0.008392,
+    "samples_ms": [
+      0.008392
+    ]
+  },
+  {
+    "shape": "64x1024",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.008419,
+    "samples_ms": [
+      0.008419
+    ]
+  }
+]

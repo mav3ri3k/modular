@@ -1909,7 +1909,7 @@ def _apple_int8_w8a8_dispatch[
 ](
     c_tt: TileTensor[mut=True, c_type, ...],
     a_tt: TileTensor[.bfloat16, ...],
-    b_tt: TileTensor[.int8, Engine=DefaultEngine[], ...],
+    b_tt: TileTensor[.int8, ...],
     bs_tt: TileTensor[.float32, ...],
     bias_tt: TileTensor[c_type, ...],
     context: DeviceContext,
@@ -1993,7 +1993,12 @@ struct Struct_matmul_int8_w8a8_apple:
         # No bias: a length-1 dummy bias TileTensor (the `has_bias=False` GEMM
         # path ignores it). Reuse `b_scale` as the dummy source (same dtype is
         # not required -- it is never read -- but a valid 1-elem view is).
-        var dummy_bias = TileTensor(c_tt._storage, row_major(Int64(1))).as_imm()
+        var dummy_bias = TileTensor[
+            c_type,
+            type_of(row_major(Int64(1))),
+            MutUntrackedOrigin,
+            Engine=type_of(c_tt).Engine,
+        ](c_tt._storage, row_major(Int64(1))).as_imm()
         _apple_int8_w8a8_dispatch[c_type, has_bias=False, target=target](
             c_tt,
             a.to_tile_tensor[.int64](),

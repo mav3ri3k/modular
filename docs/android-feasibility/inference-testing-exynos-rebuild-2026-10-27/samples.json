@@ -1,0 +1,380 @@
+[
+  {
+    "model": 2,
+    "test": "tg128",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 21.080079507,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        6072083360
+      ]
+    }
+  },
+  {
+    "model": 2,
+    "test": "tg128",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 20.071140458,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        6377315742
+      ]
+    }
+  },
+  {
+    "model": 2,
+    "test": "tg128",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 19.956598539,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        6413918672
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "tg128",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.747450717,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        10895981016
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "tg128",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.810497001,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        10837816562
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "tg128",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.825352635,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        10824201523
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "tg128",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 7.481819775,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        17108137305
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "tg128",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 7.70471492,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        16613203906
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "tg128",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "result": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 7.587973766,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        16868798437
+      ]
+    }
+  },
+  {
+    "model": 2,
+    "test": "pp512",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 20.107659926,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        25462933125
+      ]
+    }
+  },
+  {
+    "model": 2,
+    "test": "pp512",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 19.943258939,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        25672835195
+      ]
+    }
+  },
+  {
+    "model": 2,
+    "test": "pp512",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable2 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so /data/local/tmp/modular-inference-testing/bonsai/weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 19.881480939,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        25752608750
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "pp512",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.577213643,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        44224803633
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "pp512",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.285546356,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        45367763672
+      ]
+    }
+  },
+  {
+    "model": 4,
+    "test": "pp512",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable4 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 11.320014104,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        45229625625
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "pp512",
+    "sample": 1,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 7.470725312,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        68534175547
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "pp512",
+    "sample": 2,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 7.206037353,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        71051532891
+      ]
+    }
+  },
+  {
+    "model": 9,
+    "test": "pp512",
+    "sample": 3,
+    "command": "cd /data/local/tmp/modular-exynos-repro/portable9 && LD_LIBRARY_PATH=. ./bench ./OpenCLPlugin.so ./weights.bin 512 0 0 1 1",
+    "result": {
+      "n_prompt": 512,
+      "n_gen": 0,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 512,
+      "seed": 1,
+      "avg_ts": 5.846973366,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        87566672187
+      ]
+    }
+  }
+]

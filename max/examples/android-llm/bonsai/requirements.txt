@@ -1,0 +1,6 @@
+# Development-machine exporter/reference only; tested on Apple Silicon, Python 3.13.11.
+mlx==0.32.4
+mlx-lm==0.32.2
+numpy==2.5.4
+transformers==5.20.2
+huggingface_hub==2.2.0

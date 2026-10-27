@@ -33,10 +33,10 @@ mo.graph @opaque_result() -> !mo.opaque<"SIMDPair", {S0 = 4, S1 = 8}> {
 // CHECK-LABEL: mo.graph @opaque_input
 // CHECK: mogg.routine (%{{.*}} : !mo.opaque<"{{.*}}SIMDPair", {S0 = 4 : i64, S1 = 8 : i64}>) -> !mo.tensor<[12], si32>
 // CHECK: inputs (%[[IN:[^ ,)]+]]: !mo.opaque<"{{.*}}SIMDPair", {S0 = 4 : i64, S1 = 8 : i64}>)
-// CHECK: outputs (%[[OP:[^ ,)]+]])
+// CHECK: outputs (%[[OP:[^ ,)]+]]: !mogg.storage)
 // CHECK: context (%[[CTX:[^ ,)]+]])
 // CHECK: %[[SH:.*]] = mogg.shape.create() <shape = #mosh<ape[12]> : !mosh.ape>
-// CHECK: %[[OT:.*]] = mogg.tensor.create(%[[OP]], %[[SH]]) {{.*}} : !mogg.tensor
+// CHECK: %[[OT:.*]] = mogg.tensor.create(%[[OP]] : !mogg.storage, %[[SH]]) {{.*}} : !mogg.tensor
 // CHECK: mogg.call.opaque @{{.*}}ParameterizedOpaqueType[P0 = 4 : i64] inputs(%[[IN]] : !mo.opaque<"{{.*}}SIMDPair", {S0 = 4 : i64, S1 = 8 : i64}>) outputs(%[[OT]] : !mogg.tensor)
 mo.graph @opaque_input(
     %pair: !mo.opaque<"SIMDPair", {S0 = 4, S1 = 8}>

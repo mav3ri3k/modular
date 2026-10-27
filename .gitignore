@@ -1,3 +1,6 @@
+# Local derived build cache
+.derived/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -67,6 +70,9 @@ docs/_build/
 # PyBuilder
 .pybuilder/
 target/
+# On case-insensitive filesystems (macOS) the rule above also matches the
+# source tree Target/; keep those sources trackable.
+!Target/
 
 # Jupyter Notebook
 .ipynb_checkpoints

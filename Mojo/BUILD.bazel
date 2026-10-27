@@ -1325,7 +1325,7 @@ modular_cc_library(
             "lib/Compiler/ObjectCompiler/LLVM/Transforms/*.h",
             "lib/Compiler/ObjectCompiler/Target/**/*.h",
         ],
-        # Owned by :HostBackend.
+        # Owned by :HostBackend or :OpenCLEmitter.
         exclude = ["lib/Compiler/ObjectCompiler/Target/Host/HostBackend.h"],
     ),
     strip_include_prefix = "lib/Compiler/ObjectCompiler",
@@ -1391,6 +1391,24 @@ modular_cc_library(
 )
 
 modular_cc_library(
+    name = "OpenCLEmitter",
+    srcs = ["lib/Compiler/ObjectCompiler/Target/OpenCL/OpenCLEmitter.cpp"],
+    hdrs = ["lib/Compiler/ObjectCompiler/Target/OpenCL/OpenCLEmitter.h"],
+    includes = ["lib/Compiler/ObjectCompiler/Target/OpenCL"],
+    visibility = ["//Mojo:consumers"],
+    deps = [
+        "//Target:OpenCLBundle",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Analysis",
+        "@llvm-project//llvm:Passes",
+        "@llvm-project//llvm:TransformUtils",
+        "@llvm-project//llvm:Scalar",
+        "@llvm-project//llvm:InstCombine",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+modular_cc_library(
     name = "ObjectCompiler",
     srcs = glob(
         [
@@ -1402,6 +1420,8 @@ modular_cc_library(
         ],
         # Owned by :HostBackend.
         exclude = [
+            "lib/Compiler/ObjectCompiler/Target/OpenCL/OpenCLEmitter.cpp",
+            "lib/Compiler/ObjectCompiler/Target/OpenCL/OpenCLEmitter.h",
             "lib/Compiler/ObjectCompiler/Target/TargetBackend.cpp",
             "lib/Compiler/ObjectCompiler/Target/Host/HostBackend.cpp",
             "lib/Compiler/ObjectCompiler/Target/Host/HostBackend.h",
@@ -1415,6 +1435,7 @@ modular_cc_library(
         ":HostBackend",
         ":KGENToLLVM",
         ":ObjectCompiler.BitcodeWriter",
+        ":OpenCLEmitter",
         ":Pipeline",
         ":TargetBackend.headers",
         ":TargetTraits",

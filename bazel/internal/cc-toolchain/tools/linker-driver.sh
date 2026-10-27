@@ -28,7 +28,7 @@ if [[ ! -d "$clang_root" ]]; then
   clang_root="$repo_root/../+http_archive+clang-$platform"
 fi
 
-readonly clang="$clang_root/bin/clang++"
+readonly clang="${MODULAR_CLANG_EXECUTABLE:-$clang_root/bin/clang++}"
 readonly dsymutil="$clang_root/bin/dsymutil"
 
 ifs_input=""

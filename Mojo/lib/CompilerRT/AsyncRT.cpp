@@ -161,7 +161,11 @@ KGEN_CompilerRT_AsyncRT_GetCurrentCPUDevice() {
 COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncRTRuntimeRef
 KGEN_CompilerRT_AsyncRT_GetOrCreateCPUDevice() {
   auto cpuDevice = getOrCreateCPUDevice(
-      CPUDeviceSource::MojoStdlib, CPUDeviceOptions().withMainWillNotDonate());
+      CPUDeviceSource::MojoStdlib, CPUDeviceOptions().withMainWillNotDonate(),
+      // An embedding runtime (for example MAX) owns the process-wide worker
+      // configuration. The stdlib needs that runtime, not a second pool with
+      // its default options. Match the CPU DeviceContext's reuse contract.
+      /*allowUsingExistingOptions=*/true);
   return wrap(cpuDevice.release());
 }
 

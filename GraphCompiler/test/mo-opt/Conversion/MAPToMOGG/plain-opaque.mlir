@@ -12,13 +12,13 @@
 // Single plain output.
 // CHECK-LABEL: mo.graph @one_plain
 // CHECK: mogg.routine (%[[A:.*]] : !mo.tensor<[2, 2], f32>) -> !mo.tensor<[2, 2], f32>
-// CHECK: inputs (%[[IP:[^ ,)]+]])
-// CHECK: outputs (%[[OP:[^ ,)]+]])
+// CHECK: inputs (%[[IP:[^ ,)]+]]: !mogg.storage)
+// CHECK: outputs (%[[OP:[^ ,)]+]]: !mogg.storage)
 // CHECK: context (%[[CTX:[^ ,)]+]]) attributes {device = #M.device_ref<"cpu", 0>, fusionInfo = {{.*}}} {
 // CHECK:   %[[ISH:.*]] = mogg.shape.create() <shape = #mosh<ape[2, 2]> : !mosh.ape>
-// CHECK:   %[[IT:.*]] = mogg.tensor.create(%[[IP]], %[[ISH]]) <device = "cpu",{{.*}}mut = false{{.*}}> : !mogg.tensor
+// CHECK:   %[[IT:.*]] = mogg.tensor.create(%[[IP]] : !mogg.storage, %[[ISH]]) <device = "cpu",{{.*}}mut = false{{.*}}> : !mogg.tensor
 // CHECK:   %[[OSH:.*]] = mogg.shape.create() <shape = #mosh<ape[2, 2]> : !mosh.ape>
-// CHECK:   %[[OT:.*]] = mogg.tensor.create(%[[OP]], %[[OSH]]) <device = "cpu",{{.*}}mut = true{{.*}}> : !mogg.tensor
+// CHECK:   %[[OT:.*]] = mogg.tensor.create(%[[OP]] : !mogg.storage, %[[OSH]]) <device = "cpu",{{.*}}mut = true{{.*}}> : !mogg.tensor
 // CHECK:   mogg.call.opaque @{{.*}}MapLowerOnePlainOutput inputs(%[[IT]] : !mogg.tensor) outputs(%[[OT]] : !mogg.tensor) context(%[[CTX]] : !mogg.context)
 // Nothing is fused here, so the epilogue flag keeps its `false` default, which
 // the printer elides -- its absence is the assertion.

@@ -97,11 +97,12 @@ public:
   // API is a constexpr StringLiteral for fast comparison, while being
   // printable as a string.
   using API = StringLiteral;
-  static constexpr API cpuAPI = "cpu";     // Generic CPU device
-  static constexpr API gpuAPI = "gpu";     // Generic GPU device
-  static constexpr API cudaAPI = "cuda";   // NVIDIA CUDA device
-  static constexpr API hipAPI = "hip";     // AMDGPU HIP device
-  static constexpr API metalAPI = "metal"; // Apple Metal device
+  static constexpr API cpuAPI = "cpu";       // Generic CPU device
+  static constexpr API gpuAPI = "gpu";       // Generic GPU device
+  static constexpr API cudaAPI = "cuda";     // NVIDIA CUDA device
+  static constexpr API hipAPI = "hip";       // AMDGPU HIP device
+  static constexpr API metalAPI = "metal";   // Apple Metal device
+  static constexpr API openclAPI = "opencl"; // OpenCL device
 
   struct MemInfo {
     MemInfo() : total(0), free(0) {}
@@ -133,7 +134,8 @@ public:
   /// the same hard-coded 256 as the legacy implementation; anything else
   /// falls back to the host's preferred memory alignment.
   static size_t preferredAlignment(StringRef api) {
-    if (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI)
+    if (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI ||
+        api == openclAPI)
       return 256;
     return kPreferredMemoryAlignment;
   }
@@ -185,6 +187,8 @@ public:
       return pinned ? DLDevice{kDLROCMHost, 0} : DLDevice{kDLROCM, id_};
     if (api_ == metalAPI)
       return pinned ? DLDevice{kDLCPU, 0} : DLDevice{kDLMetal, id_};
+    if (api_ == openclAPI)
+      return pinned ? DLDevice{kDLCPU, 0} : DLDevice{kDLOpenCL, id_};
     return DLDevice{kDLExtDev, id_};
   }
 
@@ -281,7 +285,18 @@ class MODULAR_CXX_EXPORT DeviceBuffer final
 public:
   ~DeviceBuffer();
 
-  void *ptr() const { return ptr_; }
+  /// Raw-address access is unavailable for opaque device allocations.
+  void *ptr() const;
+  bool hasOpaqueStorage() const { return opaque_; }
+  /// Borrowed box; a clone must retain its allocation before escaping.
+  MojoHALBufferBox *mojoBufferBox() const { return mojoBox_; }
+  struct OpaqueMemoryView {
+    uint64_t allocation;
+    uint64_t byteOffset;
+    uint64_t byteSize;
+  };
+  /// The allocation handle is borrowed; this buffer retains its lifetime.
+  ErrorOr<OpaqueMemoryView> getOpaqueMemoryView() const;
   /// Relinquishes ownership of the underlying allocation to the caller and
   /// returns its pointer; destroying the buffer then frees nothing.
   void *releasePtr();
@@ -345,13 +360,12 @@ private:
 
   DeviceBuffer(MojoHALBufferBox *mojoBox, void *ptr, size_t byteSize,
                bool isHost, BoxKind kind, DeviceContextRef context,
-               DeviceBufferRef parent = DeviceBufferRef())
-      : mojoBox_(mojoBox), ptr_(ptr), byteSize_(byteSize), isHost_(isHost),
-        kind_(kind), context_(std::move(context)), parent_(std::move(parent)) {}
+               DeviceBufferRef parent = DeviceBufferRef());
 
   MojoHALBufferBox
       *mojoBox_; // Heap-boxed Mojo buffer (DeviceBuffer/HostBuffer/mmap).
   void *ptr_;
+  bool opaque_;
   size_t byteSize_;
   bool isHost_;
   BoxKind kind_;
@@ -663,6 +677,10 @@ public:
   ErrorOr<DeviceBufferRef> enqueueCreateBuffer(size_t byteSize);
   ErrorOr<DeviceBufferRef> createHostBuffer(size_t byteSize);
   DeviceBufferRef createBufferOwning(void *ptr, size_t byteSize, bool owning);
+  /// Borrows SDK allocation identity and byte range without requesting an
+  /// address. The caller retains the allocation through all queued uses.
+  ErrorOr<DeviceBufferRef>
+  borrowOpaqueMemoryView(const DeviceBuffer::OpaqueMemoryView &view);
   DeviceBufferRef createHostBufferOwning(void *ptr, size_t byteSize,
                                          bool owning);
 

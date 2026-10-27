@@ -2415,7 +2415,7 @@ struct MGPRTTestFunc:
 struct MutableTestOp:
     @staticmethod
     def execute(in_place_tensor: MutableInputTensor) raises:
-        in_place_tensor._ptr.unsafe_store(0, 0)
+        in_place_tensor.unsafe_ptr().unsafe_store(0, 0)
 
 
 # For testing support for Scalar[...] in Mojo

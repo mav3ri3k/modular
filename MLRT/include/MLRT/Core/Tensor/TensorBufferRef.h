@@ -20,6 +20,8 @@
 
 #include "llvm/Support/Alignment.h"
 
+#include <cstdint>
+#include <optional>
 #include <utility>
 
 namespace M::MLRT {
@@ -47,6 +49,13 @@ using BufferRefLifetimeProfilerEntry =
 /// storage which will be freed on deconstruction.
 class TensorBufferRef {
 public:
+  /// An allocation identity and byte range, never a dereferenceable address.
+  /// The storage reference owns the allocation and its device context.
+  struct OpaqueDeviceView {
+    uint64_t allocation;
+    uint64_t byteOffset;
+    uint64_t byteSize;
+  };
   /// Constructs a reference in the 'null' state. Useful for references
   /// which are allocated lazily.
   TensorBufferRef() = default;
@@ -75,6 +84,14 @@ public:
   static TensorBufferRef create(void *buffer, size_t size,
                                 AsyncRT::AnyAsyncValueRef storageHandle,
                                 llvm::MaybeAlign alignment = std::nullopt);
+
+  static TensorBufferRef createOpaque(OpaqueDeviceView view,
+                                      AsyncRT::AnyAsyncValueRef storageHandle);
+  bool isOpaque() const { return opaqueView.has_value(); }
+  const OpaqueDeviceView &getOpaqueView() const {
+    assert(opaqueView && "buffer has no opaque allocation view");
+    return *opaqueView;
+  }
 
   /// Create a buffer ref which does not track its memory and will not free the
   /// memory.
@@ -106,8 +123,16 @@ public:
   /// Returns a pointer to the underlying buffer. Returns nullptr if the
   /// reference is 'null' or has been moved out of. A zero sized buffer
   /// will not return nullptr.
-  void *getBuffer() { return data; }
-  const void *getBuffer() const { return data; }
+  void *getBuffer() {
+    if (isOpaque())
+      reportOpaqueAddressAccess();
+    return data;
+  }
+  const void *getBuffer() const {
+    if (isOpaque())
+      reportOpaqueAddressAccess();
+    return data;
+  }
 
   template <typename T>
   T *getBuffer() {
@@ -140,6 +165,7 @@ public:
   void swap(TensorBufferRef &rhs);
 
 private:
+  [[noreturn]] static void reportOpaqueAddressAccess();
   /// Constructs a kOwned or kBorrowed reference.
   TensorBufferRef(void *buffer, size_t size,
                   AsyncRT::AnyAsyncValueRef storageRef,
@@ -164,6 +190,8 @@ private:
 
   /// Tracks the storage object which preserves the lifetime of data.
   AsyncRT::AnyAsyncValueRef storageRef;
+
+  std::optional<OpaqueDeviceView> opaqueView;
 
   BufferRefLifetimeProfilerEntry profilerEntry;
 };

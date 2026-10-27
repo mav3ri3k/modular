@@ -1,0 +1,12 @@
+[Privacy-filtered snapshot; only battery/thermal summary retained]
+AC powered: false
+USB powered: true
+Wireless powered: false
+Dock powered: false
+status: 2
+health: 2
+level: 74
+scale: 100
+voltage: 4159
+temperature: 380
+Thermal Status: 1

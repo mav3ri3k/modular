@@ -48,6 +48,7 @@ from max.gpu.memory import (
     async_copy_wait_group,
     external_memory,
 )
+from layout.tensor_engine import TensorEngine, DefaultEngine
 from layout import Coord, Idx, TileTensor, TensorLayout, row_major
 from layout.tile_iterator import TileTensorIter
 from layout.tile_tensor import stack_allocation
@@ -1239,8 +1240,10 @@ def repack_Q4_0_for_sm8x[
 # will be a uint32 matrix of shape [K // 8, N], and scales will be of shape
 # [K_groups, N]. The input is a uint8 tensor of shape
 # [K_groups * group_bytes, N].
-comptime _PermutationTensor = TileTensor[
-    .int32, type_of(row_major(Int(0))), ImmutAnyOrigin
+comptime _PermutationTensor[
+    Engine: TensorEngine = DefaultEngine[element_width=1]
+] = TileTensor[
+    .int32, type_of(row_major(Int(0))), ImmutAnyOrigin, Engine=Engine
 ]
 
 
@@ -1253,10 +1256,11 @@ def repack_GPTQ_for_sm8x[
     scales_type: DType,
     group_size: Int,
     has_perm: Bool,
+    PermEngine: TensorEngine = DefaultEngine[element_width=1],
 ](
     in_tensor: TileTensor[mut=False, .uint8, in_layout, ImmutAnyOrigin],
     out_tensor: TileTensor[mut=True, .uint8, out_layout, MutAnyOrigin],
-    perm_idx: _PermutationTensor,
+    perm_idx: _PermutationTensor[PermEngine],
 ):
     """Repacks GPTQ quantized weights into the tiled layout expected by the SM8x quantized GEMM kernel.
 
@@ -1266,6 +1270,7 @@ def repack_GPTQ_for_sm8x[
         scales_type: The dtype to cast the per-group scales to.
         group_size: The number of K elements sharing a single scale.
         has_perm: Whether a permutation index is applied to the K dimension.
+        PermEngine: Storage engine backing the optional permutation tensor.
 
     Args:
         in_tensor: The input GPTQ quantized weight tensor in global memory.
@@ -2301,10 +2306,11 @@ def gpu_qint4_repack_Q4_0[
 def gpu_qint4_repack_GPTQ[
     group_size: Int,
     target: StaticString,
+    PermEngine: TensorEngine = DefaultEngine[element_width=1],
 ](
     b_tt: TileTensor[mut=False, .uint8, address_space=.GENERIC, ...],
     b_packed_tt: TileTensor[mut=True, .uint8, address_space=.GENERIC, ...],
-    perm_idx: OptionalReg[_PermutationTensor] = None,
+    perm_idx: OptionalReg[_PermutationTensor[PermEngine]] = None,
     ctx: Optional[DeviceContext] = None,
 ) raises:
     """Launches the GPU kernel that repacks GPTQ weights into the packed GEMM layout.
@@ -2312,6 +2318,7 @@ def gpu_qint4_repack_GPTQ[
     Parameters:
         group_size: The number of K elements sharing a single scale.
         target: The target platform string, which must identify a GPU.
+        PermEngine: Storage engine backing the optional permutation tensor.
 
     Args:
         b_tt: The input GPTQ quantized weight tile tensor in global memory.
@@ -2353,6 +2360,7 @@ def gpu_qint4_repack_GPTQ[
             DType.bfloat16,
             group_size,
             True,
+            PermEngine=PermEngine,
         ]
 
         cuda_ctx.enqueue_function[repack](

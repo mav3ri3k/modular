@@ -1,0 +1,9 @@
+{
+  "baseline_model_object": "b42c69ee5346c6351936b7ad385f056a7bf3581489f42b4451ce8f549cc99f04",
+  "direct_model_object": "cbb659be215e17e5158de0611c0392383d794e0216b9f0b2a228a64652b11d7c",
+  "extra_model_object": "d7d53c251ff3eb831c0787abfd2aaa8c66d494111a3f6c646fee3be48a70a4f8",
+  "baseline_plugin": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+  "diagnostic_plugin": "3932cdec258d161bac574af81c8d0d0d777a39b0e586d1682c04fec69c05f771",
+  "raw_event_plugin": "d8e1bb5710b81c4252721d662ee16fdf6d69a2c6d40a2321281a82f49b30d27b",
+  "reference_vulkan": "0a3004269da478fdc40a9c0d0bb7689b545496d7c4161989a4a447373ea9f11f"
+}

@@ -1,0 +1,45 @@
+{
+  "variant": "t4_g8_w64_u1_p32",
+  "outputs_per_lane": 4,
+  "groups_joined": 8,
+  "workgroup_size": 64,
+  "word_unroll": 1,
+  "weight_output_tile": 32,
+  "weight_group_tile": 8,
+  "weight_bits": 2,
+  "quantization_group_size": 128,
+  "weight_order": [
+    "group//8",
+    "output//32",
+    "word",
+    "group%8",
+    "output%32"
+  ],
+  "weight_word_index": "(((group//8)*(width//32)+output//32)*64+word*8+group%8)*32+output%32",
+  "scale_order": [
+    "group",
+    "output"
+  ],
+  "scale_dtype": "float16",
+  "activation_storage": "packed float16 pairs in uint32",
+  "global_size": [
+    "(width//32)*64",
+    "reduction//1024"
+  ],
+  "local_size": [
+    64,
+    1
+  ],
+  "partial_shape": [
+    "reduction//1024",
+    "width"
+  ],
+  "validated_constraints": [
+    "width%64==0",
+    "reduction%1024==0"
+  ],
+  "source_generator": "max/examples/android-llm/bonsai/projection_bench/iterate.py",
+  "opencl_sha256": "f06aaf9b224b3779506755f38251335ef00d0ca197491d617f46f49ca514291f",
+  "pipeline_median_ms": 6.685752000000001,
+  "scope": "Standalone synthetic production-shape benchmark; model integration/token-rate gain unmeasured."
+}

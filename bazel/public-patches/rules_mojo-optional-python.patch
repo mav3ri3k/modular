@@ -1,0 +1,77 @@
+--- a/mojo/private/mojo_binary_test.bzl
++++ b/mojo/private/mojo_binary_test.bzl
+@@ -58,7 +58,7 @@
+ }
+ 
+ _TOOLCHAINS = use_cpp_toolchain() + [
+-    _PYTHON_TOOLCHAIN_TYPE,
++    config_common.toolchain_type(_PYTHON_TOOLCHAIN_TYPE, mandatory = False),
+ ]
+ 
+ _EXEC_GROUPS = {
+@@ -227,9 +227,9 @@
+ 
+     data = ctx.attr.data
+     runfiles = ctx.runfiles(ctx.files.data)
+-    transitive_runfiles = [
+-        ctx.runfiles(transitive_files = py_toolchain.py3_runtime.files),
+-    ]
++    transitive_runfiles = []
++    if py_toolchain:
++        transitive_runfiles.append(ctx.runfiles(transitive_files = py_toolchain.py3_runtime.files))
+     if extra_runfiles:
+         transitive_runfiles.append(ctx.runfiles(files = extra_runfiles))
+     for target in data:
+@@ -258,27 +258,31 @@
+     for path in depset(transitive = python_imports).to_list():
+         python_path += "../" + path + ":"
+ 
+-    # https://github.com/bazelbuild/rules_python/issues/2262
+-    libpython = None
+-    for file in py_toolchain.py3_runtime.files.to_list():
+-        if file.basename.startswith("libpython"):
+-            libpython = file.short_path
+-            break  # if there are multiple any of them should work and they are likely symlinks to each other
+-
+-    if not libpython:
+-        fail("failed to find libpython, please report this at https://github.com/modular/rules_mojo/issues")
+-
+-    default_path = ctx.attr.env.get("PATH") or ctx.configuration.default_shell_env.get("PATH") or "/usr/bin:/bin:/usr/sbin"
+-    runtime_env = dict(ctx.attr.env) | {
+-        "MODULAR_PYTHON_EXECUTABLE": py_toolchain.py3_runtime.interpreter.short_path,
+-        "MOJO_PYTHON": py_toolchain.py3_runtime.interpreter.short_path,
+-        "MOJO_PYTHON_LIBRARY": libpython,
+-        "PATH": paths.dirname(py_toolchain.py3_runtime.interpreter.short_path) + ":" + default_path,  # python < 3.11 doesn't set sys.executable correctly when Py_Initialize is called unless it's in the $PATH
+-        "PYTHONEXECUTABLE": py_toolchain.py3_runtime.interpreter.short_path,
+-        "PYTHONNOUSERSITE": "affirmative",
+-        "PYTHONPATH": python_path,
+-        "PYTHONSAFEPATH": "affirmative",
+-    }
++    runtime_env = dict(ctx.attr.env)
++    if python_imports and not py_toolchain:
++        fail("Python dependencies require a Python runtime for the target platform")
++    if py_toolchain:
++        # https://github.com/bazelbuild/rules_python/issues/2262
++        libpython = None
++        for file in py_toolchain.py3_runtime.files.to_list():
++            if file.basename.startswith("libpython"):
++                libpython = file.short_path
++                break  # if there are multiple any of them should work and they are likely symlinks to each other
++
++        if not libpython:
++            fail("failed to find libpython, please report this at https://github.com/modular/rules_mojo/issues")
++
++        default_path = ctx.attr.env.get("PATH") or ctx.configuration.default_shell_env.get("PATH") or "/usr/bin:/bin:/usr/sbin"
++        runtime_env.update({
++            "MODULAR_PYTHON_EXECUTABLE": py_toolchain.py3_runtime.interpreter.short_path,
++            "MOJO_PYTHON": py_toolchain.py3_runtime.interpreter.short_path,
++            "MOJO_PYTHON_LIBRARY": libpython,
++            "PATH": paths.dirname(py_toolchain.py3_runtime.interpreter.short_path) + ":" + default_path,  # python < 3.11 doesn't set sys.executable correctly when Py_Initialize is called unless it's in the $PATH
++            "PYTHONEXECUTABLE": py_toolchain.py3_runtime.interpreter.short_path,
++            "PYTHONNOUSERSITE": "affirmative",
++            "PYTHONPATH": python_path,
++            "PYTHONSAFEPATH": "affirmative",
++        })
+     runtime_env.update(runtime_env_extra)
+     for key, value in runtime_env.items():
+         runtime_env[key] = ctx.expand_make_variables(

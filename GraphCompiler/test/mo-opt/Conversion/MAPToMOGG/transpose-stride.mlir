@@ -17,15 +17,15 @@
 
 // CHECK-LABEL: mo.graph @transposeSwap
 // CHECK:       [[KERNEL:%[^ ]+]] = mogg.routine {{(dispatch\([a-z]+\) )?}}({{.*}} : !mo.tensor<[2, 3], f32>, !mo.tensor<[2], si64>) -> !mo.tensor<[3, 2], f32>
-// CHECK-NEXT:  inputs ([[IP:%[^ :,]+]], [[PP:%[^ :,]+]])
-// CHECK-NEXT:  outputs ([[OP:%[^ :,]+]])
+// CHECK-NEXT:  inputs ([[IP:%[^ :,]+]]: !mogg.storage, [[PP:%[^ :,]+]]: !mogg.storage)
+// CHECK-NEXT:  outputs ([[OP:%[^ :,]+]]: !mogg.storage)
 // CHECK-NEXT:  context ([[CTX:%[^ :,]+]]) attributes {device = #M.device_ref<"cpu", 0>, fusionInfo = {{.*}}} {
 // CHECK-NEXT:    [[ISH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[2, 3]> : !mosh.ape>
-// CHECK-NEXT:    [[IT:%[^ ]+]] = mogg.tensor.create([[IP]], [[ISH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
+// CHECK-NEXT:    [[IT:%[^ ]+]] = mogg.tensor.create([[IP]] : !mogg.storage, [[ISH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[PSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[2]> : !mosh.ape>
-// CHECK-NEXT:    [[PT:%[^ ]+]] = mogg.tensor.create([[PP]], [[PSH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
+// CHECK-NEXT:    [[PT:%[^ ]+]] = mogg.tensor.create([[PP]] : !mogg.storage, [[PSH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[OSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[3, 2]> : !mosh.ape>
-// CHECK-NEXT:    [[OT:%[^ ]+]] = mogg.tensor.create([[OP]], [[OSH]]) {{.*}}io = Output{{.*}} : !mogg.tensor
+// CHECK-NEXT:    [[OT:%[^ ]+]] = mogg.tensor.create([[OP]] : !mogg.storage, [[OSH]]) {{.*}}io = Output{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[TRANS:%[^ ]+]] = mogg.tensor.create.transpose([[IT]], [[PT]]) {{.*}}outShape = #mosh<ape[3, 2]>{{.*}}staticPermutations = array<i64: 1, 0>{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[LSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[3, 2]> : !mosh.ape>
 // CHECK-NEXT:    mogg.call.foreach @builtin_primitives.primitives._foreach shape([[LSH]]) context([[CTX]]) ([[IDX:%[^ :,]+]] : !map.index<2>) capturing {[[OUT:%[^ :,]+]] = [[OT]] : !mogg.tensor, [[TRANSARG:%[^ :,]+]] = [[TRANS]] : !mogg.tensor} device = "cpu" {

@@ -1,0 +1,28 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
+load("//bazel:api.bzl", "modular_cc_binary")
+
+modular_cc_binary(
+    name = "mojo-opencl-emit",
+    srcs = ["emit.cpp"],
+    deps = [
+        "//Mojo:OpenCLEmitter",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:IRReader",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+py_binary(
+    name = "compile",
+    srcs = ["compile.py"],
+    main = "compile.py",
+)
+
+py_test(
+    name = "emitter_rejections_test",
+    size = "small",
+    srcs = ["test_emitter.py"],
+    args = ["$(location :mojo-opencl-emit)"],
+    data = [":mojo-opencl-emit"],
+    main = "test_emitter.py",
+)

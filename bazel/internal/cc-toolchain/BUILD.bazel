@@ -12,6 +12,17 @@ load(":sysroot_subset.bzl", "sysroot_subset")
 package(default_visibility = ["//visibility:public"])
 
 cc_sysroot(
+    name = "android_sysroot_aarch64",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    allowlist_include_directories = ["@android-ndk//sysroot:root"],
+    data = ["@android-ndk//sysroot:files"],
+    sysroot = "@android-ndk//sysroot:root",
+)
+
+cc_sysroot(
     name = "linux_sysroot_aarch64",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
@@ -117,12 +128,15 @@ cc_sysroot(
         args = select({
             "//:linux_x86_64": [":linux_sysroot_x86_64"],
             "//:linux_aarch64": [":linux_sysroot_aarch64"],
+            "//:android_aarch64": [":android_sysroot_aarch64"],
             "@platforms//os:macos": [
                 ":macos_sysroot_compile",
                 ":macos_sysroot_link",
             ],
+        }) + select({
+            "//:android_aarch64": ["//bazel/internal/cc-toolchain/args:android_resource_dir_args"],
+            "//conditions:default": ["//bazel/internal/cc-toolchain/args:resource_dir_args"],
         }) + [
-            "//bazel/internal/cc-toolchain/args:resource_dir_args",
             "//bazel/internal/cc-toolchain/args:compile_and_link_args",
             "//bazel/internal/cc-toolchain/args:compile_args",
             "//bazel/internal/cc-toolchain/args:cpp_compile_args",
@@ -136,7 +150,7 @@ cc_sysroot(
             "//bazel/internal/cc-toolchain/args/modular:assertions",  # Comes after warnings to allow disabling them
             "//bazel/internal/cc-toolchain/args:ignore_unused_command_line_argument",
         ] + select({
-            "@platforms//os:linux": [
+            "//:elf": [
                 "@rules_cc//cc/toolchains/args/soname_flags:set_soname",
             ],
             "//conditions:default": [],
@@ -203,7 +217,15 @@ cc_sysroot(
         module_map = "//bazel/internal/cc-toolchain/tools:builtin_module_map",
         supports_header_parsing = True,
         tags = [TOP_LEVEL_TAG],  # Used below, unclear why this is needed
-        tool_map = "//bazel/internal/cc-toolchain/tools:{}_tools".format(platform),
+        target_libc = select({
+            "//:android_aarch64": "bionic",
+            "@platforms//os:linux": "glibc",
+            "@platforms//os:macos": "macosx",
+        }),
+        tool_map = select({
+            "//:android_aarch64": "//bazel/internal/cc-toolchain/tools:android_tools",
+            "//conditions:default": "//bazel/internal/cc-toolchain/tools:{}_tools".format(platform),
+        }),
     )
     for platform in PLATFORMS
 ]

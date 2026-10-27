@@ -20,3 +20,9 @@ def main() raises:
     assert_false(materialize[H100.compute < A100.compute]())
     assert_true(materialize[A100.compute < H100.compute]())
     assert_false(materialize[A100.compute > MI300X.compute]())
+    # Shared launch schedulers use this count to bound their grids. Unknown
+    # OpenCL hardware still needs a positive scheduling lower bound.
+    comptime for arch in ["opencl-generic", "adreno-840"]:
+        comptime info = get_gpu_info[arch]()
+        assert_true(materialize[info.sm_count > 0]())
+        assert_true(materialize[info.max_thread_block_size >= info.warp_size]())

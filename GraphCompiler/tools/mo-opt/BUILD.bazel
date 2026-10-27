@@ -24,6 +24,7 @@ modular_cc_binary(
     ] + INTERNAL_KERNEL_MOJOPKGS,
     deps = [
         "//GraphCompiler",
+        "//GraphCompiler:CommonDriver",
         "//Init",
         "//Support:Context",
         "//Support:Globals",

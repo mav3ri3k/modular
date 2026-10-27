@@ -824,6 +824,53 @@ def _matmul_gpu_impl[
     compute_fn: ComputeFnType,
     ctx: DeviceContext,
 ) raises:
+    # Vendor kernels require architecture-specific instructions and launch
+    # contracts. Other targets use the portable kernel until they supply a
+    # specialized implementation.
+    comptime if (
+        ctx.target.is_nvidia_gpu()
+        or ctx.target.is_amd_gpu()
+        or ctx.target.is_apple_gpu()
+    ):
+        _matmul_gpu_vendor_impl[
+            use_tensor_core=use_tensor_core,
+            transpose_b=transpose_b,
+            use_tf32=use_tf32,
+            pdl_level=pdl_level,
+            has_epilogue_fn=has_epilogue_fn,
+            has_compute_fn=has_compute_fn,
+        ](c, a, b, epilogue_fn, compute_fn, ctx)
+    else:
+        comptime assert not (has_epilogue_fn and has_compute_fn)
+        comptime assert c.rank == c.flat_rank == 2
+        comptime assert a.rank == a.flat_rank == 2
+        comptime assert b.rank == b.flat_rank == 2
+        enqueue_matmul_kernel_naive[
+            transpose_b=transpose_b,
+            has_epilogue_fn=has_epilogue_fn,
+            has_compute_fn=has_compute_fn,
+        ](c, a, b, epilogue_fn, compute_fn, ctx)
+
+
+def _matmul_gpu_vendor_impl[
+    EpilogueFnType: ElementwiseEpilogueFn,
+    ComputeFnType: ElementwiseComputeFn,
+    //,
+    *,
+    use_tensor_core: Bool,
+    transpose_b: Bool,
+    use_tf32: Bool,
+    pdl_level: PDLLevel,
+    has_epilogue_fn: Bool,
+    has_compute_fn: Bool,
+](
+    c: TileTensor[mut=True, ...],
+    a: TileTensor[mut=False, ...],
+    b: TileTensor[mut=False, ...],
+    epilogue_fn: EpilogueFnType,
+    compute_fn: ComputeFnType,
+    ctx: DeviceContext,
+) raises:
     comptime assert not (
         has_epilogue_fn and has_compute_fn
     ), "pass either epilogue_fn or compute_fn, not both"
@@ -2755,6 +2802,10 @@ def _multistage_gemm_runtime_impl[
             b_linear_idx_type=b.linear_idx_type,
             workspace_linear_idx_type=tensor_work_space.linear_idx_type,
             config=config,
+            c_engine=c.Engine,
+            a_engine=a.Engine,
+            b_engine=b.Engine,
+            workspace_engine=tensor_work_space.Engine,
         ]
 
         comptime if ctx.target.is_amd_gpu() and not has_amd_rdna_gpu_accelerator():

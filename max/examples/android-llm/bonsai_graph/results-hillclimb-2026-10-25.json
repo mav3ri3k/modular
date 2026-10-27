@@ -1,0 +1,477 @@
+{
+  "date": "2026-10-25",
+  "phone": "DEVICE_SERIAL",
+  "protocol": "95 decode forwards,96 forced outputs,capacity128; three alternating measured sweeps after warmups. Every ID checked; full-logit validation separately. No phone clock/power overrides.",
+  "confirmed_compact_scale_comparisons": {
+    "hill-halfscale-96.json": {
+      "serial": "DEVICE_SERIAL",
+      "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+      "prompt": "What is the opposite of hot? Answer in one word.",
+      "prompt_tokens": 24,
+      "output_tokens": 96,
+      "repeats": 3,
+      "validation_included": false,
+      "token_ids_validated": true,
+      "profiling": false,
+      "variants": {
+        "baseline": "/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-final",
+        "halfscale": "/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-hill-halfscale"
+      },
+      "artifact_sha256": {
+        "baseline": {
+          "runner": "bc2a710602b745cc29d16fc0a5d8c68e8d24a84ff5c773efc43016f82d5d9183",
+          "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+          "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+          "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+          "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+          "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+          "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+        },
+        "halfscale": {
+          "runner": "ebe09cfab3cd835abbf90fc3397abb047609099b5b6c34af89a6ca248ed81ffb",
+          "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+          "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+          "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+          "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+          "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+          "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+        }
+      },
+      "runs": [
+        {
+          "variant": "baseline",
+          "warmup": true,
+          "forwards": 95,
+          "seconds": 1.722,
+          "tokens_per_second": 55.16,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "halfscale",
+          "warmup": true,
+          "forwards": 95,
+          "seconds": 1.639,
+          "tokens_per_second": 57.96,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "baseline",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.784,
+          "tokens_per_second": 53.25,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "halfscale",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.636,
+          "tokens_per_second": 58.07,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "halfscale",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.632,
+          "tokens_per_second": 58.21,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "baseline",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.793,
+          "tokens_per_second": 53.0,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "baseline",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.78,
+          "tokens_per_second": 53.36,
+          "max_abs_error": null,
+          "relative_l2": null
+        },
+        {
+          "variant": "halfscale",
+          "warmup": false,
+          "forwards": 95,
+          "seconds": 1.644,
+          "tokens_per_second": 57.8,
+          "max_abs_error": null,
+          "relative_l2": null
+        }
+      ],
+      "median_tokens_per_second": {
+        "baseline": 53.25,
+        "halfscale": 58.07
+      }
+    },
+    "hill-max-old-new.json": {
+      "variants": {
+        "old": {},
+        "seq16": {},
+        "seq64": {}
+      },
+      "records": [
+        {
+          "variant": "old",
+          "warmup": true,
+          "validation": false,
+          "tok_s": 48.79
+        },
+        {
+          "variant": "seq16",
+          "warmup": true,
+          "validation": false,
+          "tok_s": 55.66
+        },
+        {
+          "variant": "seq64",
+          "warmup": true,
+          "validation": false,
+          "tok_s": 54.38
+        },
+        {
+          "variant": "old",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 49.23
+        },
+        {
+          "variant": "seq16",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 52.98
+        },
+        {
+          "variant": "seq64",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 52.78
+        },
+        {
+          "variant": "seq64",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 53.27
+        },
+        {
+          "variant": "seq16",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 53.11
+        },
+        {
+          "variant": "old",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 49.29
+        },
+        {
+          "variant": "old",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 48.78
+        },
+        {
+          "variant": "seq16",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 53.25
+        },
+        {
+          "variant": "seq64",
+          "warmup": false,
+          "validation": false,
+          "tok_s": 52.89
+        },
+        {
+          "variant": "old",
+          "warmup": true,
+          "validation": true,
+          "tok_s": 38.11
+        },
+        {
+          "variant": "seq16",
+          "warmup": true,
+          "validation": true,
+          "tok_s": 41.83
+        },
+        {
+          "variant": "seq64",
+          "warmup": true,
+          "validation": true,
+          "tok_s": 36.61
+        }
+      ]
+    },
+    "hill-final-profile-summary.json": {
+      "mojo": {
+        "decode_forwards": 23,
+        "dispatches_per_token": 721,
+        "gpu_ms": 14.987043478260869,
+        "span_ms": 15.892913043478261,
+        "groups_ms": {
+          "packed_linear": 7.941782608695652,
+          "head_norm": 0.2969130434782608,
+          "hadamard": 0.4238260869565218,
+          "gated_norm": 0.2519130434782608,
+          "rms_partials": 0.14473913043478262,
+          "cache_kv": 0.013000000000000006,
+          "rms_norm": 0.141,
+          "packed_reduce": 1.0141739130434781,
+          "swiglu": 0.06252173913043478,
+          "rope": 0.025826086956521752,
+          "delta_update": 1.2226521739130434,
+          "embedding": 0.007782608695652176,
+          "packed_head": 2.2077391304347826,
+          "gate_partials": 0.35604347826086963,
+          "copy": 0.0020000000000000013,
+          "convolve": 0.09204347826086959,
+          "attention_scores": 0.27334782608695657,
+          "normalize_qk": 0.23934782608695648,
+          "residual": 0.0985217391304348,
+          "delta_gates": 0.0688695652173913,
+          "attention_values": 0.10260869565217394
+        }
+      },
+      "max": {
+        "decode_forwards": 23,
+        "dispatches_per_token": 599,
+        "gpu_ms": 15.170347826086957,
+        "span_ms": 16.092304347826087,
+        "groups_ms": {
+          "NormalizeQk": 0.2571739130434782,
+          "AttentionValues": 0.10247826086956523,
+          "Convolve": 0.09665217391304347,
+          "HeadRope": 0.3133913043478261,
+          "Embedding": 0.015739130434782617,
+          "GatedNorm": 0.2514782608695652,
+          "DeltaGates": 0.0708695652173913,
+          "CacheKv": 0.012956521739130441,
+          "GatePartials": 0.37700000000000006,
+          "PackedLinear": 8.086130434782609,
+          "rowwise": 1.1170869565217392,
+          "DeltaUpdate": 1.2332608695652176,
+          "PackedHead": 2.231086956521739,
+          "Hadamard": 0.4245217391304349,
+          "AttentionScores": 0.27234782608695657,
+          "rms": 0.30782608695652164
+        }
+      }
+    }
+  },
+  "notes": [
+    "The confirmed wall gains measure exact compact scales before the new CPU sampler.",
+    "Host sampler combines finite/greedy scans; stage time improves, subsequent whole-run comparison thermally confounded.",
+    "Sequence fusion64/unlimited and other arithmetic variants rejected; see HILLCLIMB_LOG.md.",
+    "Final source uses standard default sequence limit16; app unchanged.",
+    "Final selected-source paired generation run after cooling: Mojo59.11/MAX56.43tok/s, three alternating repeats, all96 IDs match. This is distinct from the controlled weight-only comparisons."
+  ],
+  "artifacts": {
+    "bonsai-final/runner": "bc2a710602b745cc29d16fc0a5d8c68e8d24a84ff5c773efc43016f82d5d9183",
+    "bonsai-hill-halfscale/runner": "ebe09cfab3cd835abbf90fc3397abb047609099b5b6c34af89a6ca248ed81ffb",
+    "bonsai-max-repro/graph_runner": "df806e7a412e4fdafe0e04af0ba5f67747af6ed2835ba3fe24e81c369cc8e299",
+    "bonsai-max-repro/bonsai.mef": "eb149ec859e547fe2f78f0e43c823ec4754d7cd15a060cd39e80f6a6977c584c",
+    "bonsai-hill-max-seq16/graph_runner": "b33295971e9e42529dcf1e3a86c4851a6efe09040331afb9cb7988749966f36f",
+    "bonsai-hill-max-seq16/bonsai.mef": "ba22df47be5118d2dc65698ab3e48dcf3b001267b705d525331aa19c1a867a90"
+  },
+  "final_source_validation": {
+    "serial": "DEVICE_SERIAL",
+    "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+    "checkpoint_sha256": "da5095b9f34d7f0d5094090afeeadf124eef821c75136dc28957ce586ae7ac0c",
+    "prompt_tokens": 24,
+    "output_tokens": 96,
+    "validation_included": true,
+    "token_ids_validated": true,
+    "profiling": false,
+    "runs": [
+      {
+        "variant": "mojo",
+        "warmup": true,
+        "forwards": 95,
+        "seconds": 1.746,
+        "tokens_per_second": 54.42,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-validation-mojo-0.log",
+        "max_abs_error": 0.0204191,
+        "relative_l2": 0.00064232
+      },
+      {
+        "variant": "max",
+        "warmup": true,
+        "forwards": 95,
+        "seconds": 2.079,
+        "tokens_per_second": 45.7,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-validation-max-1.log",
+        "max_abs_error": 0.0200463,
+        "relative_l2": 0.000646198
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.796,
+        "tokens_per_second": 52.89,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-validation-mojo-2.log",
+        "max_abs_error": 0.0204191,
+        "relative_l2": 0.00064232
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 2.04,
+        "tokens_per_second": 46.56,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-validation-max-3.log",
+        "max_abs_error": 0.0200463,
+        "relative_l2": 0.000646198
+      }
+    ],
+    "median_tokens_per_second": {
+      "mojo": 52.89,
+      "max": 46.56
+    },
+    "artifact_sha256": {
+      "max/graph_runner": "594f5fa6a0f6ceac72806f1e84b776ba16f8163ba11672fc7b8f5d181e89d37a",
+      "max/bonsai.mef": "ba22df47be5118d2dc65698ab3e48dcf3b001267b705d525331aa19c1a867a90",
+      "max/libKGENCompilerRTShared.so": "831d740faae00aa11b910fe7fdfa8dbcdba001d5ef84f1f18b10baeb02608568",
+      "max/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "max/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "max/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "max/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "max/libHALDeviceContextMojo.so": "28d9f1e99010d7a7a0700c2e6972e4463306872ece1f0d70f191daa51541901b",
+      "max/libAsyncRTMojoBindings.so": "d172b1de5928ec17e0d700f90a160058c35d82ed085e0fed3f1f14196b461f09",
+      "max/libMGPRT.so": "5161ea44ec67005de16c8f1ce1cec6e307779d8fc899f8a982cb5dbb9b5450de",
+      "max/libmax.so": "5210efa0bd7727eb1c5d319b4d5a1b62d6cfc9eece6130e5391c91227ddf3556",
+      "max/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+      "mojo/runner": "3c81d081250462938eab68335caa910c144e8dd1d82c53038c15907f761d3d9d"
+    }
+  },
+  "final_source_generation": {
+    "serial": "DEVICE_SERIAL",
+    "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+    "checkpoint_sha256": "da5095b9f34d7f0d5094090afeeadf124eef821c75136dc28957ce586ae7ac0c",
+    "prompt_tokens": 24,
+    "output_tokens": 96,
+    "validation_included": false,
+    "token_ids_validated": true,
+    "profiling": false,
+    "runs": [
+      {
+        "variant": "mojo",
+        "warmup": true,
+        "forwards": 95,
+        "seconds": 1.561,
+        "tokens_per_second": 60.86,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-mojo-0.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": true,
+        "forwards": 95,
+        "seconds": 1.667,
+        "tokens_per_second": 56.98,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-max-1.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.599,
+        "tokens_per_second": 59.41,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-mojo-2.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.683,
+        "tokens_per_second": 56.43,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-max-3.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.685,
+        "tokens_per_second": 56.39,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-max-4.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.612,
+        "tokens_per_second": 58.92,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-mojo-5.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.607,
+        "tokens_per_second": 59.11,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-mojo-6.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 95,
+        "seconds": 1.682,
+        "tokens_per_second": 56.47,
+        "log": "/Users/REDACTED/Library/Caches/modular-android-integration/hill-final-generation-max-7.log",
+        "max_abs_error": null,
+        "relative_l2": null
+      }
+    ],
+    "median_tokens_per_second": {
+      "mojo": 59.11,
+      "max": 56.43
+    },
+    "artifact_sha256": {
+      "max/graph_runner": "594f5fa6a0f6ceac72806f1e84b776ba16f8163ba11672fc7b8f5d181e89d37a",
+      "max/bonsai.mef": "ba22df47be5118d2dc65698ab3e48dcf3b001267b705d525331aa19c1a867a90",
+      "max/libKGENCompilerRTShared.so": "831d740faae00aa11b910fe7fdfa8dbcdba001d5ef84f1f18b10baeb02608568",
+      "max/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "max/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "max/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "max/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "max/libHALDeviceContextMojo.so": "28d9f1e99010d7a7a0700c2e6972e4463306872ece1f0d70f191daa51541901b",
+      "max/libAsyncRTMojoBindings.so": "d172b1de5928ec17e0d700f90a160058c35d82ed085e0fed3f1f14196b461f09",
+      "max/libMGPRT.so": "5161ea44ec67005de16c8f1ce1cec6e307779d8fc899f8a982cb5dbb9b5450de",
+      "max/libmax.so": "5210efa0bd7727eb1c5d319b4d5a1b62d6cfc9eece6130e5391c91227ddf3556",
+      "max/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+      "mojo/runner": "3c81d081250462938eab68335caa910c144e8dd1d82c53038c15907f761d3d9d"
+    }
+  },
+  "final_artifacts": {
+    "bonsai-hill-final/runner": "3c81d081250462938eab68335caa910c144e8dd1d82c53038c15907f761d3d9d",
+    "bonsai-hill-final/model.o": "154cf8f4db52f34d8fef2a477904b52278211347c3f52e08f74a6823f169c5b5",
+    "bonsai-hill-max-final/graph_runner": "594f5fa6a0f6ceac72806f1e84b776ba16f8163ba11672fc7b8f5d181e89d37a",
+    "bonsai-hill-max-final/bonsai.mef": "ba22df47be5118d2dc65698ab3e48dcf3b001267b705d525331aa19c1a867a90"
+  }
+}

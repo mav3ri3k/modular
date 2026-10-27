@@ -1,0 +1,43 @@
+{
+  "production_sha256": "42446bc0f04cb51868cf0ebc73a993aeb29b2afefc4dc3dc94109df7378c4405",
+  "layouts": [
+    "baseline",
+    "group_word",
+    "word_group",
+    "group_word_planes",
+    "word_group_planes",
+    "group_major"
+  ],
+  "generated_cl_sha256": {
+    "word_group_load.cl": "cb3a4b8b1c399f83ed797e4284f54e3c01b43853478b5f6fb6593dc099f4e5a7",
+    "group_major_load.cl": "1e88deb87decd3e37027024094e2c6f155d60a78ee1a31964f52e1a14334d4d7",
+    "group_word_planes_load.cl": "a5e7dc0f4e786a12ee4a26c00baba059ba7313e6db9ee008731e0c99d33526fa",
+    "group_word_planes_unpack.cl": "ec674f59d564af5c35aa877c68e5563e4965731cebfc6a3c36b89163f2db8ae6",
+    "baseline_unpack.cl": "e935ed8f354b70b2554af2f7f260b7aa5ba9ff2d54ebd81aa2bba07bc96eba3c",
+    "word_group_planes_load.cl": "cb3a4b8b1c399f83ed797e4284f54e3c01b43853478b5f6fb6593dc099f4e5a7",
+    "group_major_full.cl": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+    "word_group_full.cl": "2407cc712154560d8f88787d1e6aea94483e70a720836e050b93e88dc2a47bdf",
+    "word_group_planes_full.cl": "8c5ef34a319b4a5ddc39e99d1725aa21c32496a738e571c51f49d3477f8dea64",
+    "group_word_unpack.cl": "4f4163dd1b1530d7a1ea15839ed69e55d12432836413de0f1252bc9117a805de",
+    "group_word_planes_full.cl": "249c3ed82d6526e7e1c9b3363e441ae0a965f05ecc55500e564194e5a4d89fdf",
+    "group_word_full.cl": "99cfc61406a9e59e5e38375161c95bd5cc79270fc73a8689ac4371cb3c1e8445",
+    "group_major_unpack.cl": "2c509a2f4bbd1b47c24189d49eccbca4df1acdf1c797d53508945d2dcb718935",
+    "baseline_full.cl": "32e79c34f07350fdee1d9903d363087ed6f7c2227a96f6bc39675d96b7abaafb",
+    "word_group_unpack.cl": "f877f1927b59fcdc4e70cc62291a007d404587525957a931e3e98e0130108a5c",
+    "group_word_load.cl": "a5e7dc0f4e786a12ee4a26c00baba059ba7313e6db9ee008731e0c99d33526fa",
+    "word_group_planes_unpack.cl": "4c06efbdf9a49a46d57e19545a23587508bf4ded6ed4a12c66803cbf9770c08b",
+    "baseline_load.cl": "a7316548fd47d5dcbdb31b2df4e3fd59415090a6c187dc218a9057874745b38f"
+  },
+  "mojo_sha256": "9c116377fb9f4a8a6c4897f5e1a1caf231740f911c80e53500ea412726c698ab",
+  "host_sha256": "205cd35ff68563336b19bd73a55f3f7bc9a21634e8025efb6d125435ae2255a5",
+  "source_sha256": {
+    "build.py": "b1440b3d998d5c79424030f218612b26ca5d661bee9aff35796af668babeed54",
+    "run.py": "25f751526bf5a9da45bb66a930b683fe919f4da1d716f3d7e9ea371ce4e71e83",
+    "generate.py": "3e2df877b1990cccfb361b1ce79a1040c7d85b3e96f31b2df2c5600992896f54",
+    "bench.cpp": "a03678a7f159f119a0bffb7da241ce82c54877b0c4b9dce8b027f29e5e55f715"
+  },
+  "package_sha256": {
+    "std.mojoc": "cde1309e2782aeaa6d076f2286e30a1d333c55b915edbb62f28f5a01dc88a09c",
+    "max.mojoc": "3dcc4fb607f7a5563d3694124d3870ad7ab7043e762aa460635e0d31bad55ab3"
+  }
+}

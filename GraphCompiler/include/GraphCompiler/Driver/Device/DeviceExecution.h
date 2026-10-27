@@ -37,6 +37,12 @@ MODULAR_VISIBILITY_EXPORT M::Driver::DeviceBufferRef
 borrowBuffer(const M::Driver::DeviceContextRef &device, void *ptr,
              size_t byteSize);
 
+/// Borrows a graph buffer's allocation view, preserving opaque storage. The
+/// caller keeps the tensor and its storage alive through queued operations.
+MODULAR_VISIBILITY_EXPORT ErrorOr<M::Driver::DeviceBufferRef>
+borrowBuffer(const M::Driver::DeviceContextRef &device,
+             const M::MLRT::TensorBufferRef &buffer);
+
 // Construct a device buffer holding `tensor`, allocated against the MLRT
 // `device` context.
 MODULAR_VISIBILITY_EXPORT

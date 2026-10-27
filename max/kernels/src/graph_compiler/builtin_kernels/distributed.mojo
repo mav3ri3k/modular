@@ -685,7 +685,12 @@ struct DistributedBroadcast:
             imm dev_ctxs_input,
             imm outputs,
         }:
-            var out_buf = TileTensor[mut=True](
+            var out_buf = TileTensor[
+                dtype,
+                type_of(in_buf).LayoutType,
+                MutUntrackedOrigin,
+                Engine=type_of(in_buf).Engine,
+            ](
                 outputs[index]
                 .to_tile_tensor[.int64]()
                 .make_dynamic[.int64]()

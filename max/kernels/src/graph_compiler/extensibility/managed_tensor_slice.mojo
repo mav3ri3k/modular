@@ -26,8 +26,13 @@ next to this file in `decorators.mojo`.
 """
 from max.algorithm.functional import elementwise
 
-from std.builtin.device_passable import DevicePassable, DeviceTypeEncoder
-from std.collections import Optional
+from std.os import abort
+from std.builtin.device_passable import (
+    DevicePassable,
+    DeviceTypeEncoder,
+    DevicePointerLike,
+)
+from std.collections import Optional, OptionalReg
 from max.gpu.host import (
     DeviceBuffer,
     DeviceContext,
@@ -36,9 +41,9 @@ from max.gpu.host import (
 )
 from max.gpu.host.info import is_cpu
 from max.gpu.host.info import is_gpu as _is_gpu
-from std.math import ceil, fma
+from std.math import align_up, ceil, fma, exp, min, max
 from std.memory import AddressSpace
-from std.reflection import reflect
+from std.reflection import call_location, reflect
 from std.sys import align_of, simd_width_of, size_of
 from std.sys.info import CompilationTarget, is_gpu
 from std.sys.intrinsics import strided_load, strided_store
@@ -50,6 +55,7 @@ from max.runtime.tracing import trace_arg
 from layout import (
     Coord,
     CoordLike,
+    Idx,
     IntTuple,
     Layout,
     TileTensor,
@@ -63,6 +69,15 @@ from layout.coord import (
 from layout.int_tuple import _IntTupleToCoordLike, coord_to_int_tuple
 from layout.tile_io import TileCopier
 from layout.tile_layout import Layout as TileLayout, TensorLayout, _RowMajor
+from layout.tensor_engine import (
+    TensorEngine,
+    TensorOps,
+    _elementwise_binary_with_broadcast,
+    _elementwise_binary_out_with_broadcast,
+    _elementwise_unary_out,
+    _copy_from,
+    _offset_elements,
+)
 
 
 # ===----------------------------------------------------------------------=== #
@@ -272,8 +287,8 @@ trait InputFusion(DevicePassable, TrivialRegisterPassable):
 
     Conformers are `DevicePassable` so a GPU kernel callback can capture the
     functor. Encoding walks fields via `encode_fields`, translating host
-    `Pointer`s. `ManagedTensorSlice.device_type` is `TileTensor` and omits
-    fusion fields; capture the fusion value, not the slice.
+    pointer leaves. `ManagedTensorSlice` preserves its declared layout,
+    including the fusion fields, when captured by a device callable.
     """
 
     # Default DevicePassable so graph-compiler FusionStruct types and
@@ -894,9 +909,13 @@ def simd_store_into_managed_tensor_slice[
     def store_stride1() {imm}:
         comptime if dtype == .bool:
             var v = value.cast[.uint8]()
-            tensor._ptr.unsafe_bitcast[UInt8]().unsafe_store(flat_index, v)
+            tensor.unsafe_ptr().unsafe_bitcast[UInt8]().unsafe_store(
+                flat_index, v
+            )
         else:
-            tensor._ptr.unsafe_store[alignment=max_alignment](flat_index, value)
+            tensor.unsafe_ptr().unsafe_store[alignment=max_alignment](
+                flat_index, value
+            )
 
     # Stride > 1
     @inline(.always)
@@ -905,12 +924,14 @@ def simd_store_into_managed_tensor_slice[
             var v = value.cast[.uint8]()
             strided_store(
                 v,
-                tensor._ptr.unsafe_bitcast[UInt8]().unsafe_offset(flat_index),
+                tensor.unsafe_ptr()
+                .unsafe_bitcast[UInt8]()
+                .unsafe_offset(flat_index),
                 stride,
             )
         else:
             return strided_store(
-                value, tensor._ptr.unsafe_offset(flat_index), stride
+                value, tensor.unsafe_ptr().unsafe_offset(flat_index), stride
             )
 
     comptime if not _last_stride_is_static:
@@ -918,7 +939,9 @@ def simd_store_into_managed_tensor_slice[
         # Dynamic stride
         match stride:
             case 0:
-                tensor._ptr.unsafe_store[alignment=max_alignment](0, value)
+                tensor.unsafe_ptr().unsafe_store[alignment=max_alignment](
+                    0, value
+                )
             case 1:
                 store_stride1()
             case _:
@@ -927,7 +950,9 @@ def simd_store_into_managed_tensor_slice[
         # static stride
         comptime match _last_stride_value:
             case 0:
-                tensor._ptr.unsafe_store[alignment=max_alignment](0, value)
+                tensor.unsafe_ptr().unsafe_store[alignment=max_alignment](
+                    0, value
+                )
             case 1:
                 store_stride1()
             case _:
@@ -1059,13 +1084,17 @@ def simd_load_from_managed_tensor_slice[
     @inline(.always)
     def load_stride1() {imm} -> SIMD[dtype, simd_width]:
         comptime if dtype == .bool:
-            var v = tensor._ptr.unsafe_bitcast[UInt8]().unsafe_load[
-                width=simd_width,
-                invariant=invariant,
-            ](flat_index)
+            var v = (
+                tensor.unsafe_ptr()
+                .unsafe_bitcast[UInt8]()
+                .unsafe_load[
+                    width=simd_width,
+                    invariant=invariant,
+                ](flat_index)
+            )
             return v.cast[dtype]()
         else:
-            return tensor._ptr.unsafe_load[
+            return tensor.unsafe_ptr().unsafe_load[
                 width=simd_width, alignment=max_alignment, invariant=invariant
             ](flat_index)
 
@@ -1074,13 +1103,15 @@ def simd_load_from_managed_tensor_slice[
     def load_strided(stride: Int) {imm} -> SIMD[dtype, simd_width]:
         comptime if dtype == .bool:
             var v = strided_load[simd_width, invariant=invariant](
-                tensor._ptr.unsafe_bitcast[UInt8]().unsafe_offset(flat_index),
+                tensor.unsafe_ptr()
+                .unsafe_bitcast[UInt8]()
+                .unsafe_offset(flat_index),
                 stride,
             )
             return v.cast[dtype]()
         else:
             return strided_load[simd_width, invariant=invariant](
-                tensor._ptr.unsafe_offset(flat_index), stride
+                tensor.unsafe_ptr().unsafe_offset(flat_index), stride
             )
 
     comptime if not _last_stride_is_static:
@@ -1088,7 +1119,9 @@ def simd_load_from_managed_tensor_slice[
         # Dynamic stride
         match stride:
             case 0:
-                return tensor._ptr.unsafe_load[invariant=invariant](flat_index)
+                return tensor.unsafe_ptr().unsafe_load[invariant=invariant](
+                    flat_index
+                )
             case 1:
                 return load_stride1()
             case _:
@@ -1097,7 +1130,9 @@ def simd_load_from_managed_tensor_slice[
         # Static stride
         comptime match _last_stride_value:
             case 0:
-                return tensor._ptr.unsafe_load[invariant=invariant](flat_index)
+                return tensor.unsafe_ptr().unsafe_load[invariant=invariant](
+                    flat_index
+                )
             case 1:
                 return load_stride1()
             case _:
@@ -1168,6 +1203,1409 @@ def _index_list_to_static_coord[
     return result
 
 
+struct _TensorDataPointer[dtype: DType](
+    DevicePassable, DevicePointerLike, TrivialRegisterPassable
+):
+    """Borrows graph storage as either a raw pointer or an opaque memory view.
+
+    The owning graph value keeps the allocation alive until enqueue. Only the
+    DeviceTypeEncoder converts the memory view into a native kernel argument.
+    """
+
+    comptime PointeeType = Scalar[Self.dtype]
+    comptime device_type = Self
+    comptime RawPointer = Pointer[Self.PointeeType, MutUntrackedOrigin]
+    var raw: OptionalReg[Self.RawPointer]
+    var allocation: UInt64
+    var byte_offset: UInt64
+    var byte_size: UInt64
+    var byte_begin: UInt64
+
+    @staticmethod
+    def null() -> Self:
+        """Returns storage without an allocation, for type-only fused views."""
+        return Self(None, 0, 0, 0)
+
+    def __init__(
+        out self,
+        raw: OptionalReg[Self.RawPointer],
+        allocation: UInt64,
+        byte_offset: UInt64,
+        byte_size: UInt64,
+        byte_begin: UInt64 = 0,
+    ):
+        self.raw = raw
+        self.allocation = allocation
+        self.byte_offset = byte_offset
+        self.byte_size = byte_size
+        self.byte_begin = byte_begin
+
+    @inline(.always)
+    def unsafe_ptr(ref self) -> Pointer[Self.PointeeType, MutAnyOrigin]:
+        comptime if is_gpu():
+            # Kernel argument encoding has resolved and validated the pointer.
+            return self.raw.unsafe_value().as_unsafe_any_origin()
+        if not self.raw:
+            abort(
+                "Opaque graph storage has no raw address",
+                location=call_location(),
+            )
+        return self.raw.value().as_unsafe_any_origin()
+
+    def unsafe_offset(self, offset: Int) -> Self:
+        comptime if is_gpu():
+            return Self(
+                self.unsafe_ptr()
+                .unsafe_offset(offset)
+                .unsafe_origin_cast[MutUntrackedOrigin](),
+                0,
+                0,
+                0,
+            )
+        if self.allocation == 0:
+            if not self.raw and offset == 0:
+                return self
+            return Self(self.raw.value().unsafe_offset(offset), 0, 0, 0)
+        comptime element_bytes = UInt64(size_of[Self.dtype]())
+        if offset >= 0:
+            var count = UInt64(offset)
+            if count > self.byte_size // element_bytes:
+                abort(
+                    "Graph tensor pointer offset is outside its borrowed view"
+                )
+            var delta = count * element_bytes
+            return Self(
+                None,
+                self.allocation,
+                self.byte_offset + delta,
+                self.byte_size - delta,
+                self.byte_begin,
+            )
+        # Avoid signed overflow for Int.MIN and check before multiplication.
+        var count = UInt64(-(offset + 1)) + 1
+        if count > (self.byte_offset - self.byte_begin) // element_bytes:
+            abort("Graph tensor pointer offset is outside its borrowed view")
+        var delta = count * element_bytes
+        return Self(
+            None,
+            self.allocation,
+            self.byte_offset - delta,
+            self.byte_size + delta,
+            self.byte_begin,
+        )
+
+    def reinterpret_as[
+        target_dtype: DType
+    ](self) -> _TensorDataPointer[target_dtype]:
+        """Borrows the same byte extent with a different element type."""
+        comptime if is_gpu():
+            return _TensorDataPointer[target_dtype](
+                self.unsafe_ptr()
+                .unsafe_bitcast[Scalar[target_dtype]]()
+                .unsafe_origin_cast[MutUntrackedOrigin](),
+                0,
+                0,
+                0,
+            )
+        if self.allocation == 0:
+            if not self.raw:
+                return _TensorDataPointer[target_dtype].null()
+            return _TensorDataPointer[target_dtype](
+                self.raw.value().unsafe_bitcast[Scalar[target_dtype]](), 0, 0, 0
+            )
+        return _TensorDataPointer[target_dtype](
+            None,
+            self.allocation,
+            self.byte_offset,
+            self.byte_size,
+            self.byte_begin,
+        )
+
+    def unsafe_bitcast[T: AnyType](self) -> Pointer[T, MutAnyOrigin]:
+        # Explicit raw pointer interop remains unavailable for opaque storage.
+        return self.unsafe_ptr().unsafe_bitcast[T]()
+
+    def _buffer_view(ref self) -> Optional[Tuple[UInt64, UInt64, UInt64]]:
+        if self.allocation == 0:
+            if not self.raw:
+                return Optional((UInt64(0), UInt64(0), UInt64(0)))
+            return None
+        return Optional((self.allocation, self.byte_offset, self.byte_size))
+
+    def _has_raw_address(ref self) -> Bool:
+        return Bool(self.raw)
+
+    def _to_device_type(
+        self, mut encoder: Some[DeviceTypeEncoder], target: MutOpaquePointer[_]
+    ):
+        # Keep the real pointer field at its declared offset. Capturing kernel
+        # bodies use this structure's layout as well as explicit arguments.
+        encoder.encode_device_ptr(self, target)
+        comptime for i in range(1, 5):
+            comptime offset = reflect[Self].field_offset[
+                index=i, target=encoder.target()
+            ]()
+            encoder.encode(
+                UInt64(0),
+                target.unsafe_bitcast[UInt8]()
+                .unsafe_offset(offset)
+                .unsafe_bitcast[NoneType](),
+            )
+
+    @staticmethod
+    def get_type_name() -> String:
+        return "GraphTensorDataPointer"
+
+
+struct GraphStorageEngine[*, element_width: Int = 1](TensorOps):
+    """Implements `TensorEngine` over graph tensor storage.
+
+    `GraphStorageEngine` is the graph-storage analogue of `DevicePointerEngine`
+    and `StableAddrEngine`. Its `StorageType` handle is a `_TensorDataPointer`:
+    on the host the handle carries either a raw pointer or an opaque
+    (allocation, byte offset, extent) view of graph-owned memory, and at the
+    kernel boundary the encoder resolves the view to a native device pointer
+    written into the handle's `raw` field with the host-only metadata zeroed
+    (see `_TensorDataPointer._to_device_type`). On the device every operation
+    therefore reduces to plain pointer arithmetic.
+
+    Operations that dereference storage (`unsafe_ptr`, `copy_from`) work on
+    the device and for raw-backed host storage; they abort for opaque host
+    storage, which has no host-visible address. Operations that only
+    manipulate the handle (`offset`, `unsafe_cast`) work on both host and
+    device: offsetting an opaque view advances its byte offset, bounds-checked
+    against the borrowed extent.
+
+    Elementwise operations use the shared `TensorOps` implementations.
+
+    Parameters:
+        element_width: Number of scalar elements per logical element. A value
+            of `1` (the default) is a non-vectorized tensor; larger values
+            describe a vectorized view whose logical elements are SIMD
+            vectors. The handle is always scalar-typed and every operation
+            works in scalar-element units, so `element_width` only sets
+            `element_size` (and thus the tile's vectorized `ElementType`),
+            exactly as for `DefaultEngine`.
+    """
+
+    comptime element_size = Self.element_width
+    """Number of scalar elements per logical element (alias of `element_width`)."""
+
+    comptime _BASE_TYPE_NAME: StaticString = "GraphStorageEngine"
+    """The unparameterized name of this engine."""
+
+    comptime StorageType[
+        mut: Bool,
+        //,
+        dtype: DType,
+        origin: Origin[mut=mut],
+        address_space: AddressSpace,
+    ]: TrivialRegisterPassable = _TensorDataPointer[dtype]
+    """A `_TensorDataPointer` handle borrowing graph-owned storage.
+
+    The `origin` and `address_space` parameters are carried for `TensorEngine`
+    conformance only: the handle tracks neither, and graph storage is always
+    `GENERIC` device memory.
+
+    Parameters:
+        mut: The mutability of the borrowed storage, inferred from `origin`.
+        dtype: The element data type of the borrowed storage.
+        origin: The origin the handle is attributed to.
+        address_space: The address space the borrowed storage resides in.
+    """
+
+    @staticmethod
+    def write_type_name_to(mut writer: Some[Writer]):
+        """Writes the engine type name representation to the writer.
+
+        Args:
+            writer: The `Writer` to write the engine name to.
+        """
+        t"GraphStorageEngine[element_size={Self.element_size}]".write_to(writer)
+
+    @doc_hidden
+    @staticmethod
+    @inline(.always)
+    def unsafe_ptr[
+        mut: Bool,
+        dtype: DType,
+        origin: Origin[mut=mut],
+        address_space: AddressSpace,
+        //,
+    ](
+        storage: Self.StorageType[dtype, origin, address_space],
+    ) -> Pointer[
+        Scalar[dtype], origin, address_space=address_space
+    ]:
+        """Returns a raw scalar pointer to the base of the borrowed storage.
+
+        On the device the kernel-boundary encoder has resolved the handle's
+        view into its `raw` field, and for raw-backed host storage the pointer
+        is already present, so both go through
+        `_TensorDataPointer.unsafe_ptr`. Opaque host storage has no
+        host-visible address and aborts there.
+
+        Parameters:
+            mut: The mutability of the borrowed storage, inferred from `origin`.
+            dtype: The element data type of the borrowed storage.
+            origin: The origin tracking the lifetime of the borrowed storage.
+            address_space: The address space the borrowed storage resides in.
+
+        Args:
+            storage: The storage to recover the base pointer from.
+
+        Returns:
+            A bare `Pointer` to the first scalar element of the storage.
+        """
+        comptime ResultPtr = Pointer[
+            Scalar[dtype], origin, address_space=address_space
+        ]
+        return rebind[ResultPtr](
+            storage.unsafe_ptr().unsafe_address_space_cast[address_space]()
+        )
+
+    @staticmethod
+    @inline(.always)
+    def unsafe_cast[
+        to_mut: Bool,
+        //,
+        to_dtype: DType,
+        to_origin: Origin[mut=to_mut],
+        to_address_space: AddressSpace,
+    ](storage: Self.StorageType[...]) -> Self.StorageType[
+        to_dtype, to_origin, to_address_space
+    ]:
+        """Reinterprets a storage handle with new type parameters.
+
+        Delegates to `_TensorDataPointer.reinterpret_as`, which keeps the raw
+        pointer or the opaque view intact while changing the element type.
+        The caller is responsible for ensuring the new parameters are valid
+        for the referenced storage.
+
+        Parameters:
+            to_mut: The mutability to reinterpret the storage as.
+            to_dtype: The element data type to reinterpret the storage as.
+            to_origin: The origin to reinterpret the storage as.
+            to_address_space: The address space to reinterpret the storage as.
+
+        Args:
+            storage: The storage to reinterpret.
+
+        Returns:
+            A handle borrowing the same storage, viewed with the new type
+            parameters.
+        """
+        return storage.reinterpret_as[to_dtype]()
+
+    comptime OffsetResultType[
+        offset_types: TypeList[Trait=CoordLike, ...],
+    ]: TensorEngine = Self
+    """The storage type produced by offsetting with a given coordinate.
+
+    Offsetting never changes the engine, so this is `Self`.
+
+    Parameters:
+        offset_types: The coordinate element types of the applied offset.
+    """
+
+    @staticmethod
+    @inline(.always)
+    def offset[
+        offset_mut: Bool,
+        offset_types: TypeList[Trait=CoordLike, ...],
+        //,
+        offset_dtype: DType,
+        offset_origin: Origin[mut=offset_mut],
+        offset_address_space: AddressSpace,
+    ](
+        var storage: Self.StorageType[
+            offset_dtype, offset_origin, offset_address_space
+        ],
+        var offset_coord: Coord[*offset_types],
+    ) -> Self.OffsetResultType[offset_types].StorageType[
+        offset_dtype, offset_origin, offset_address_space
+    ]:
+        """Returns a storage handle offset by a number of scalar elements.
+
+        Delegates to `_TensorDataPointer.unsafe_offset`. For an opaque host
+        view this advances the byte offset, bounds-checked against the
+        borrowed extent, including signed offsets back to its original start. For raw-backed storage — including every device-side
+        handle, whose metadata the kernel-boundary encoder zeroed — this is
+        plain pointer arithmetic.
+
+        Parameters:
+            offset_mut: The mutability of the storage, inferred from
+                `offset_origin`.
+            offset_types: The coordinate element types of `offset_coord`.
+            offset_dtype: The element data type of the storage.
+            offset_origin: The origin tracking the lifetime of the storage.
+            offset_address_space: The address space the storage resides in.
+
+        Args:
+            storage: The handle to offset from.
+            offset_coord: A flat coordinate whose components sum to the
+                number of scalar elements to advance the handle by.
+
+        Returns:
+            A handle of the same type starting the given number of scalar
+            elements into the referenced storage.
+        """
+        return storage.unsafe_offset(_offset_elements(offset_coord))
+
+    @staticmethod
+    def copy_from[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dst_dtype: DType,
+        src_dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dst_dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[
+                src_dtype, other_origin, other_address_space
+            ],
+            OtherLayoutType,
+        ],
+    ):
+        """Copies the elements of `other` into `storage`, in place.
+
+        Delegates to the shared `_copy_from` loop; destination accesses go
+        through this engine's `unsafe_ptr`, so they are device only for
+        opaque storage.
+
+        Parameters:
+            SelfLayoutType: The layout type of the destination storage.
+            self_origin: The origin of the destination storage.
+            self_address_space: The address space of the destination storage.
+            OtherLayoutType: The layout type of the source storage.
+            other_mut: The mutability of the source storage.
+            other_origin: The origin of the source storage.
+            other_address_space: The address space of the source storage.
+            dst_dtype: The element data type of the destination storage.
+            src_dtype: The element data type of the source storage.
+            OtherEngine: The engine of the source. May differ from `Self`
+                as long as the two engines are copy-compatible (same logical
+                element size).
+
+        Constraints:
+
+        - Both operands must have statically known shapes with matching total
+            element count.
+        - Both operands must have the same logical element size.
+        - Source and destination dtypes may differ; each logical element is
+            cast to the destination dtype.
+
+        Args:
+            storage: A tuple of the destination storage (modified in place)
+                and its layout.
+            other: A tuple of the source storage and its layout.
+        """
+        # The handle erases `origin`, so `_copy_from` cannot infer the origin
+        # parameters from the argument types; bind them explicitly.
+        _copy_from[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dst_dtype=dst_dtype,
+            src_dtype=src_dtype,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+            OtherEngine=OtherEngine,
+        ](storage, other)
+
+    @staticmethod
+    def iadd[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.iadd`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](storage, other, SIMD[dtype, Self.element_size].__add__)
+
+    @staticmethod
+    def imul[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.imul`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](storage, other, SIMD[dtype, Self.element_size].__mul__)
+
+    @staticmethod
+    def isub[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.isub`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](storage, other, SIMD[dtype, Self.element_size].__sub__)
+
+    @staticmethod
+    def ifloordiv[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.ifloordiv`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](storage, other, SIMD[dtype, Self.element_size].__floordiv__)
+
+    @staticmethod
+    def itruediv[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.itruediv`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](storage, other, SIMD[dtype, Self.element_size].__truediv__)
+
+    @staticmethod
+    def imin[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.imin`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](
+            storage,
+            other,
+            lambda (
+                lhs: SIMD[dtype, Self.element_size], rhs: type_of(lhs)
+            ) -> type_of(lhs): min(lhs, rhs),
+        )
+
+    @staticmethod
+    def imax[
+        SelfLayoutType: TensorLayout,
+        self_origin: MutOrigin,
+        self_address_space: AddressSpace,
+        OtherLayoutType: TensorLayout,
+        other_mut: Bool,
+        other_origin: Origin[mut=other_mut],
+        other_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        OtherEngine: TensorEngine,
+    ](
+        storage: Tuple[
+            Self.StorageType[dtype, self_origin, self_address_space],
+            SelfLayoutType,
+        ],
+        other: Tuple[
+            OtherEngine.StorageType[dtype, other_origin, other_address_space],
+            OtherLayoutType,
+        ],
+    ):
+        """See `TensorOps.imax`."""
+
+        _elementwise_binary_with_broadcast[
+            SelfLayoutType=SelfLayoutType,
+            self_origin=self_origin,
+            OtherLayoutType=OtherLayoutType,
+            other_mut=other_mut,
+            other_origin=other_origin,
+            dtype=dtype,
+            OtherEngine=OtherEngine,
+            width=Self.element_size,
+            self_address_space=self_address_space,
+            other_address_space=other_address_space,
+            DstEngine=Self,
+        ](
+            storage,
+            other,
+            lambda (
+                lhs: SIMD[dtype, Self.element_size], rhs: type_of(lhs)
+            ) -> type_of(lhs): max(lhs, rhs),
+        )
+
+    @staticmethod
+    def _elementwise_unary[
+        dtype: DType,
+    ](
+        storage: _TensorDataPointer[dtype],
+        layout: Some[TensorLayout],
+        func: Some[
+            def(
+                SIMD[dtype, Self.element_width]
+            ) -> (SIMD[dtype, Self.element_width])
+        ],
+    ):
+        """See `TensorOps._elementwise_unary`."""
+        comptime assert type_of(layout).all_dims_known, (
+            "_elementwise_unary must operate on tensors of statically known"
+            " layouts"
+        )
+
+        comptime for i in range(type_of(layout).static_product):
+            var idx = layout(Idx[i])
+            storage.unsafe_ptr().unsafe_store(
+                idx,
+                func(
+                    storage.unsafe_ptr().unsafe_load[width=Self.element_width](
+                        idx
+                    )
+                ),
+            )
+
+    @staticmethod
+    def iabs[
+        dtype: DType, //
+    ](
+        storage: Self.StorageType[mut=True, dtype, ...],
+        layout: Some[TensorLayout],
+    ):
+        """See `TensorOps.iabs`."""
+
+        Self._elementwise_unary(
+            storage,
+            layout,
+            lambda (val: SIMD[dtype, Self.element_width]) -> type_of(val): abs(
+                val
+            ),
+        )
+
+    @staticmethod
+    def irecip[
+        dtype: DType, //
+    ](
+        storage: Self.StorageType[mut=True, dtype, ...],
+        layout: Some[TensorLayout],
+    ):
+        """See `TensorOps.irecip`."""
+        comptime assert (
+            dtype.is_floating_point()
+        ), "recip requires a floating-point dtype"
+
+        Self._elementwise_unary(
+            storage,
+            layout,
+            lambda (val: SIMD[dtype, Self.element_width]) -> type_of(val): (
+                1 / val
+            ),
+        )
+
+    @staticmethod
+    def iexp[
+        dtype: DType,
+        scale_dtype: DType = dtype,
+        //,
+        scale: Scalar[scale_dtype],
+    ](
+        storage: Self.StorageType[mut=True, dtype, ...],
+        layout: Some[TensorLayout],
+    ):
+        """See `TensorOps.iexp`."""
+        comptime assert (
+            dtype.is_floating_point()
+        ), "exp requires a floating-point dtype"
+
+        comptime assert type_of(
+            layout
+        ).all_dims_known, (
+            "exp must operate on tensors of statically known layouts"
+        )
+
+        # The loop is inlined rather than routed through `_elementwise_unary`:
+        # a closure defined in a function with a dependent-typed value
+        # parameter (`scale: Scalar[scale_dtype]`) fails parameter resolution
+        # during elaboration when passed as a function value.
+        comptime for i in range(type_of(layout).static_product):
+            var idx = layout(Idx[i])
+            storage.unsafe_ptr().unsafe_store(
+                idx,
+                exp(
+                    storage.unsafe_ptr().unsafe_load[width=Self.element_width](
+                        idx
+                    )
+                    * scale.cast[dtype]()
+                ),
+            )
+
+    @staticmethod
+    def add[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.add`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](dst, lhs, rhs, SIMD[dtype, Self.element_size].__add__)
+
+    @staticmethod
+    def mul[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.mul`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](dst, lhs, rhs, SIMD[dtype, Self.element_size].__mul__)
+
+    @staticmethod
+    def sub[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.sub`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](dst, lhs, rhs, SIMD[dtype, Self.element_size].__sub__)
+
+    @staticmethod
+    def floordiv[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.floordiv`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](dst, lhs, rhs, SIMD[dtype, Self.element_size].__floordiv__)
+
+    @staticmethod
+    def truediv[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.truediv`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](dst, lhs, rhs, SIMD[dtype, Self.element_size].__truediv__)
+
+    @staticmethod
+    def min[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.min`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](
+            dst,
+            lhs,
+            rhs,
+            lambda (
+                lhs: SIMD[dtype, Self.element_size], rhs: type_of(lhs)
+            ) -> type_of(lhs): min(lhs, rhs),
+        )
+
+    @staticmethod
+    def max[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        LhsLayoutType: TensorLayout,
+        lhs_mut: Bool,
+        lhs_origin: Origin[mut=lhs_mut],
+        lhs_address_space: AddressSpace,
+        RhsLayoutType: TensorLayout,
+        rhs_mut: Bool,
+        rhs_origin: Origin[mut=rhs_mut],
+        rhs_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        LhsEngine: TensorEngine,
+        RhsEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        lhs: Tuple[
+            LhsEngine.StorageType[dtype, lhs_origin, lhs_address_space],
+            LhsLayoutType,
+        ],
+        rhs: Tuple[
+            RhsEngine.StorageType[dtype, rhs_origin, rhs_address_space],
+            RhsLayoutType,
+        ],
+    ):
+        """See `TensorOps.max`."""
+
+        _elementwise_binary_out_with_broadcast[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            LhsLayoutType=LhsLayoutType,
+            lhs_mut=lhs_mut,
+            lhs_origin=lhs_origin,
+            RhsLayoutType=RhsLayoutType,
+            rhs_mut=rhs_mut,
+            rhs_origin=rhs_origin,
+            dtype=dtype,
+            LhsEngine=LhsEngine,
+            RhsEngine=RhsEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            lhs_address_space=lhs_address_space,
+            rhs_address_space=rhs_address_space,
+            DstEngine=Self,
+        ](
+            dst,
+            lhs,
+            rhs,
+            lambda (
+                lhs: SIMD[dtype, Self.element_size], rhs: type_of(lhs)
+            ) -> type_of(lhs): max(lhs, rhs),
+        )
+
+    @staticmethod
+    def abs[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        SrcLayoutType: TensorLayout,
+        src_mut: Bool,
+        src_origin: Origin[mut=src_mut],
+        src_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        SrcEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        src: Tuple[
+            SrcEngine.StorageType[dtype, src_origin, src_address_space],
+            SrcLayoutType,
+        ],
+    ):
+        """See `TensorOps.abs`."""
+
+        _elementwise_unary_out[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            SrcLayoutType=SrcLayoutType,
+            src_mut=src_mut,
+            src_origin=src_origin,
+            dtype=dtype,
+            SrcEngine=SrcEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            src_address_space=src_address_space,
+            DstEngine=Self,
+        ](
+            dst,
+            src,
+            lambda (val: SIMD[dtype, Self.element_size]) -> type_of(val): abs(
+                val
+            ),
+        )
+
+    @staticmethod
+    def recip[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        SrcLayoutType: TensorLayout,
+        src_mut: Bool,
+        src_origin: Origin[mut=src_mut],
+        src_address_space: AddressSpace,
+        //,
+        dtype: DType,
+        SrcEngine: TensorEngine,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        src: Tuple[
+            SrcEngine.StorageType[dtype, src_origin, src_address_space],
+            SrcLayoutType,
+        ],
+    ):
+        """See `TensorOps.recip`."""
+        comptime assert (
+            dtype.is_floating_point()
+        ), "recip requires a floating-point dtype"
+
+        @inline(.always)
+        def recip_fn(val: SIMD[dtype, Self.element_size]) -> type_of(val):
+            return 1 / val
+
+        _elementwise_unary_out[
+            DstLayoutType=DstLayoutType,
+            dst_origin=dst_origin,
+            SrcLayoutType=SrcLayoutType,
+            src_mut=src_mut,
+            src_origin=src_origin,
+            dtype=dtype,
+            SrcEngine=SrcEngine,
+            width=Self.element_size,
+            dst_address_space=dst_address_space,
+            src_address_space=src_address_space,
+            DstEngine=Self,
+        ](
+            dst,
+            src,
+            lambda (val: SIMD[dtype, Self.element_size]) -> type_of(val): (
+                1 / val
+            ),
+        )
+
+    @staticmethod
+    def exp[
+        DstLayoutType: TensorLayout,
+        dst_origin: MutOrigin,
+        dst_address_space: AddressSpace,
+        SrcLayoutType: TensorLayout,
+        src_mut: Bool,
+        src_origin: Origin[mut=src_mut],
+        src_address_space: AddressSpace,
+        dtype: DType,
+        SrcEngine: TensorEngine,
+        scale_dtype: DType = dtype,
+        //,
+        scale: Scalar[scale_dtype] = 1,
+    ](
+        *,
+        dst: Tuple[
+            Self.StorageType[dtype, dst_origin, dst_address_space],
+            DstLayoutType,
+        ],
+        src: Tuple[
+            SrcEngine.StorageType[dtype, src_origin, src_address_space],
+            SrcLayoutType,
+        ],
+    ):
+        """See `TensorOps.exp`."""
+        comptime assert (
+            dtype.is_floating_point()
+        ), "exp requires a floating-point dtype"
+
+        comptime assert (
+            DstLayoutType.all_dims_known and SrcLayoutType.all_dims_known
+        ), "exp must operate on tensors of statically known layouts"
+
+        comptime assert (
+            DstLayoutType.static_product == SrcLayoutType.static_product
+        ), "exp requires matching total element count"
+
+        comptime assert (
+            Self.element_size == SrcEngine.element_size
+        ), "elementwise unary operations require matching logical element size"
+
+        ref dst_storage = dst[0]
+        ref dst_layout = dst[1]
+        ref src_storage = src[0]
+        ref src_layout = src[1]
+
+        comptime width = Self.element_size
+        comptime alignment = align_of[SIMD[dtype, width]]() if is_gpu() else 1
+
+        # Inlined rather than routed through `_elementwise_unary_out`: a
+        # closure defined in a function with a dependent-typed value
+        # parameter (`scale: Scalar[scale_dtype]`) fails parameter resolution
+        # during elaboration when passed as a function value.
+        var src_ptr = SrcEngine.unsafe_ptr[
+            dtype=dtype, origin=src_origin, address_space=src_address_space
+        ](src_storage)
+        comptime for i in range(type_of(dst_layout).static_product):
+            var dst_idx = dst_layout(Idx[i])
+            var src_idx = src_layout(Idx[i])
+            # Store through the device leaf pointer, matching `iexp`.
+            dst_storage.unsafe_ptr().unsafe_store(
+                dst_idx,
+                exp(
+                    src_ptr.unsafe_load[width=width, alignment=alignment](
+                        src_idx
+                    )
+                    * scale.cast[dtype]()
+                ),
+            )
+
+
+@doc_hidden
+@inline(.always)
+def simd_store_into_tensor_pointer[
+    dtype: DType,
+    rank: Int,
+    //,
+    static_spec: StaticTensorSpec[dtype, rank, ...],
+    simd_width: SIMDLength,
+    element_alignment: Int = 1,
+](
+    ptr: _TensorDataPointer[dtype],
+    shape: IndexList[rank],
+    strides: IndexList[rank],
+    indices: IndexList[rank],
+    value: SIMD[dtype, simd_width],
+):
+    # Called inside the kernel after DeviceTypeEncoder resolves storage.
+    simd_store_into_tensor_pointer[
+        static_spec=static_spec, element_alignment=element_alignment
+    ](ptr.unsafe_ptr(), shape, strides, indices, value)
+
+
+@doc_hidden
+@inline(.always)
+def simd_load_from_tensor_pointer[
+    dtype: DType,
+    rank: Int,
+    //,
+    static_spec: StaticTensorSpec[dtype, rank, ...],
+    simd_width: Int,
+    element_alignment: Int = 1,
+](
+    ptr: _TensorDataPointer[dtype],
+    shape: IndexList[rank],
+    strides: IndexList[rank],
+    indices: IndexList[rank],
+) -> SIMD[dtype, simd_width]:
+    # Called inside the kernel after DeviceTypeEncoder resolves storage.
+    return simd_load_from_tensor_pointer[
+        static_spec=static_spec,
+        simd_width=simd_width,
+        element_alignment=element_alignment,
+    ](ptr.unsafe_ptr(), shape, strides, indices)
+
+
 @fieldwise_init
 struct ManagedTensorSlice[
     mut: Bool,
@@ -1204,15 +2642,15 @@ struct ManagedTensorSlice[
     MAX's inference stack.
     """
 
-    # `trait DevicePassable` implementation
-    comptime device_type: AnyType = TileTensor[
-        Self.dtype, Self.RuntimeLayout, MutUntrackedOrigin
-    ]
+    # Preserve the tensor layout for both explicit arguments and captures.
+    # Encoding replaces only the typed pointer leaf with a device pointer and
+    # clears its host-only allocation metadata.
+    comptime device_type: AnyType = Self
 
     def _to_device_type(
         self, mut encoder: Some[DeviceTypeEncoder], target: MutOpaquePointer[_]
     ):
-        encoder.encode(self.to_tile_tensor(), target)
+        encoder.encode_fields[Self](self, target)
 
     @staticmethod
     def get_type_name() -> String:
@@ -1251,7 +2689,7 @@ struct ManagedTensorSlice[
         stride_types=Self.static_spec.static_layout._stride_types,
     ]
 
-    var _ptr: Pointer[Scalar[Self.dtype], MutUntrackedOrigin]
+    var _ptr: _TensorDataPointer[Self.dtype]
     var _runtime_layout: Self.RuntimeLayout
     var in_fusion: Self.InFusion
     var out_fusion: Self.OutFusion
@@ -1360,7 +2798,9 @@ struct ManagedTensorSlice[
         instances, but instead use the ones provided by the MAX inference
         engine.
         """
-        self._ptr = ptr.unsafe_origin_cast[MutUntrackedOrigin]()
+        self._ptr = _TensorDataPointer[Self.dtype](
+            ptr.unsafe_origin_cast[MutUntrackedOrigin](), 0, 0, 0
+        )
         self._runtime_layout = Self._make_runtime_layout(
             shape, shape.get_row_major_strides()
         )
@@ -1382,7 +2822,9 @@ struct ManagedTensorSlice[
         instances, but instead use the ones provided by the MAX inference
         engine.
         """
-        self._ptr = ptr.unsafe_origin_cast[MutUntrackedOrigin]()
+        self._ptr = _TensorDataPointer[Self.dtype](
+            ptr.unsafe_origin_cast[MutUntrackedOrigin](), 0, 0, 0
+        )
         self._runtime_layout = Self._make_runtime_layout(shape, strides)
         self.in_fusion = Self._sentinel_in_fusion()
         self.out_fusion = Self._sentinel_out_fusion()
@@ -1405,13 +2847,146 @@ struct ManagedTensorSlice[
         instances, but instead use the ones provided by the MAX inference
         engine.
         """
-        self._ptr = ptr.unsafe_origin_cast[MutUntrackedOrigin]()
+        self._ptr = _TensorDataPointer[Self.dtype](
+            ptr.unsafe_origin_cast[MutUntrackedOrigin](), 0, 0, 0
+        )
         self._runtime_layout = Self.RuntimeLayout(shape, strides)
         self.in_fusion = Self._sentinel_in_fusion()
         self.out_fusion = Self._sentinel_out_fusion()
         self.compute_fusion = Self._sentinel_compute_fusion()
         self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
         self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__[
+        P: DevicePointerLike
+    ](
+        out self,
+        ptr: P,
+        shape: IndexList[Self.rank],
+        strides: IndexList[Self.rank],
+    ):
+        """Borrows a typed device pointer while preserving opaque storage.
+
+        The pointer's owning buffer must outlive this non-owning tensor view.
+        """
+        comptime assert P.PointeeType == Scalar[Self.dtype]
+        var view = ptr._buffer_view()
+        if view:
+            var parts = view.value()
+            self._ptr = _TensorDataPointer[Self.dtype](
+                None, parts[0], parts[1], parts[2], parts[1]
+            )
+        else:
+            self._ptr = _TensorDataPointer[Self.dtype](
+                rebind[Pointer[Scalar[Self.dtype], MutUntrackedOrigin]](
+                    ptr.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin]()
+                ),
+                0,
+                0,
+                0,
+            )
+        self._runtime_layout = Self._make_runtime_layout(shape, strides)
+        self.in_fusion = Self._sentinel_in_fusion()
+        self.out_fusion = Self._sentinel_out_fusion()
+        self.compute_fusion = Self._sentinel_compute_fusion()
+        self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
+        self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__[
+        P: DevicePointerLike
+    ](out self, ptr: P, shape: IndexList[Self.rank]):
+        self = Self(ptr, shape, shape.get_row_major_strides())
+
+    def __init__(
+        out self,
+        ptr: _TensorDataPointer[Self.dtype],
+        shape: IndexList[Self.rank],
+    ):
+        """Initializes a ManagedTensorSlice from a pointer and shape.
+
+        In general, custom operations should not create `ManagedTensorSlice`
+        instances, but instead use the ones provided by the MAX inference
+        engine.
+        """
+        self._ptr = ptr
+        self._runtime_layout = Self._make_runtime_layout(
+            shape, shape.get_row_major_strides()
+        )
+        self.in_fusion = Self._sentinel_in_fusion()
+        self.out_fusion = Self._sentinel_out_fusion()
+        self.compute_fusion = Self._sentinel_compute_fusion()
+        self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
+        self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__(
+        out self,
+        ptr: _TensorDataPointer[Self.dtype],
+        shape: IndexList[Self.rank],
+        strides: IndexList[Self.rank],
+    ):
+        """Initializes a ManagedTensorSlice from a pointer, shape, and strides.
+
+        In general, custom operations should not create `ManagedTensorSlice`
+        instances, but instead use the ones provided by the MAX inference
+        engine.
+        """
+        self._ptr = ptr
+        self._runtime_layout = Self._make_runtime_layout(shape, strides)
+        self.in_fusion = Self._sentinel_in_fusion()
+        self.out_fusion = Self._sentinel_out_fusion()
+        self.compute_fusion = Self._sentinel_compute_fusion()
+        self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
+        self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__(
+        out self,
+        ptr: _TensorDataPointer[Self.dtype],
+        shape: Coord[*Self.RuntimeLayout.shape_types],
+        strides: Coord[*Self.RuntimeLayout.stride_types],
+    ):
+        """Initializes a ManagedTensorSlice from a pointer, shape, and strides.
+
+        The shape and strides are provided as `Coord`s; their runtime values
+        fill the dynamic dimensions of the tensor slice's layout.
+
+        In general, custom operations should not create `ManagedTensorSlice`
+        instances, but instead use the ones provided by the MAX inference
+        engine.
+        """
+        self._ptr = ptr
+        self._runtime_layout = Self.RuntimeLayout(shape, strides)
+        self.in_fusion = Self._sentinel_in_fusion()
+        self.out_fusion = Self._sentinel_out_fusion()
+        self.compute_fusion = Self._sentinel_compute_fusion()
+        self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
+        self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__(
+        out self,
+        *,
+        opaque_view: Tuple[UInt64, UInt64, UInt64],
+        shape: IndexList[Self.rank],
+    ):
+        self._ptr = _TensorDataPointer[Self.dtype](
+            None, opaque_view[0], opaque_view[1], opaque_view[2], opaque_view[1]
+        )
+        self._runtime_layout = Self._make_runtime_layout(
+            shape, shape.get_row_major_strides()
+        )
+        self.in_fusion = Self._sentinel_in_fusion()
+        self.out_fusion = Self._sentinel_out_fusion()
+        self.compute_fusion = Self._sentinel_compute_fusion()
+        self.compute_fusion_tile = Self._sentinel_compute_fusion_tile()
+        self.output_fusion_tile = Self._sentinel_output_fusion_tile()
+
+    def __init__(out self, tensor: Self):
+        self._ptr = tensor._ptr
+        self._runtime_layout = tensor._runtime_layout
+        self.in_fusion = tensor.in_fusion
+        self.out_fusion = tensor.out_fusion
+        self.compute_fusion = tensor.compute_fusion
+        self.compute_fusion_tile = tensor.compute_fusion_tile
+        self.output_fusion_tile = tensor.output_fusion_tile
 
     @inline(.always)
     def __getitem__(self, indices: IndexList[Self.rank]) -> Scalar[Self.dtype]:
@@ -1427,7 +3002,7 @@ struct ManagedTensorSlice[
             not Self._has_input_fusion
         ), "Direct load on fused tensor is forbidden"
         var offset = self._compute_offset(indices)
-        return self._ptr[unsafe_offset=offset]
+        return self.unsafe_ptr()[unsafe_offset=offset]
 
     @inline(.always)
     def __getitem__(self, *indices: Int) -> Scalar[Self.dtype]:
@@ -1479,7 +3054,7 @@ struct ManagedTensorSlice[
             not Self._has_output_store_fusion
         ), "Direct store on fused tensor is forbidden"
         var offset = self._compute_offset(indices)
-        self._ptr[unsafe_offset=offset] = val
+        self.unsafe_ptr()[unsafe_offset=offset] = val
 
     @inline(.always)
     def shape(self) -> IndexList[Self.rank]:
@@ -1653,7 +3228,7 @@ struct ManagedTensorSlice[
         Returns:
             The `Pointer` which contains the data for this tensor slice.
         """
-        return rebind[Pointer[Scalar[_dtype], MutAnyOrigin]](self._ptr)
+        return self._ptr.unsafe_ptr().unsafe_bitcast[Scalar[_dtype]]()
 
     @inline(.always)
     def to_device_buffer(self, ctx: DeviceContext) -> DeviceBuffer[Self.dtype]:
@@ -2043,6 +3618,24 @@ struct ManagedTensorSlice[
             val,
         )
 
+    @doc_hidden
+    @inline(.always)
+    def _as_input(
+        self,
+        out result: ManagedTensorSlice[
+            io_spec=IOSpec.Input,
+            static_spec=Self.static_spec,
+        ],
+    ):
+        """Rebinds an input view without exposing its allocation as an address.
+        """
+        comptime assert Self.input == IO.Input
+        return type_of(result)(
+            self._ptr,
+            self._runtime_layout.shape_coord(),
+            self._runtime_layout.stride_coord(),
+        )
+
     @inline(.always)
     def with_tile_layout[
         new_layout: TensorLayout,
@@ -2057,8 +3650,12 @@ struct ManagedTensorSlice[
             static_spec=Self.static_spec.with_tile_layout[new_layout](),
         ],
     ):
+        if self._ptr.allocation != 0 and not offset_ptr:
+            return type_of(result)(
+                self._ptr, new_runtime_shape, new_runtime_strides
+            )
         return type_of(result)(
-            offset_ptr.or_else(self._ptr.as_unsafe_any_origin()),
+            offset_ptr.or_else(self.unsafe_ptr()),
             new_runtime_shape,
             new_runtime_strides,
         )
@@ -2268,10 +3865,26 @@ struct ManagedTensorSlice[
             Self.dtype,
             origin=MutUntrackedOrigin,
             LayoutType=Self.RuntimeLayout,
+            Engine=GraphStorageEngine[element_width=1],
         ],
     ):
+        """Views this slice as a `TileTensor` that keeps the graph storage.
+
+        The returned tile's engine keeps the
+        underlying `_TensorDataPointer` — raw-backed or opaque — instead of
+        unwrapping a host address, so this is safe to call on the host for
+        opaque (non-SVM) device storage. Host-side tile operations that only
+        manipulate the handle (shape queries, slicing through the engine's
+        bounds-checked offset) work; loads and stores abort on the host and
+        behave exactly like a `DefaultEngine` tile once the kernel-boundary
+        encoder has resolved the view inside a kernel.
+
+        The resulting tile is `DevicePassable` on its own, so it can be
+        passed to `enqueue_function` directly or captured by a kernel
+        callback.
+        """
         return {
-            self.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin](),
+            self._ptr,
             self._runtime_layout,
         }
 
@@ -2294,7 +3907,7 @@ struct ManagedTensorSlice[
         # Pin the argument to a concrete-origin optional pointer so this call
         # stays origin-exact across the `_serialize` safe-Pointer flip.
         var serialize_ptr = OptionalPointer[Scalar[Self.dtype], ImmutAnyOrigin](
-            self._ptr.as_imm().unsafe_origin_cast[ImmutAnyOrigin]()
+            self.unsafe_ptr().as_imm().unsafe_origin_cast[ImmutAnyOrigin]()
         )
         # TODO(1937): make this work with all valid strides
         _serialize[serialize_end_line=False](serialize_ptr, shape, serialize)
@@ -2418,6 +4031,27 @@ struct VariadicTensors[
             )
             self._tensors._unsafe_ref(i) = tensor
 
+    def __init__(
+        out self,
+        ptrs: StaticTuple[_TensorDataPointer[Self.dtype], Self.size],
+        shapes: StaticTuple[IndexList[Self.rank], Self.size],
+    ):
+        """Initialize the variadic tensor from tuples of pointers and shapes.
+
+        This is a bulk initialization of the VariadicTensors value from an
+        array of pointers and an array of runtime shapes. This allows the graph
+        compiler to avoid generating code to construct DynamicTensor values
+        directly.
+        """
+
+        self._tensors = {}
+
+        for i in range(Self.size):
+            var tensor = DynamicTensor[Self.dtype, Self.rank](
+                ptrs[i], shapes[i]
+            )
+            self._tensors._unsafe_ref(i) = tensor
+
     def __len__(self) -> Int:
         """Returns the number of variadic arguments in the pack.
 
@@ -2457,7 +4091,9 @@ struct VariadicTensors[
 # ===----------------------------------------------------------------------=== #
 
 
-struct _FusionPack[*Ts: TrivialRegisterPassable](TrivialRegisterPassable):
+struct _FusionPack[*Ts: TrivialRegisterPassable](
+    DevicePassable, TrivialRegisterPassable
+):
     """TrivialRegisterPassable heterogeneous pack for fusion structs.
 
     Unlike Tuple, this uses a value-based `!kgen.struct` (not reference-based),
@@ -2468,6 +4104,43 @@ struct _FusionPack[*Ts: TrivialRegisterPassable](TrivialRegisterPassable):
         `!kgen.struct<`, ~Self.Ts.values, ` isParamPack>`
     ]
     var _mlir_value: Self._mlir_type
+
+    comptime device_type = Self
+
+    @staticmethod
+    def _field_offset[index: Int, target: CompilationTarget]() -> Int:
+        # The value pack has the target's ordinary unpacked struct layout.
+        # Its MLIR storage is opaque to field reflection, like StaticTuple.
+        var offset = 0
+        comptime for i in range(index):
+            offset = align_up(offset, align_of[Self.Ts[i], target=target]())
+            offset += size_of[Self.Ts[i], target=target]()
+        return align_up(offset, align_of[Self.Ts[index], target=target]())
+
+    def _to_device_type(
+        self, mut encoder: Some[DeviceTypeEncoder], target: MutOpaquePointer[_]
+    ):
+        # A bit copy would leave nested opaque pointers unresolved. Preserve
+        # the declared pack layout and use the shared encoder for each value.
+        comptime for i in range(Self.Ts.length):
+            comptime offset = Self._field_offset[i, encoder.target()]()
+            var dst = (
+                target.unsafe_bitcast[UInt8]()
+                .unsafe_offset(offset)
+                .unsafe_bitcast[NoneType]()
+            )
+            var value = self[i]
+            comptime if conforms_to(Self.Ts[i], DevicePassable):
+                comptime assert Self.Ts[i]._is_convertible_to_device_type[
+                    Self.Ts[i]
+                ]()
+                value._to_device_type(encoder, dst)
+            else:
+                encoder.encode(value, dst)
+
+    @staticmethod
+    def get_type_name() -> String:
+        return "FusionPack"
 
     @inline(.nodebug)
     def __init__(out self, *args: *Self.Ts):
@@ -2507,6 +4180,25 @@ struct _FusedInputVariadicTensors[
             Pointer[Scalar[Self.dtype], origin=MutUntrackedOrigin],
             Self.size,
         ],
+        shapes: StaticTuple[IndexList[Self.rank], Self.size],
+        fusions: _FusionPack[*Self.FusionTypes],
+    ):
+        comptime for i in range(Self.size):
+            comptime assert Self.FusionTypes[i] != _NoFusionIn, (
+                "_FusedInputVariadicTensors requires a real fusion struct"
+                " for every element; use plain VariadicTensors for unfused"
+                " inputs"
+            )
+        self._tensors = {}
+        for i in range(Self.size):
+            self._tensors._unsafe_ref(i) = DynamicTensor[Self.dtype, Self.rank](
+                ptrs[i], shapes[i]
+            )
+        self._fusions = fusions
+
+    def __init__(
+        out self,
+        ptrs: StaticTuple[_TensorDataPointer[Self.dtype], Self.size],
         shapes: StaticTuple[IndexList[Self.rank], Self.size],
         fusions: _FusionPack[*Self.FusionTypes],
     ):
@@ -2598,6 +4290,25 @@ struct _FusedOutputVariadicTensors[
             Pointer[Scalar[Self.dtype], origin=MutUntrackedOrigin],
             Self.size,
         ],
+        shapes: StaticTuple[IndexList[Self.rank], Self.size],
+        fusions: _FusionPack[*Self.FusionTypes],
+    ):
+        comptime for i in range(Self.size):
+            comptime assert Self.FusionTypes[i] != _NoFusionOut, (
+                "_FusedOutputVariadicTensors requires a real fusion struct"
+                " for every element; use plain VariadicTensors for unfused"
+                " outputs"
+            )
+        self._tensors = {}
+        for i in range(Self.size):
+            self._tensors._unsafe_ref(i) = DynamicTensor[Self.dtype, Self.rank](
+                ptrs[i], shapes[i]
+            )
+        self._fusions = fusions
+
+    def __init__(
+        out self,
+        ptrs: StaticTuple[_TensorDataPointer[Self.dtype], Self.size],
         shapes: StaticTuple[IndexList[Self.rank], Self.size],
         fusions: _FusionPack[*Self.FusionTypes],
     ):

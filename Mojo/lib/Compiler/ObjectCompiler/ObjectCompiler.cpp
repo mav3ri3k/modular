@@ -237,8 +237,16 @@ static LogicalResult runLLVMOptPasses(llvm::Module &module,
                                                     /*DebugLogging=*/false);
   standardInstrumentations.registerCallbacks(pic, &moduleAnalysisMgr);
 
+  auto backendOr =
+      TargetBackendRegistry::get().lookup(Triple(options.targetTriple));
+  const TargetBackend *backend = backendOr.isError() ? nullptr : *backendOr;
+  bool useMachine = !backend || backend->usesTargetMachineForOptimization();
   TargetLibraryInfoImpl targetLibInfo(Triple(module.getTargetTriple()));
-  PassBuilder passBuilder(&targetMachine, PipelineTuningOptions(),
+  // A portable source backend has no host C library or borrowed CPU ISA.
+  if (!useMachine)
+    targetLibInfo.disableAllFunctions();
+  PassBuilder passBuilder(useMachine ? &targetMachine : nullptr,
+                          PipelineTuningOptions(),
                           /*PGOOpt=*/std::nullopt, &pic);
 
   // Specially handle the alias analysis manager so that we can register
@@ -1059,6 +1067,41 @@ ErrorOr<BufferRef> ObjectCompiler::emitArchive(OwningOpRef<ModuleOp> module,
                                       bitcodeLibs, backend)))
         return std::move(output).setToError(AsyncRT::getMLIRDiagnostic(
             Error("failed to link bitcode libraries"), moduleLoc));
+
+      if (backend.usesModuleEmitterForArchive()) {
+        op->erase();
+        if (failed(optimizeLLVMModule(*llvmModule, tm, options, cpuDevice,
+                                      std::nullopt)))
+          return std::move(output).setToError(AsyncRT::getMLIRDiagnostic(
+              "failed to optimize the device LLVM module", moduleLoc));
+        auto noLlc = [](llvm::Module &, WriteableBuffer &,
+                        bool) -> ErrorOrSuccess {
+          return Error("standalone module emission cannot invoke llc");
+        };
+        auto noLink = [](BufferRef, StringRef) -> ErrorOr<BufferRef> {
+          return Error("standalone module emission cannot link machine code");
+        };
+        EmitContext emitCtx{options, tm, moduleLoc, 0,
+                            nullptr, {}, noLlc,     noLink};
+        auto artifact = emitAssembly
+                            ? backend.emitAssembly(*llvmModule, emitCtx)
+                            : backend.emitObject(*llvmModule, emitCtx);
+        if (artifact.isError())
+          return std::move(output).setToError(
+              AsyncRT::getMLIRDiagnostic(artifact.takeError(), moduleLoc));
+        if (!options.saveTempsPrefix.empty() &&
+            failed(writeBytesToTempWithHash(
+                options.saveTempsPrefix,
+                backend.traits()
+                    ->extensionFor(emitAssembly ? EmitAs::ASM : EmitAs::OBJECT)
+                    .str(),
+                (*artifact)->getBuffer())))
+          return std::move(output).setToError(AsyncRT::getMLIRDiagnostic(
+              "failed to save the device artifact", moduleLoc));
+        *buf << (*artifact)->getBuffer();
+        std::move(output).emplace(buf.copy());
+        return;
+      }
 
       // Split the module into multiple slices and compile each in parallel.
       [[maybe_unused]] bool needsOriginalOrder =

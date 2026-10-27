@@ -1,0 +1,5 @@
+Mojo HMX Bonsai projection 6144x2048: ms=4.243,3.489,3.766 max_abs_error=1.487741
+HEXAGON_PROFILE unpack_ms=0.913 hmx_ms=0.000 reduce_ms=0.000 wait_ms=0.000 activation_ms=0.000
+HEXAGON_PROFILE unpack_ms=0.861 hmx_ms=0.000 reduce_ms=0.000 wait_ms=0.000 activation_ms=0.000
+HEXAGON_PROFILE unpack_ms=0.832 hmx_ms=0.000 reduce_ms=0.000 wait_ms=0.000 activation_ms=0.000
+FAIL: Projection does not match CPU reference

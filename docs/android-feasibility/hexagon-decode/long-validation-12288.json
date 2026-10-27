@@ -1,0 +1,8 @@
+[
+  {
+    "label": "hvx-bonsai-reference-long-validate-rows12288",
+    "tok_s": 61.84,
+    "errors": "Logits: max_abs_error=0.0201702 relative_l2=0.000400455",
+    "log": "logs/long-validation-12288/hvx-bonsai-reference-long-validate-rows12288.log"
+  }
+]

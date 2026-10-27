@@ -1,0 +1,30 @@
+Device allocations: 553.43 MiB; context capacity: 2048
+GPU: Samsung Xclipse 940
+Prefill: 24 tokens, 2.772 s, 8.66 tok/s
+TOKEN 0 73804
+TOKEN 1 248046
+TOKEN 2 198
+TOKEN 3 248068
+TOKEN 4 198
+TOKEN 5 90700
+TOKEN 6 8340
+TOKEN 7 25
+TOKEN 8 271
+TOKEN 9 16
+TOKEN 10 13
+TOKEN 11 220
+TOKEN 12 2972
+TOKEN 13 27382
+TOKEN 14 1386
+TOKEN 15 279
+TOKEN 16 6007
+TOKEN 17 3296
+TOKEN 18 64700
+TOKEN 19 561
+TOKEN 20 1156
+TOKEN 21 369
+TOKEN 22 9859
+TOKEN 23 364
+Decode: 23 forwards, 1.482 s, 15.51 tok/s (includes token selection readback, full-logit readback and validation)
+Logits: max_abs_error=0.0210514 relative_l2=0.000756475
+PASS: all generated tokens and logits match reference

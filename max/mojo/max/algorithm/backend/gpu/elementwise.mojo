@@ -38,7 +38,6 @@ from max.gpu.primitives.grid_controls import (
 from max.gpu.host import DeviceContext
 from max.gpu.host.info import B200
 from max.gpu.sync import mbarrier_init, mbarrier_arrive_expect_tx_relaxed
-from std.math import clamp
 from std.math.uutils import ufloordiv, uceildiv, udivmod
 from std.memory import unsafe_stack_allocation
 from std.sys._assembly import inlined_assembly
@@ -411,9 +410,10 @@ struct _GridStrideKernel[
 
     var func: Self.FuncType
     var shape: IndexList[Self.rank, element_type=Self.shape_dtype]
-    var num_packed_elems: Int
-    var unpacked_tail_length: Int
-    var packed_region_length: Int
+    # Use a fixed-width representation at the host/device capture boundary.
+    var num_packed_elems: Int64
+    var unpacked_tail_length: Int64
+    var packed_region_length: Int64
 
     @__llvm_metadata(
         MAX_THREADS_PER_BLOCK_METADATA=StaticTuple[Int32, 1](
@@ -424,6 +424,9 @@ struct _GridStrideKernel[
         t"{Self.trace_description}_r{Self.rank}_w{Self.simd_width}_b{Self.block_size}.gs.{Self.handle_uneven_simd}"
     )
     def __call__(self):
+        var num_packed_elems = Int(self.num_packed_elems)
+        var unpacked_tail_length = Int(self.unpacked_tail_length)
+        var packed_region_length = Int(self.packed_region_length)
         # process the packed region — each thread handles multiple packed
         # elements at stride block_size for coalesced access and ILP.
         var tid = thread_idx.x + Self.block_size * block_idx.x
@@ -432,12 +435,12 @@ struct _GridStrideKernel[
         with PDL():
             for base_idx in range(
                 tid,
-                self.num_packed_elems,
+                num_packed_elems,
                 stride * Self.elems_per_thread,
             ):
                 comptime for e in range(Self.elems_per_thread):
                     var idx = base_idx + e * stride
-                    if idx < self.num_packed_elems:
+                    if idx < num_packed_elems:
                         var start_indices = _start_indices_of_nth_element[
                             Self.shape_types
                         ](idx * Self.simd_width, self.shape)
@@ -469,11 +472,11 @@ struct _GridStrideKernel[
                             )
 
             # process the tail region
-            if tid < self.unpacked_tail_length:
+            if tid < unpacked_tail_length:
                 self.func[1](
                     Coord(
                         _start_indices_of_nth_element[Self.shape_types](
-                            Int(self.packed_region_length + tid), self.shape
+                            Int(packed_region_length + tid), self.shape
                         ).canonicalize()
                     )
                 )
@@ -532,16 +535,17 @@ def _elementwise_impl_gpu_grid_stride[
     if length == 0:
         return
 
-    # Grid is sized to saturate SMs — do NOT divide by elems_per_thread
-    # here, as that would reduce occupancy. The unrolling only helps when
-    # threads have multiple grid-stride iterations to process.
-    var num_blocks: Int = clamp(
-        uceildiv(num_packed_elems, block_size),
-        1,
-        sm_count
-        * ufloordiv(threads_per_multiprocessor, block_size)
-        * num_waves,
-    )
+    # Cover the packed work, then cap the grid only when occupancy is known.
+    # Do not divide by elems_per_thread: unrolling benefits threads that have
+    # multiple grid-stride iterations to process.
+    var num_blocks: Int = max(1, uceildiv(num_packed_elems, block_size))
+    comptime if sm_count > 0 and threads_per_multiprocessor >= block_size:
+        num_blocks = min(
+            num_blocks,
+            sm_count
+            * ufloordiv(threads_per_multiprocessor, block_size)
+            * num_waves,
+        )
 
     @inline(.always)
     def launch[handle_uneven_simd: Bool]() raises {imm}:
@@ -555,9 +559,9 @@ def _elementwise_impl_gpu_grid_stride[
         ](
             func,
             shape,
-            num_packed_elems,
-            unpacked_tail_length,
-            packed_region_length,
+            Int64(num_packed_elems),
+            Int64(unpacked_tail_length),
+            Int64(packed_region_length),
         )
         ctx.enqueue_function(
             k,
@@ -602,13 +606,14 @@ struct _DualGridStrideKernel[
     var func_1: Self.Func1Type
     var shape_0: Coord[*Self.shape_0_types]
     var shape_1: Coord[*Self.shape_1_types]
-    var num_packed_0: Int
-    var unpacked_tail_0: Int
-    var packed_region_0: Int
-    var num_packed_1: Int
-    var unpacked_tail_1: Int
-    var packed_region_1: Int
-    var max_packed: Int
+    # Use a fixed-width representation at the host/device capture boundary.
+    var num_packed_0: Int64
+    var unpacked_tail_0: Int64
+    var packed_region_0: Int64
+    var num_packed_1: Int64
+    var unpacked_tail_1: Int64
+    var packed_region_1: Int64
+    var max_packed: Int64
 
     @__llvm_metadata(
         MAX_THREADS_PER_BLOCK_METADATA=StaticTuple[Int32, 1](
@@ -619,6 +624,13 @@ struct _DualGridStrideKernel[
         t"{Self.trace_description}_r{Self.rank}_w{Self.simd_width}_b{Self.block_size}.dual_gs.{Self.handle_uneven_simd}"
     )
     def __call__(self):
+        var num_packed_0 = Int(self.num_packed_0)
+        var unpacked_tail_0 = Int(self.unpacked_tail_0)
+        var packed_region_0 = Int(self.packed_region_0)
+        var num_packed_1 = Int(self.num_packed_1)
+        var unpacked_tail_1 = Int(self.unpacked_tail_1)
+        var packed_region_1 = Int(self.packed_region_1)
+        var max_packed = Int(self.max_packed)
         comptime assert Self.shape_0_types.length == Self.shape_1_types.length
         var tid = thread_idx.x + Self.block_size * block_idx.x
         var stride = Self.block_size * grid_dim.x
@@ -626,12 +638,12 @@ struct _DualGridStrideKernel[
         with PDL():
             for base_idx in range(
                 tid,
-                self.max_packed,
+                max_packed,
                 stride * Self.elems_per_thread,
             ):
                 comptime for e in range(Self.elems_per_thread):
                     var idx = base_idx + e * stride
-                    if idx < self.num_packed_0:
+                    if idx < num_packed_0:
                         var start_indices_0 = (
                             _get_start_indices_of_nth_subvolume[0](
                                 idx * Self.simd_width,
@@ -659,7 +671,7 @@ struct _DualGridStrideKernel[
                             self.func_0[Self.simd_width, Self.simd_width](
                                 Coord(start_indices_0)
                             )
-                    if idx < self.num_packed_1:
+                    if idx < num_packed_1:
                         var start_indices_1 = (
                             _get_start_indices_of_nth_subvolume[0](
                                 idx * Self.simd_width,
@@ -688,20 +700,20 @@ struct _DualGridStrideKernel[
                                 Coord(start_indices_1)
                             )
 
-            if tid < self.unpacked_tail_0:
+            if tid < unpacked_tail_0:
                 self.func_0[1, Self.rank](
                     Coord(
                         _get_start_indices_of_nth_subvolume[0](
-                            Int(self.packed_region_0 + tid),
+                            Int(packed_region_0 + tid),
                             coord_to_index_list(self.shape_0),
                         )
                     )
                 )
-            if tid < self.unpacked_tail_1:
+            if tid < unpacked_tail_1:
                 self.func_1[1, Self.rank](
                     Coord(
                         _get_start_indices_of_nth_subvolume[0](
-                            Int(self.packed_region_1 + tid),
+                            Int(packed_region_1 + tid),
                             coord_to_index_list(self.shape_1),
                         )
                     )
@@ -776,13 +788,14 @@ def _dual_elementwise_impl_gpu_grid_stride[
     if length_0 == 0 and length_1 == 0:
         return
 
-    var num_blocks: Int = clamp(
-        uceildiv(max_packed, block_size),
-        1,
-        sm_count
-        * ufloordiv(threads_per_multiprocessor, block_size)
-        * num_waves,
-    )
+    var num_blocks: Int = max(1, uceildiv(max_packed, block_size))
+    comptime if sm_count > 0 and threads_per_multiprocessor >= block_size:
+        num_blocks = min(
+            num_blocks,
+            sm_count
+            * ufloordiv(threads_per_multiprocessor, block_size)
+            * num_waves,
+        )
 
     var any_unaligned = (
         Int(shape_0[rank - 1]) % simd_width != 0
@@ -802,13 +815,13 @@ def _dual_elementwise_impl_gpu_grid_stride[
             func_1,
             shape_0,
             shape_1,
-            num_packed_0,
-            unpacked_tail_0,
-            packed_region_0,
-            num_packed_1,
-            unpacked_tail_1,
-            packed_region_1,
-            max_packed,
+            Int64(num_packed_0),
+            Int64(unpacked_tail_0),
+            Int64(packed_region_0),
+            Int64(num_packed_1),
+            Int64(unpacked_tail_1),
+            Int64(packed_region_1),
+            Int64(max_packed),
         )
         ctx.enqueue_function(
             k,
@@ -859,11 +872,16 @@ def _elementwise_impl_gpu[
     comptime sm_count: Int = hw_info.sm_count
     comptime threads_per_multiprocessor = hw_info.threads_per_multiprocessor
 
+    # Occupancy data is optional for portable targets. The declared workgroup
+    # limit still supplies a valid launch shape when register counts are unknown.
     comptime assert (
-        sm_count > 0 and threads_per_multiprocessor > 0
-    ), "the sm_count and thread_count must be known"
+        hw_info.max_thread_block_size > 0
+    ), "the maximum thread block size must be known"
 
-    comptime block_size_unrounded = registers_per_block // registers_per_thread
+    comptime block_size_unrounded = (
+        registers_per_block // registers_per_thread if registers_per_block
+        > 0 else hw_info.max_thread_block_size
+    )
 
     # Round down to the warp/wavefront size for correct hardware alignment
     # on both NVIDIA (warp=32) and AMD (wavefront=64).
@@ -1018,11 +1036,16 @@ def _dual_elementwise_impl_gpu[
     comptime sm_count: Int = hw_info.sm_count
     comptime threads_per_multiprocessor = hw_info.threads_per_multiprocessor
 
+    # Occupancy data is optional for portable targets. The declared workgroup
+    # limit still supplies a valid launch shape when register counts are unknown.
     comptime assert (
-        sm_count > 0 and threads_per_multiprocessor > 0
-    ), "the sm_count and thread_count must be known"
+        hw_info.max_thread_block_size > 0
+    ), "the maximum thread block size must be known"
 
-    comptime block_size_unrounded = registers_per_block // registers_per_thread
+    comptime block_size_unrounded = (
+        registers_per_block // registers_per_thread if registers_per_block
+        > 0 else hw_info.max_thread_block_size
+    )
     comptime warp_size = WARP_SIZE
     comptime default_block_size = (
         128 if ctx.default_device_info

@@ -81,6 +81,20 @@ static ParseResult parseDim(OpAsmParser &p, StringAttr &name) {
                  p.parseGreater());
 }
 
+// Raw-pointer construction has an implied type; typed storage is explicit.
+static ParseResult parseStorageOperandType(OpAsmParser &parser, Type &type) {
+  type = PointerType::get(parser.getContext());
+  if (succeeded(parser.parseOptionalColon()))
+    return parser.parseType(type);
+  return success();
+}
+
+static void printStorageOperandType(OpAsmPrinter &printer, Operation *,
+                                    Type type) {
+  if (!isa<PointerType>(type))
+    printer << " : " << type;
+}
+
 /// Build a Mojo expression that loads from decomposed tensor components on the
 /// fusion struct, using the struct's StaticTensorSpec parameter.
 static std::string buildStructLoadExpr(StringRef captureIdx,
@@ -650,10 +664,10 @@ LogicalResult RoutineOp::verify() {
                << args[i].getType();
       continue;
     }
-    if (!isa<PointerType>(args[i].getType()))
+    if (!isa<PointerType, StorageType>(args[i].getType()))
       return emitOpError() << "body block argument #" << i
-                           << " must be a !mogg.pointer (one per input then "
-                              "output tensor)";
+                           << " must be a !mogg.storage or !mogg.pointer "
+                              "(one per input then output tensor)";
   }
 
   size_t i = numTensors;
@@ -1034,36 +1048,9 @@ MojoValue generateMutableTensorInit(Value input, EmitMojoState &state) {
     return state.builder.var(ctor({}, {stable.addr(), stable.runtimeLayout()}));
   }
 
-  // Extract dtype
-  ErrorOr<DType> dTypeOr = M::MO::fromMLIRType(tensorType.getElementType());
-  ASSERT_STREAM(!dTypeOr.isError(),
-                "Failed to extract dtype from mutable input tensor");
-  MojoValue dtype = state.mlirDTypeToMojoType(*dTypeOr);
-
-  ASSERT_STREAM(tensorType.hasRank(),
-                "Mutable input tensor must have statically known rank");
-  MojoValue rank(static_cast<int64_t>(tensorType.getRankNonZero()));
-
-  ManagedTensorSliceRef mts(inputValue);
-  StaticTensorSpecRef staticSpec(mts.staticSpec());
-
-  // Build template parameters. The static layout is conveyed through the
-  // layout argument's type (below), so no separate layout param.
-  SmallVector<MojoValue> templateParams = {dtype, rank, MojoValue(false),
-                                           MojoValue(kEnumIoInput),
-                                           staticSpec.alignment()};
-
-  // Build runtime arguments: the slice already carries its layout (shape and
-  // strides as static-aware Coords), so forward it directly.
-  SmallVector<MojoValue> runtimeArgs = {
-      OpaquePointerRef(mts.rawPtr())
-          .bitcast(MojoValue(kComptimeDTypeNoneType))(),
-      inputValue.get("runtime_layout")()};
-
-  auto tensorInitPrimDecl =
-      state.registry.lookupPrimitive(TensorInitOp::getOperationName());
-  MojoValue moggTensorInit(primitiveMojoName(tensorInitPrimDecl));
-  return state.builder.var(moggTensorInit(templateParams, runtimeArgs));
+  // Preserve the tensor's typed storage while changing its mutability. The
+  // host view may describe an opaque allocation rather than a raw address.
+  return state.builder.var(inputValue.get("_as_input")());
 }
 } // namespace
 
@@ -1533,13 +1520,14 @@ LogicalResult TensorCreateOp::emitMojo(EmitMojoState &state) {
   ASSERT_STREAM(tensorInitPrimDecl,
                 "Primitive not found for " << primitiveName.str());
   MojoValue moggTensorInit(primitiveMojoName(tensorInitPrimDecl));
-  state.setMojoValueFor(
-      getTensor(),
-      state.builder.var(moggTensorInit(
-          {dTypeParam, rankParam, mutParam, ioParam, alignmentParam},
-          {OpaquePointerRef(state.getMojoValueFor(getPtr()))
-               .bitcast(MojoValue(kComptimeDTypeNoneType))(),
-           layoutVar})));
+  MojoValue storage = state.getMojoValueFor(getPtr());
+  if (isa<PointerType>(getPtr().getType()))
+    storage =
+        OpaquePointerRef(storage).bitcast(MojoValue(kComptimeDTypeNoneType))();
+  state.setMojoValueFor(getTensor(), state.builder.var(moggTensorInit(
+                                         {dTypeParam, rankParam, mutParam,
+                                          ioParam, alignmentParam},
+                                         {storage, layoutVar})));
 
   return success();
 }
@@ -1784,20 +1772,21 @@ bool CallOpaqueOp::isThrows() {
 //
 //   var config = Kernel[...].execute_configuration[...](operands...)
 //   comptime T0 = type_of(operand0)  # one per operand
-//   def execute_device_N(a0: T0.TileTensorType, a1: T1, ...):
+//   def execute_device_N(a0: T0.device_type, a1: T1, ...):
 //       Kernel[...].execute_device[...](T0(a0), a1, ...)
 //   var func = ctx.compile_function[execute_device_N]()
-//   ctx.enqueue_function(func, operand0.to_tile_tensor(), operand1, ...,
+//   ctx.enqueue_function(func, operand0, operand1, ...,
 //                        grid_dim = config.get_grid_dim(),
 //                        block_dim = config.get_block_dim())
 //
 // `operands` are the call's outputs then inputs, without the context. A tensor
-// crosses the launch as its `TileTensor` projection and is rebuilt on the
-// device; a scalar crosses as is. Some accelerators marshal no other struct
-// argument correctly (HWB-657), and on GPUs a `TileTensor` is its own device
-// type.
-// `execute_configuration` may return any value with `get_grid_dim()` and
-// `get_block_dim()`, as NeoDriver's `GridBlockExecutionConfig` has.
+// crosses through its DevicePassable device_type and is rebuilt on the
+// device; a scalar crosses as is. Keeping the host view intact until encoding
+// preserves opaque allocation descriptors. Some accelerators marshal no other
+// struct argument correctly (HWB-657), and on GPUs a `TileTensor` is its own
+// device type. `execute_configuration` may return any value with
+// `get_grid_dim()` and `get_block_dim()`, as NeoDriver's
+// `GridBlockExecutionConfig` has.
 static LogicalResult emitDeclarativeLaunch(
     CallOpaqueOp op, EmitMojoState &state, KernelDeclAdaptor &adaptor,
     ArrayRef<MojoValue> operands,
@@ -1857,9 +1846,8 @@ static LogicalResult emitDeclarativeLaunch(
   for (auto [operand, tensor] : llvm::zip_equal(operands, isTensor)) {
     MojoValue type = builder.comptime(MojoValue("type_of")({}, {operand}));
     types.push_back(type);
-    kernelArgs.emplace_back("operand",
-                            tensor ? type.get("TileTensorType") : type);
-    launchArgs.push_back(tensor ? operand.get("to_tile_tensor")() : operand);
+    kernelArgs.emplace_back("operand", tensor ? type.get("device_type") : type);
+    launchArgs.push_back(operand);
   }
   MojoValue kernel = builder.lambda(
       "execute_device_", /*parameters=*/{}, kernelArgs,
@@ -1975,7 +1963,7 @@ MojoValue emitVariadicTensorPack(EmitMojoState &state,
   SmallVector<MojoValue> runtimeStorage =
       llvm::map_to_vector(inputValues, [&](const MojoValue &val) {
         return stable ? StableTensorRef(val).addr()
-                      : ManagedTensorSliceRef(val).rawPtr();
+                      : ManagedTensorSliceRef(val).dataPointer();
       });
   SmallVector<MojoValue> runtimeShapes =
       llvm::map_to_vector(inputValues, [&](const MojoValue &val) {
@@ -2259,9 +2247,9 @@ collectFusedCaptureInfos(EmitMojoState &state, Operation *op,
     // trivially-capturing foreach closure (where `mts.static_spec` would
     // reference the uncaptured slice).
     ManagedTensorSliceRef capRef(state.getMojoValueFor(cap));
-    // `unsafe_ptr()` erases the origin to `MutAnyOrigin`, matching the
-    // functor's pointer field and `simd_*_tensor_pointer`'s `ptr` parameter.
-    MojoValue ptr = state.builder.var(capRef.unsafePtr());
+    // Keep storage typed on the host. DeviceTypeEncoder resolves opaque
+    // views only when the enclosing kernel is enqueued.
+    MojoValue ptr = state.builder.var(capRef.dataPointer());
     MojoValue shape = state.builder.var(capRef.shape());
     MojoValue strides = state.builder.var(capRef.strides());
     MojoValue spec = state.builder.comptime(capRef.staticSpec());
@@ -2274,11 +2262,12 @@ collectFusedCaptureInfos(EmitMojoState &state, Operation *op,
 
 // Builds a `ManagedTensorSlice` over `ptr` with `layout`/`dtype`/`rank`, via
 // the `mogg.tensor.__init__` primitive. `ptr` may be a real base pointer (so an
-// accumulating kernel can accumulate through it) or a dangling one (for a
+// accumulating kernel can accumulate through it) or a null one (for a
 // kernel that only reads shape and never touches the pointer).
 static MojoValue emitBaseSliceFromPtr(EmitMojoState &state, MojoValue dtype,
                                       unsigned rank, MojoValue layout,
-                                      MojoValue alignment, MojoValue ptr) {
+                                      MojoValue alignment, MojoValue ptr,
+                                      bool typed = false) {
   auto tensorInitPrimDecl =
       state.registry.lookupPrimitive(TensorInitOp::getOperationName());
   ASSERT_STREAM(tensorInitPrimDecl,
@@ -2287,33 +2276,38 @@ static MojoValue emitBaseSliceFromPtr(EmitMojoState &state, MojoValue dtype,
       {dtype, MojoValue(static_cast<uint64_t>(rank)), MojoValue(false),
        MojoValue(kStructIO).get(MO::stringifyIOKind(MO::IOKind::Input)),
        alignment},
-      {OpaquePointerRef(ptr).bitcast(MojoValue(kComptimeDTypeNoneType))(),
+      {typed
+           ? ptr
+           : OpaquePointerRef(ptr).bitcast(MojoValue(kComptimeDTypeNoneType))(),
        layout}));
 }
 
-/// A dangling `ManagedTensorSlice` that only carries a type; every access goes
+/// A null-storage `ManagedTensorSlice` that only carries a type; every access goes
 /// through the fusion functor bound onto it. A dtype-changing epilogue needs
 /// it: the kernel gets a slice of its compute dtype (f32), while the real
 /// output (si32) reaches the functor as capture 0, since
 /// `_bind_to_fused_output` preserves its receiver's dtype.
-static MojoValue emitDanglingBaseSlice(EmitMojoState &state, MojoValue dtype,
+static MojoValue emitNullBaseSlice(EmitMojoState &state, MojoValue dtype,
                                        unsigned rank, MojoValue layout,
                                        MojoValue alignment) {
-  MojoValue danglingPtr =
-      MojoValue(
-          kStructPointer)[{MojoValue(kStructScalar)[{
-                               MojoValue(kStructDType).get(kEnumDTypeInt8)}],
-                           MojoValue(kComptimeMutAnyOrigin)}]
-          .get(OpaquePointerRef::kUnsafeDangling)();
+  MojoValue nullStorage =
+      MojoValue(kStructMsTensorDataPointer)[{
+          MojoValue(kStructDType).get(kEnumDTypeInt8)}]
+          .get("null")();
   return emitBaseSliceFromPtr(state, dtype, rank, layout, alignment,
-                              danglingPtr);
+                              nullStorage, /*typed=*/true);
 }
 
 LogicalResult TensorGetPtrOp::emitMojo(EmitMojoState &state) {
-  // Read the raw base pointer of the input slice. This op lives in the kernel
-  // body (outside any fusion lambda), so `state.builder` is the right scope.
+  // Preserve the typed storage handle of the input slice. This op lives in the
+  // kernel body (outside any fusion lambda), so `state.builder` is the right
+  // scope.
   ManagedTensorSliceRef mts(state.getMojoValueFor(getTensor()));
-  state.setMojoValueFor(getResult(), state.builder.var(mts.rawPtr()));
+  state.setMojoValueFor(getResult(),
+                        state.builder.var(MojoValue(
+                            llvm::formatv("{0}.reinterpret_as[DType.int8]()",
+                                          mts.dataPointer().text)
+                                .str())));
   return success();
 }
 
@@ -2406,14 +2400,8 @@ emitMapFusionFunctor(EmitMojoState &state, Region &region,
           // from the same slice) -- symbolic rank and all.
           MojoValue indexListType = MojoValue(
               kStructIndexList)[selfSpecParams[j].get(kParameterRank)];
-          MojoValue scalarType = MojoValue(kStructScalar)[{capture.dtype}];
-          // A `MutAnyOrigin` pointer field (mutable-any, matching
-          // `simd_*_tensor_pointer`'s `ptr` parameter) needs the legacy
-          // any-origin opt-in the Mojo parser otherwise rejects.
-          state.structDefsBuilder.verbatim(
-              MojoValue("@__allow_legacy_any_origin_fields"));
           selfPtrFields[j] = state.structDefsBuilder.varDecl(MojoValue(
-              kStructPointer)[{scalarType, MojoValue(kComptimeMutAnyOrigin)}]);
+              "managed_tensor_slice._TensorDataPointer")[{capture.dtype}]);
           selfShapeFields[j] = state.structDefsBuilder.varDecl(indexListType);
           selfStridesFields[j] = state.structDefsBuilder.varDecl(indexListType);
         }
@@ -2709,12 +2697,14 @@ ParseResult TensorCreateEpilogueOp::parse(OpAsmParser &parser,
                                           OperationState &result) {
   MLIRContext *ctx = parser.getContext();
   OpAsmParser::UnresolvedOperand shape, outputPtr;
+  Type outputPtrType = PointerType::get(ctx);
   SmallVector<OpAsmParser::Argument> entryArgs;
   SmallVector<OpAsmParser::UnresolvedOperand> captures, shapes;
   SmallVector<Type> captureTypes;
   if (parser.parseOperand(shape) ||
       parseFusedBodyArgs(parser, entryArgs, captures, captureTypes, shapes) ||
       parser.parseKeyword("ptr") || parser.parseOperand(outputPtr) ||
+      parseStorageOperandType(parser, outputPtrType) ||
       parseFusedTensorAttrs(
           parser, result, getComputeOutputArgAttrName(result.name),
           getContractAttrName(result.name), getDeviceAttrName(result.name),
@@ -2728,7 +2718,7 @@ ParseResult TensorCreateEpilogueOp::parse(OpAsmParser &parser,
       parser.resolveOperands(captures, captureTypes, parser.getNameLoc(),
                              result.operands) ||
       parser.resolveOperands(shapes, shapeTy, result.operands) ||
-      parser.resolveOperand(outputPtr, PointerType::get(ctx), result.operands))
+      parser.resolveOperand(outputPtr, outputPtrType, result.operands))
     return failure();
   result.addAttribute(getOperandSegmentSizesAttrName(result.name),
                       parser.getBuilder().getDenseI32ArrayAttr(
@@ -2742,6 +2732,7 @@ void TensorCreateEpilogueOp::print(OpAsmPrinter &p) {
   p << " " << getShape();
   printFusedBodyArgs(p, getBody().front(), getCaptures(), getShapeCaptures());
   p << " ptr " << getOutputPtr();
+  printStorageOperandType(p, *this, getOutputPtr().getType());
   printFusedTensorAttrs(p, getComputeOutputArg(), getContractAttr(),
                         getDeviceAttr(), getElementType(), getIoAttr(),
                         getMut());
@@ -2767,6 +2758,7 @@ ParseResult TileCreateEpilogueOp::parse(OpAsmParser &parser,
                                         OperationState &result) {
   MLIRContext *ctx = parser.getContext();
   OpAsmParser::UnresolvedOperand shape, outputPtr;
+  Type outputPtrType = PointerType::get(ctx);
   SmallVector<OpAsmParser::Argument> entryArgs;
   SmallVector<OpAsmParser::UnresolvedOperand> captures, shapes;
   SmallVector<Type> captureTypes;
@@ -2780,6 +2772,7 @@ ParseResult TileCreateEpilogueOp::parse(OpAsmParser &parser,
   if (!shapes.empty())
     return parser.emitError(argsLoc, "a tile epilogue takes no shape captures");
   if (parser.parseKeyword("ptr") || parser.parseOperand(outputPtr) ||
+      parseStorageOperandType(parser, outputPtrType) ||
       parseTileFusionLane(parser, lane) || parser.parseComma() ||
       parseFusedTensorAttrs(
           parser, result, /*computeOutputArgName=*/{}, /*contractName=*/{},
@@ -2792,7 +2785,7 @@ ParseResult TileCreateEpilogueOp::parse(OpAsmParser &parser,
   if (parser.resolveOperand(shape, ShapeType::get(ctx), result.operands) ||
       parser.resolveOperands(captures, captureTypes, parser.getNameLoc(),
                              result.operands) ||
-      parser.resolveOperand(outputPtr, PointerType::get(ctx), result.operands))
+      parser.resolveOperand(outputPtr, outputPtrType, result.operands))
     return failure();
   result.addTypes(TensorType::get(ctx));
   return parser.parseRegion(*result.addRegion(), entryArgs);
@@ -2801,7 +2794,9 @@ ParseResult TileCreateEpilogueOp::parse(OpAsmParser &parser,
 void TileCreateEpilogueOp::print(OpAsmPrinter &p) {
   p << " " << getShape();
   printFusedBodyArgs(p, getBody().front(), getCaptures(), /*shapes=*/{});
-  p << " ptr " << getOutputPtr() << " ";
+  p << " ptr " << getOutputPtr();
+  printStorageOperandType(p, *this, getOutputPtr().getType());
+  p << " ";
   printTileFusionLane(p, getLaneAttr());
   p << ",";
   printFusedTensorAttrs(p, /*computeOutputArg=*/false, /*contract=*/{},
@@ -3688,13 +3683,9 @@ LogicalResult TensorCreateEpilogueOp::emitMojo(EmitMojoState &state) {
         MojoValue(kFnRowMajor)({}, {state.getMojoValueFor(getShape())}));
     MojoValue baseSlice = emitBaseSliceFromPtr(
         state, dtypeParam, *baseRankT, layoutVar, alignmentParam,
-        state.getMojoValueFor(getOutputPtr()));
-    // The wrapper's `handle` is `Pointer[Scalar[dtype], MutUntrackedOrigin]`;
-    // a slice's `unsafe_ptr()` yields `MutAnyOrigin`, so retag the origin.
-    MojoValue basePtr = state.builder.var(MojoValue(
-        llvm::formatv("{0}.unsafe_origin_cast[MutUntrackedOrigin]()",
-                      ManagedTensorSliceRef(baseSlice).unsafePtr().text)
-            .str()));
+        state.getMojoValueFor(getOutputPtr()),
+        isa<StorageType>(getOutputPtr().getType()));
+    MojoValue basePtr = ManagedTensorSliceRef(baseSlice).dataPointer();
     MojoValue wrapper = MojoValue("_MoggTransformFusionTensor")(
         {dtypeParam, MojoValue("type_of")({}, {layoutVar}), alignmentParam,
          MojoValue(true), MojoValue("type_of")({}, {functorInstance}),
@@ -3746,7 +3737,8 @@ LogicalResult TensorCreateEpilogueOp::emitMojo(EmitMojoState &state) {
       state, inputDtypeParam, *baseRank, baseLayout,
       MojoValue(static_cast<uint64_t>(
           M::Driver::getPreferredAlignment(getDevice().str()))),
-      state.getMojoValueFor(getOutputPtr()));
+      state.getMojoValueFor(getOutputPtr()),
+      isa<StorageType>(getOutputPtr().getType()));
   // Which entry point to bind through follows the kernel's declared argument
   // type, not the lane: a `_FusedComputeOutputTensor` argument binds with
   // `_bind_to_fused_compute_output` even when a dtype change or the
@@ -3771,7 +3763,7 @@ LogicalResult TensorCreatePrologueOp::emitMojo(EmitMojoState &state) {
   //     `InputLoadFusion` shape (Coord `__call__`), wrapped in
   //     `_MoggInputLoadFusionTensor`.
   //   - MTS API (`FusedInputTensor`): the `managed_tensor_slice.InputFusion`
-  //     shape (IndexList `load`), bound onto a type-only dangling base slice.
+  //     shape (IndexList `load`), bound onto a type-only null-storage base slice.
 
   // The dtype the kernel reads; capture dtypes come from their defining ops.
   ErrorOr<DType> dtypeOr = M::MO::fromMLIRType(getElementType());
@@ -3857,10 +3849,10 @@ LogicalResult TensorCreatePrologueOp::emitMojo(EmitMojoState &state) {
     return success();
   }
 
-  // Bind the functor onto a type-only dangling base slice: the tensor the
+  // Bind the functor onto a type-only null-storage base slice: the tensor the
   // kernel READS has no slice to bind onto (fusion replaced it), so every load
   // goes through the functor.
-  MojoValue baseSlice = emitDanglingBaseSlice(state, dtypeParam, *rank,
+  MojoValue baseSlice = emitNullBaseSlice(state, dtypeParam, *rank,
                                               layoutVar, alignmentParam);
   MojoValue fusedTensor = baseSlice.get(
       ManagedTensorSliceRef::kBindToFusedInput)({}, {functorInstance});
@@ -4545,6 +4537,14 @@ LogicalResult RebindOp::emitMojo(EmitMojoState &state) {
     return success();
   }
 
+  if (isa<MOGG::StorageType>(resultType)) {
+    state.setMojoValueFor(getResult(),
+                          OwnedByteBufferRef(state.getMojoValueFor(getInput()))
+                              .view()
+                              .get("_ptr"));
+    return success();
+  }
+
   // Pointer cast: the input is the `OwnedByteBuffer` an `!mgp.buffer` unpacks
   // to, but the MOGG-ABI stub takes a raw `OpaquePointer[MutAnyOrigin]` (it
   // does `ptr.bitcast[NoneType]()` in `tensor.create`). Take the buffer's data
@@ -4614,9 +4614,7 @@ OpFoldResult AsyncPackOp::fold(FoldAdaptor adaptor) {
 
 /// The data pointer of an `!mgp.buffer` value as an untyped Mojo pointer.
 static MojoValue bufferDataPointer(EmitMojoState &state, Value buffer) {
-  return OpaquePointerRef(
-             ManagedTensorSliceRef(state.getMojoValueFor(buffer)).unsafePtr())
-      .bitcast(MojoValue(kComptimeDTypeNoneType))();
+  return OwnedByteBufferRef(state.getMojoValueFor(buffer)).view().get("_ptr");
 }
 
 /// Emits the call to the `mogg_tensor_init`-family primitive `primitiveName`,
@@ -4670,12 +4668,13 @@ LogicalResult TensorInitOp::emitMojo(EmitMojoState &state) {
 // Inline Mojo definitions for the trait tensor-argument struct, emitted once
 // per module (guarded by `EmitMojoState::emittedTensorArgDefs`). One struct
 // serves every execute lane. `_Engine` names how the storage is referenced: a
-// raw pointer under `DefaultEngine`, a stable address slot under
+// typed handle under `GraphStorageEngine`, a stable address slot under
 // `StableAddrEngine`. `_is_device_passable` selects whether it crosses to the
-// device (as the projected `TileTensor`, itself `DevicePassable`). The
+// device with identity layout and encoded pointer fields. The
 // `_MoggDenseTensorArg` and `_MoggStableTensorArg`
 // aliases bind the engine, so a stub names the lane rather than the engine.
 static constexpr llvm::StringLiteral kTensorArgDefs = R"mojo(
+from extensibility.managed_tensor_slice import GraphStorageEngine, _TensorDataPointer
 from layout import Coord, DefaultEngine, TensorEngine, TensorLayout, TileTensor
 from extensibility import (
     Input,
@@ -4721,7 +4720,7 @@ struct _MoggTensorArg[
     _alignment: Int,
     _io: _MoggTensorIO,
     _is_device_passable: Bool,
-    _Engine: TensorEngine = DefaultEngine[element_width=1],
+    _Engine: TensorEngine = GraphStorageEngine[element_width=1],
 ](
     # A storage handle and a layout, so copies alias the same buffer, as
     # `TileTensor` copies do. `TensorTuple` holds its elements by value.
@@ -4732,7 +4731,7 @@ struct _MoggTensorArg[
     Movable,
     # An output is written through a live pointer, never through a slot.
     Output where _io == _MoggTensorIO.OUTPUT
-    and _Engine == DefaultEngine[element_width=1],
+    and _Engine == GraphStorageEngine[element_width=1],
     Stable where _Engine == StableAddrEngine[element_width=1],
     TileTensorable,
 ):
@@ -4758,23 +4757,9 @@ struct _MoggTensorArg[
     ]
     var _layout: Self.LayoutType
 
-    # `ptr` is whatever the stub received as the buffer's data pointer, and the
-    # engine decides what that is: the data itself under `DefaultEngine`, the
-    # slot's address under `StableAddrEngine` (the same reinterpretation
-    # `mogg_stable_tensor_init` performs for the legacy lane). The storage
-    # field's type is opaque behind the `TensorEngine` bound, hence the
-    # `rebind` once the engine is pinned.
     @inline(.always)
-    def __init__(
-        out self,
-        ptr: Pointer[NoneType, MutAnyOrigin],
-        layout: Self.LayoutType,
-    ) where Self.Engine == DefaultEngine[element_width=1]:
-        self._storage = rebind[type_of(self._storage)](
-            ptr.unsafe_bitcast[Scalar[Self.dtype]]()
-            .unsafe_mut_cast[Self.mut]()
-            .unsafe_origin_cast[Self.Origin]()
-        )
+    def __init__(out self, ptr: _TensorDataPointer[DType.int8], layout: Self.LayoutType) where Self.Engine == GraphStorageEngine[element_width=1]:
+        self._storage = rebind[type_of(self._storage)](ptr.reinterpret_as[Self.dtype]())
         self._layout = layout
 
     @inline(.always)
@@ -4788,26 +4773,21 @@ struct _MoggTensorArg[
         )
         self._layout = layout
 
-    # A declarative launch passes the argument to the device as its projection,
-    # and the device rebuilds it here.
+    # Declarative launches may also construct the argument from a tile.
     @inline(.always)
     def __init__(out self, tile: Self.TileTensorType):
         self._storage = tile._storage
         self._layout = tile.layout
 
-    # The device representation is the projected `TileTensor`: the device
-    # kernel receives a real tile (Coord-indexed load/store), not this arg. The
-    # encoder copies the storage handle bit-for-bit, so the graph must have
-    # transferred the buffer to the device (see the GPU e2e tests'
-    # `mo.transfer`) for a pointer handle to be a valid device address. A slot
-    # handle's two pointer layers are device addresses already.
-    comptime device_type: AnyType = Self.TileTensorType
+    # Preserve the declared capture layout and let the storage engine encode
+    # its pointer leaves at the device boundary.
+    comptime device_type: AnyType = Self
 
     @inline(.always)
     def _to_device_type(
         self, mut encoder: Some[DeviceTypeEncoder], target: MutOpaquePointer[_]
     ) where Self._is_device_passable:
-        encoder.encode(Self.TileTensorType(self._storage, self._layout), target)
+        encoder.encode_fields[Self](self, target)
 
     @staticmethod
     def get_type_name() -> String where Self._is_device_passable:
@@ -4832,7 +4812,7 @@ struct _MoggTensorArg[
 
 
 comptime _MoggDenseTensorArg = _MoggTensorArg[
-    _Engine=DefaultEngine[element_width=1], ...
+    _Engine=GraphStorageEngine[element_width=1], ...
 ]
 
 # A `Stable` argument is GPU only, so the alias pins it device-passable.
@@ -4856,6 +4836,7 @@ static constexpr llvm::StringLiteral kStableTensorArgAlias =
 static constexpr llvm::StringLiteral kShapeTensorArgStructName =
     "_MoggShapeTensorArg";
 static constexpr llvm::StringLiteral kShapeTensorArgDefs = R"mojo(
+from extensibility.managed_tensor_slice import GraphStorageEngine, _TensorDataPointer
 from layout import Coord, TensorLayout, TileTensor
 from extensibility import Tensor, TileTensorable
 
@@ -4881,18 +4862,16 @@ struct _MoggShapeTensorArg[
     comptime __shape_types = Self.LayoutType.__shape_types
     comptime rank = Self.LayoutType.rank
     comptime alignment = Self._alignment
-    var handle: Pointer[Scalar[Self.dtype], UntrackedOrigin[mut = Self.mut]]
+    var handle: _TensorDataPointer[Self.dtype]
     var _layout: Self.LayoutType
 
     @inline(.always)
     def __init__(
         out self,
-        ptr: Pointer[NoneType, MutAnyOrigin],
+        ptr: _TensorDataPointer[DType.int8],
         layout: Self.LayoutType,
     ):
-        self.handle = ptr.unsafe_bitcast[Scalar[Self.dtype]]().unsafe_mut_cast[
-            Self.mut
-        ]().unsafe_origin_cast[UntrackedOrigin[mut = Self.mut]]()
+        self.handle = ptr.reinterpret_as[Self.dtype]()
         self._layout = layout
 
     @inline(.always)
@@ -4910,12 +4889,9 @@ struct _MoggShapeTensorArg[
         dtype = Self.dtype,
         LayoutType = Self.LayoutType,
         origin = UntrackedOrigin[mut = Self.mut],
+        Engine = GraphStorageEngine[element_width=1],
     ]:
-        return TileTensor[
-            dtype = Self.dtype,
-            LayoutType = Self.LayoutType,
-            origin = UntrackedOrigin[mut = Self.mut],
-        ](ptr=self.handle, layout=self.layout())
+        return {self.handle, self.layout()}
 )mojo";
 
 /// Emit `_MoggShapeTensorArg[dtype, layoutType, alignment, dataVisible](ptr,
@@ -4973,10 +4949,7 @@ LogicalResult TensorArgInitOp::emitMojo(EmitMojoState &state) {
     MojoValue alignmentParam(
         static_cast<uint64_t>(M::Driver::getPreferredAlignment(
             MO::getDeviceOrDefaultAny(tensorTy).getLabel().str())));
-    MojoValue ptr = OpaquePointerRef(ManagedTensorSliceRef(
-                                         state.getMojoValueFor(getBuffer()))
-                                         .unsafePtr())
-                        .bitcast(MojoValue(kComptimeDTypeNoneType))();
+    MojoValue ptr = bufferDataPointer(state, getBuffer());
     state.setMojoValueFor(
         getResult(),
         emitShapeTensorArg(state, dTypeParam, layoutType, alignmentParam,
@@ -4989,13 +4962,10 @@ LogicalResult TensorArgInitOp::emitMojo(EmitMojoState &state) {
     state.structDefsBuilder.verbatim(MojoValue(kTensorBufferCaptureDefs.str()));
     state.emittedTensorBufferCaptureDefs = true;
   }
-  MojoValue rawUnsafePtr =
-      ManagedTensorSliceRef(state.getMojoValueFor(getBuffer())).unsafePtr();
-  MojoValue ptr = state.builder.var(
-      llvm::formatv("{0}.unsafe_bitcast[Scalar[{1}]]().unsafe_mut_cast[True]()"
-                    ".unsafe_origin_cast[MutUntrackedOrigin]()",
-                    rawUnsafePtr.text, dTypeParam.text)
-          .str());
+  MojoValue ptr = state.builder.var(MojoValue(
+      llvm::formatv("{0}.reinterpret_as[{1}]()",
+                    bufferDataPointer(state, getBuffer()).text, dTypeParam.text)
+          .str()));
   MojoValue structName("_MoggTensorBufferCapture");
   state.setMojoValueFor(getResult(),
                         state.builder.var(structName({dTypeParam, layoutType},
@@ -5028,9 +4998,8 @@ LogicalResult TraitCreateOp::emitMojo(EmitMojoState &state) {
           ? llvm::formatv("{0}.as_unsafe_any_origin()",
                           StableTensorRef(slice).slotPtr().text)
                 .str()
-          : llvm::formatv(
-                "{0}.unsafe_bitcast[NoneType]().as_unsafe_any_origin()",
-                ManagedTensorSliceRef(slice).unsafePtr().text)
+          : llvm::formatv("{0}.reinterpret_as[DType.int8]()",
+                          ManagedTensorSliceRef(slice).dataPointer().text)
                 .str());
 
   // Device is on the op (like `mogg.tensor.create`), so alignment and the
@@ -5454,18 +5423,16 @@ LogicalResult CallElementwiseOp::emitMojo(EmitMojoState &state) {
 //===----------------------------------------------------------------------===//
 
 LogicalResult EmptyBufferOp::emitMojo(EmitMojoState &state) {
-  // Represent the empty buffer with a dangling pointer.
-  MojoValue danglingPointer =
-      MojoValue(
-          kStructPointer)[{MojoValue(kStructScalar)[{
-                               MojoValue(kStructDType).get(kEnumDTypeInt8)}],
-                           MojoValue(kComptimeMutAnyOrigin)}]
-          .get(OpaquePointerRef::kUnsafeDangling)();
+  // An empty buffer has no allocation or fabricated host device address.
+  MojoValue nullStorage =
+      MojoValue(kStructMsTensorDataPointer)[{
+          MojoValue(kStructDType).get(kEnumDTypeInt8)}]
+          .get("null")();
   MojoValue zeroShape =
       MojoValue(kStructIndexList)({MojoValue("1")}, {MojoValue("0")});
   state.setMojoValueFor(getResult(),
                         state.builder.var(MojoValue(kComptimeMutByteBuffer)(
-                            {}, {danglingPointer, zeroShape})));
+                            {}, {nullStorage, zeroShape})));
   return success();
 }
 

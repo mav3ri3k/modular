@@ -1,0 +1,110 @@
+[
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.057153,
+    "samples_ms": [
+      0.056951,
+      0.057153,
+      0.057199
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "word_group",
+    "median_mean_ms": 0.055068,
+    "samples_ms": [
+      0.055068,
+      0.05532,
+      0.05502
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "group_major",
+    "median_mean_ms": 0.054976,
+    "samples_ms": [
+      0.054991,
+      0.054843,
+      0.054976
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.021641,
+    "samples_ms": [
+      0.021641,
+      0.021612,
+      0.021676
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "word_group",
+    "median_mean_ms": 0.0211,
+    "samples_ms": [
+      0.021184,
+      0.0211,
+      0.021095
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "group_major",
+    "median_mean_ms": 0.021019,
+    "samples_ms": [
+      0.021143,
+      0.021019,
+      0.021019
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.057474,
+    "samples_ms": [
+      0.057542,
+      0.057307,
+      0.057474
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "word_group",
+    "median_mean_ms": 0.056533,
+    "samples_ms": [
+      0.056664,
+      0.056533,
+      0.05625
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "group_major",
+    "median_mean_ms": 0.054936,
+    "samples_ms": [
+      0.05488,
+      0.054965,
+      0.054936
+    ]
+  }
+]

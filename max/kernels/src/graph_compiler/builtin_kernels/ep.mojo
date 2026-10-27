@@ -682,7 +682,7 @@ struct Struct_ep_dispatch_wait:
             Int(output_tokens.static_spec.shape_tuple[1]) == hidden_size
         ), "EP dispatch_wait: output tokens shape doesn't match hidden size."
 
-        var format_handler = BF16TokenFormat[hidden_size, top_k](
+        var format_handler = BF16TokenFormat[hidden_size, top_k, TokensEngine=type_of(output_tokens.to_tile_tensor[.int64]()).Engine](
             output_tokens.to_tile_tensor[.int64]()
         )
 
@@ -746,7 +746,12 @@ struct Struct_ep_dispatch_wait_fp8:
             output_tokens_tensor.static_shape[1] == hidden_size
         ), "EP dispatch_wait: output tokens shape doesn't match hidden size."
 
-        var format_handler = BlockwiseFP8TokenFormat[hidden_size, top_k](
+        var format_handler = BlockwiseFP8TokenFormat[
+            hidden_size,
+            top_k,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesEngine=type_of(output_scales_tensor).Engine,
+        ](
             output_tokens_tensor,
             output_scales_tensor,
         )
@@ -812,7 +817,12 @@ struct Struct_ep_dispatch_wait_block_scaled_nv:
             output_tokens_tensor.static_shape[1] * 2 == hidden_size
         ), "EP dispatch_wait: output tokens shape doesn't match hidden size."
 
-        var format_handler = NVBlockScaledTokenFormat[hidden_size, top_k](
+        var format_handler = NVBlockScaledTokenFormat[
+            hidden_size,
+            top_k,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesOffsetEngine=type_of(scales_offsets_tensor).Engine,
+        ](
             output_tokens_tensor,
             output_scales_tensor,
             scales_offsets_tensor,
@@ -898,6 +908,8 @@ struct Struct_ep_dispatch_wait_mxfp4:
             hidden_size,
             top_k,
             mx_format=mx_fmt,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesEngine=type_of(output_scales_tensor).Engine,
         ](
             output_tokens_tensor,
             output_scales_tensor,
@@ -1013,7 +1025,7 @@ struct Struct_ep_dispatch:
         comptime assert dispatch_dtype == .bfloat16
 
         var output_tokens_tensor = output_tokens.to_tile_tensor[.int64]()
-        var format_handler = BF16TokenFormat[hidden_size, top_k](
+        var format_handler = BF16TokenFormat[hidden_size, top_k, TokensEngine=type_of(output_tokens_tensor).Engine](
             output_tokens_tensor
         )
 
@@ -1083,9 +1095,12 @@ struct Struct_ep_dispatch_fp8:
         var output_tokens_tensor = output_tokens.to_tile_tensor[.int64]()
         var output_scales_tensor = output_scales.to_tile_tensor[.int64]()
 
-        var format_handler = BlockwiseFP8TokenFormat[hidden_size, top_k](
-            output_tokens_tensor, output_scales_tensor
-        )
+        var format_handler = BlockwiseFP8TokenFormat[
+            hidden_size,
+            top_k,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesEngine=type_of(output_scales_tensor).Engine,
+        ](output_tokens_tensor, output_scales_tensor)
 
         ep_fused_dispatch_kernel_api[
             n_experts,
@@ -1219,7 +1234,12 @@ struct Struct_ep_dispatch_block_scaled_nv:
             # Currently only use one global input scale for all experts
             return input_scales_tensor[0].cast[dtype]()
 
-        var format_handler = NVBlockScaledTokenFormat[hidden_size, top_k](
+        var format_handler = NVBlockScaledTokenFormat[
+            hidden_size,
+            top_k,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesOffsetEngine=type_of(scales_offsets_tensor).Engine,
+        ](
             output_tokens_tensor,
             output_scales_tensor,
             scales_offsets_tensor,
@@ -1374,7 +1394,13 @@ struct Struct_ep_dispatch_block_scaled_nv_dyn_global_scales:
         _check_rowwise_scales_rows(output_rowwise_scales, output_tokens)
 
         var format_handler = NVBlockScaledTokenFormat[
-            hidden_size, top_k, nvfp4_dyn_global_scales=True
+            hidden_size,
+            top_k,
+            nvfp4_dyn_global_scales=True,
+            TokensEngine=type_of(output_tokens.to_tile_tensor[.int64]()).Engine,
+            ScalesOffsetEngine=type_of(
+                scales_offsets.to_tile_tensor[.int64]()
+            ).Engine,
         ](
             output_tokens.to_tile_tensor[.int64](),
             output_scales.to_tile_tensor[.int64](),
@@ -1466,6 +1492,8 @@ struct Struct_ep_dispatch_mxfp4:
             hidden_size,
             top_k,
             mx_format=mx_fmt,
+            TokensEngine=type_of(output_tokens_tensor).Engine,
+            ScalesEngine=type_of(output_scales_tensor).Engine,
         ](
             output_tokens_tensor,
             output_scales_tensor,
@@ -1627,7 +1655,12 @@ struct DistributedEPDispatchBlockScaledNV:
             ](expert_id: Int) {var in_scales} -> Scalar[dtype]:
                 return in_scales[0].cast[dtype]()
 
-            var format_handler = NVBlockScaledTokenFormat[hidden_size, top_k](
+            var format_handler = NVBlockScaledTokenFormat[
+                hidden_size,
+                top_k,
+                TokensEngine=type_of(out_tokens).Engine,
+                ScalesOffsetEngine=type_of(sc_offsets).Engine,
+            ](
                 out_tokens,
                 out_scales,
                 sc_offsets,
@@ -1792,7 +1825,15 @@ struct DistributedEPDispatchBlockScaledNVDynGlobalScales:
             imm gpu_ctxs,
         }:
             var format_handler = NVBlockScaledTokenFormat[
-                hidden_size, top_k, nvfp4_dyn_global_scales=True
+                hidden_size,
+                top_k,
+                nvfp4_dyn_global_scales=True,
+                TokensEngine=type_of(
+                    output_tokens[index].to_tile_tensor[.int64]()
+                ).Engine,
+                ScalesOffsetEngine=type_of(
+                    scales_offsets[index].to_tile_tensor[.int64]()
+                ).Engine,
             ](
                 output_tokens[index].to_tile_tensor[.int64](),
                 output_scales[index].to_tile_tensor[.int64](),
@@ -1957,6 +1998,8 @@ struct DistributedEPDispatchMXFP4:
                 hidden_size,
                 top_k,
                 mx_format=mx_fmt,
+                TokensEngine=type_of(out_tokens).Engine,
+                ScalesEngine=type_of(out_scales).Engine,
             ](
                 out_tokens,
                 out_scales,
@@ -2083,7 +2126,7 @@ struct DistributedEPDispatch:
             imm gpu_ctxs,
         }:
             var out_tokens = output_tokens[index].to_tile_tensor[.int64]()
-            var format_handler = BF16TokenFormat[hidden_size, top_k](out_tokens)
+            var format_handler = BF16TokenFormat[hidden_size, top_k, TokensEngine=type_of(out_tokens).Engine](out_tokens)
 
             ep_fused_dispatch_kernel_api[
                 n_experts,
@@ -2225,9 +2268,12 @@ struct DistributedEPDispatchFP8:
         }:
             var out_tokens = output_tokens[index].to_tile_tensor[.int64]()
             var out_scales = output_scales[index].to_tile_tensor[.int64]()
-            var format_handler = BlockwiseFP8TokenFormat[hidden_size, top_k](
-                out_tokens, out_scales
-            )
+            var format_handler = BlockwiseFP8TokenFormat[
+                hidden_size,
+                top_k,
+                TokensEngine=type_of(out_tokens).Engine,
+                ScalesEngine=type_of(out_scales).Engine,
+            ](out_tokens, out_scales)
 
             ep_fused_dispatch_kernel_api[
                 n_experts,
@@ -2884,7 +2930,9 @@ struct Struct_ep_combine_skip_a2a:
             context,
             output_fn,
             router_weights_fn,
-            topk_ids._ptr.as_imm(),
+            topk_ids.unsafe_ptr()
+            .as_imm()
+            .unsafe_origin_cast[ImmUntrackedOrigin](),
         )
 
 

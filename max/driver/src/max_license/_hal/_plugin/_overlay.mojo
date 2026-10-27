@@ -15,8 +15,9 @@ from ._trait import DefaultHalPlugin
 from .cuda import CudaHalPlugin
 from .hip import HipHalPlugin
 from .metal import MetalHalPlugin
+from .opencl import OpenCLHalPlugin
 from std._plugin.selector import PluginSelector
 
 comptime HAL_PLUGINS = PluginSelector[
-    DefaultHalPlugin, MetalHalPlugin, CudaHalPlugin, HipHalPlugin
+    DefaultHalPlugin, MetalHalPlugin, CudaHalPlugin, HipHalPlugin, OpenCLHalPlugin
 ]

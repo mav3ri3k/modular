@@ -6,17 +6,17 @@
 // and the kernel takes one input pointer rather than two -- the constant
 // buffer is never loaded from, or even passed in.
 
-// CHECK: def {{__[A-Za-z0-9_]+}}([[IN:[^:]*]]: OpaquePointer[MutAnyOrigin], [[OUT:[^:]*]]: OpaquePointer[MutAnyOrigin], [[CTX:.*]]: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}([[IN:[^:]*]]: managed_tensor_slice._TensorDataPointer[DType.int8], [[OUT:[^:]*]]: managed_tensor_slice._TensorDataPointer[DType.int8], [[CTX:.*]]: {{.*}}DeviceContext) raises:
 // CHECK:   var [[MTS0:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, False, extensibility.IO.Input, {{[0-9]+}}]([[IN]]{{.*}})
 // CHECK:   var [[MTS1:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, True, extensibility.IO.Output, {{[0-9]+}}]([[OUT]]{{.*}})
 // Each capture is decomposed into (ptr, shape, strides) plus its comptime
 // StaticTensorSpec, and accessed through the pointer-based simd load/store -- no
 // TileTensor is materialized.
-// CHECK:   var [[PTR0:.*]] = [[MTS0]].unsafe_ptr()
+// CHECK:   var [[PTR0:.*]] = [[MTS0]]._ptr
 // CHECK:   var [[SH0:.*]] = [[MTS0]].shape()
 // CHECK:   var [[ST0:.*]] = [[MTS0]].strides()
 // CHECK:   comptime [[SPEC0:.*]] = [[MTS0]].static_spec
-// CHECK:   var [[PTR1:.*]] = [[MTS1]].unsafe_ptr()
+// CHECK:   var [[PTR1:.*]] = [[MTS1]]._ptr
 // CHECK:   var [[SH1:.*]] = [[MTS1]].shape()
 // CHECK:   var [[ST1:.*]] = [[MTS1]].strides()
 // CHECK:   comptime [[SPEC1:.*]] = [[MTS1]].static_spec

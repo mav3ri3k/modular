@@ -736,7 +736,11 @@ unsigned TypeDeclInfo::getNumFieldsInType(Type type) const {
 
   // Initialize a parameter evaluator. We need to compute the resolved field
   // types to recursively compute the number of fields.
+  // Associated field types can require witness evaluation. Use the same
+  // context as field access so an aggregate storage projection is not counted
+  // as one opaque field while its accesses use its expanded field layout.
   ParameterEvaluator evaluator;
+  evaluator.setEvaluationContext(getEvaluationContext());
   for (auto [decl, value] :
        llvm::zip(decl.getInputParams(), structType.getParamValues()))
     evaluator.setDeclBinding(decl, value);
@@ -784,6 +788,7 @@ TypeDeclInfo::getFieldContaining(LIT::StructType declRef,
   LIT::StructDeclOp decl = getStructInfoForType(declRef).decl;
 
   ParameterEvaluator evaluator(decl.getInputParams(), declRef.getParamValues());
+  evaluator.setEvaluationContext(getEvaluationContext());
   // Scan to find the field that contains this.
   unsigned startFieldIdx = 0;
   for (auto field : decl.getFieldDecls()) {
@@ -2242,7 +2247,8 @@ static Type digIntoTypeAtFieldOffset(Type type, unsigned firstInvalidOffset,
         typeDeclInfo.getFieldContaining(declRefType, firstInvalidOffset);
     firstInvalidOffset -= fieldBitOffset;
     nextValidOffset -= fieldBitOffset;
-    type = fieldDecl.getReboundType(declRefType);
+    type = fieldDecl.getReboundType(declRefType,
+                                    typeDeclInfo.getEvaluationContext());
     diag << "." << fieldDecl.getName();
   }
 
@@ -2251,7 +2257,8 @@ static Type digIntoTypeAtFieldOffset(Type type, unsigned firstInvalidOffset,
     auto declRefType = sugarCast<LIT::StructType>(type);
     auto [fieldDecl, startBit, numBits] =
         typeDeclInfo.getFieldContaining(declRefType, 0);
-    type = fieldDecl.getReboundType(declRefType);
+    type = fieldDecl.getReboundType(declRefType,
+                                    typeDeclInfo.getEvaluationContext());
     diag << "." << fieldDecl.getName();
   }
 
@@ -3612,6 +3619,8 @@ void DestructorInserter::destroyValueIfNeeded(Value value, ValueRef valueRef,
 
   // Initialize an evaluator so that we can resolve the field types.
   ParameterEvaluator evaluator;
+  evaluator.setEvaluationContext(
+      valueSet.getTypeDeclInfo().getEvaluationContext());
   for (auto [decl, value] :
        llvm::zip(structDecl.getParams(), valueType.getParamValues()))
     evaluator.setDeclBinding(decl, value);
@@ -3620,7 +3629,11 @@ void DestructorInserter::destroyValueIfNeeded(Value value, ValueRef valueRef,
 
   unsigned nextBit = 0;
   for (StructFieldOp field : structDecl.getFieldDecls()) {
-    auto fieldVal = RefStructGEROp::create(builder, value, field);
+    auto fieldType = RefStructGEROp::getFieldType(
+        cast<RefType>(value.getType()), field,
+        valueSet.getTypeDeclInfo().getEvaluationContext());
+    auto fieldVal =
+        RefStructGEROp::create(builder, fieldType, field.getNameAttr(), value);
     unsigned numBits = valueSet.getTypeDeclInfo().getNumFieldsInType(
         evaluator.getReboundType(field.getType()));
     destroyValueIfNeeded(fieldVal, valueRef.getSubfield(nextBit, numBits),
@@ -5270,7 +5283,8 @@ static void clearTrivialFields(ValueRef valueRef, Type valueType,
     // struct Pair[T: Movable](Movable):
     //    var first: T
     // ```
-    Type fieldType = field.getReboundType(valueDRType);
+    Type fieldType = field.getReboundType(
+        valueDRType, valueSet.getTypeDeclInfo().getEvaluationContext());
     unsigned numBits = valueSet.getTypeDeclInfo().getNumFieldsInType(fieldType);
     // If this field has consumed bits, and if has trivial type, force it
     // back to being non-consumed.  This can allow the proper correctness
@@ -5413,7 +5427,12 @@ bool DestructorInsertion::scheduleNeededDtors(ValueRef use,
 
     // Drill into the right field.
     for (StructFieldOp subfield : accessPath)
-      value = RefStructGEROp::create(dtorInserter.builder, value, subfield);
+      value = RefStructGEROp::create(
+          dtorInserter.builder,
+          RefStructGEROp::getFieldType(
+              cast<RefType>(value.getType()), subfield,
+              valueSet.getTypeDeclInfo().getEvaluationContext()),
+          subfield.getNameAttr(), value);
   }
 
   // If this is a store to a subfield of a non-trivial value being destroyed,

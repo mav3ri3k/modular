@@ -13,6 +13,12 @@ package_group(
     ],
 )
 
+# Inputs for vendor HAL entry-point generators.
+filegroup(
+    name = "HALHeaders",
+    srcs = glob(["include/HAL/*.h"]),
+)
+
 modular_cc_library(
     name = "HAL",
     hdrs = glob([

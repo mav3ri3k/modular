@@ -843,12 +843,12 @@ def dispatch_relative_logits_mask[
     //,
     local_window_size: Int = -1,
 ](
-    bias_nd: ImmTileTensor[dtype, BiasLayout, bias_origin],
+    bias_nd: ImmTileTensor[dtype, BiasLayout, bias_origin, Engine=_],
     cache_lengths: ImmTileTensor[
-        .uint32, CacheLengthsLayout, cache_lengths_origin
+        .uint32, CacheLengthsLayout, cache_lengths_origin, Engine=_
     ],
     input_row_offsets: ImmTileTensor[
-        .uint32, RowOffsetsLayout, row_offsets_origin
+        .uint32, RowOffsetsLayout, row_offsets_origin, Engine=_
     ],
     callback_fn: Some[callback_fn_type],
 ) raises -> None:

@@ -24,6 +24,7 @@
 #include "HAL/M_driver_api.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -209,7 +210,8 @@ M_driver_status_t M_driver_property(M_driver_driver_t handle,
     return M_DRIVER_STATUS_INVALID_ARG;
 
   if (strcmp(property_name, M_DRIVER_PROPERTY_API) == 0) {
-    *(const char **)value = "mock";
+    const char *api = getenv("MODULAR_MOCK_HAL_API");
+    *(const char **)value = api && *api ? api : "mock";
     return M_DRIVER_STATUS_SUCCESS;
   }
 
@@ -260,6 +262,13 @@ M_driver_status_t M_driver_device_property(M_driver_device_t device,
   (void)device;
   if (!property_name || !value)
     return M_DRIVER_STATUS_INVALID_ARG;
+  if (strcmp(property_name, M_DRIVER_DEVICE_PROPERTY_NAME) == 0 ||
+      strcmp(property_name, M_DRIVER_DEVICE_PROPERTY_ARCH) == 0) {
+    snprintf((char *)value, M_DRIVER_DEVICE_PROPERTY_MAX_LEN, "%s",
+             strcmp(property_name, M_DRIVER_DEVICE_PROPERTY_NAME) == 0
+                 ? "Mock HAL device" : "mock");
+    return M_DRIVER_STATUS_SUCCESS;
+  }
   if (strcmp(property_name, M_DRIVER_DEVICE_PROPERTY_HOST_UNIFIED) == 0) {
     *(int64_t *)value = 0;
     return M_DRIVER_STATUS_SUCCESS;

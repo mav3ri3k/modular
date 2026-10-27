@@ -310,6 +310,8 @@ constexpr llvm::StringLiteral kStructStableVariadicTensors =
     "extensibility.StableVariadicTensors";
 constexpr llvm::StringLiteral kStructTensorTuple = "extensibility.TensorTuple";
 constexpr llvm::StringLiteral kStructStaticString = "StaticString";
+constexpr llvm::StringLiteral kStructMsTensorDataPointer =
+    "managed_tensor_slice._TensorDataPointer";
 constexpr llvm::StringLiteral kStructMsFusionPack =
     "managed_tensor_slice._FusionPack";
 constexpr llvm::StringLiteral kStructMsFusedInputVariadicTensors =
@@ -638,8 +640,6 @@ public:
   static constexpr llvm::StringLiteral kStaticStridesTuple =
       "_static_strides_tuple";
   static constexpr llvm::StringLiteral kAlignment = "alignment";
-  /// Storage pointer of VariadicTensors elements.
-  static constexpr llvm::StringLiteral kPtr = "_ptr";
   static constexpr llvm::StringLiteral kIoSpec = "io_spec";
   /// Bind methods for fusion lambdas.
   static constexpr llvm::StringLiteral kBindToFusedInput =
@@ -666,7 +666,6 @@ public:
   }
   MojoValue alignment() const { return value.get(kAlignment); }
   MojoValue ioSpec() const { return value.get(kIoSpec); }
-  MojoValue rawPtr() const { return value.get(kPtr); }
   MojoValue inFusion() const { return value.get(kInFusion); }
   MojoValue outFusion() const { return value.get(kOutFusion); }
   MojoValue inFusionType() const {
@@ -676,6 +675,8 @@ public:
     return MojoValue("type_of")({}, {value}).get(kOutFusionParam);
   }
 
+  /// Preserve typed storage until device argument encoding.
+  MojoValue dataPointer() const { return value.get("_ptr"); }
   MojoValue unsafePtr() const { return value.get(kUnsafePtr)(); }
   MojoValue shape() const { return value.get(kShape)(); }
   MojoValue strides() const { return value.get(kStrides)(); }
@@ -743,9 +744,8 @@ public:
   MojoValue value;
 };
 
-/// What `!mgp.buffer` lowers to: a `MutByteBuffer` view plus an
-/// `AnyAsyncValueRef` storage handle. Unwrap `.view` before passing to a
-/// kernel stub or register-passable container.
+/// What `!mgp.buffer` lowers to: a typed view plus retained storage. The
+/// view preserves opaque allocation metadata until device argument encoding.
 class OwnedByteBufferRef {
 public:
   explicit OwnedByteBufferRef(MojoValue v) : value(std::move(v)) {}
@@ -753,7 +753,7 @@ public:
   static constexpr llvm::StringLiteral kView = "view";
   static constexpr llvm::StringLiteral kUnsafePtr = "unsafe_ptr";
 
-  MojoValue view() const { return value.get(kView); }
+  MojoValue view() const { return value.get("tensor_view")(); }
 
   /// `Pointer[Int8, MutAnyOrigin]`.
   MojoValue unsafePtr() const { return value.get(kUnsafePtr)(); }
@@ -769,7 +769,7 @@ public:
 
   static constexpr llvm::StringLiteral kTensor = "tensor";
 
-  MojoValue tensor() const { return value.get(kTensor); }
+  MojoValue tensor() const { return value.get("tensor_view")(); }
 
   MojoValue value;
 };

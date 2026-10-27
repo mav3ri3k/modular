@@ -683,14 +683,17 @@ struct CompilationTarget[_mlir_value: _TargetType = _current_target(), //](
         This is a closed list rather than `not self.is_accelerator()` to avoid
         accidentally classifying unknown non-accelerator targets as CPUs.
         Targets with an unlisted architecture are neither a CPU nor an
-        accelerator.
+        accelerator. An accelerator using one of these scalar data models
+        is excluded by its stdlib plugin's device classification.
 
         Returns:
             True if the target is a known CPU target, and False otherwise.
         """
         # FIXME(MSTDL-3279): Add other host architectures here if they become
         # supported platforms.
-        return self.is_x86() or self.is_arm() or self.is_riscv()
+        return (
+            self.is_x86() or self.is_arm() or self.is_riscv()
+        ) and not self.is_accelerator()
 
     # TODO(MOCO-5022): Make these @staticmethod's once side effect bug is fixed
     @inline(.nodebug)

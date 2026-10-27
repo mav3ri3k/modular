@@ -65,8 +65,7 @@ from layout.tile_tensor import stack_allocation
 from std.memory import unsafe_memcpy
 
 from nn.concat import concat
-from nn.reshape import reshape
-from nn.slice import slice_as_view
+from nn.slice import slice_as_view, slice_view_layout
 from layout.int_tuple import _IntTupleToCoordLike, UNKNOWN_VALUE
 from layout.tile_layout import Layout as TileLayout
 from extensibility import register_internal
@@ -76,6 +75,7 @@ from extensibility import (
     StableTensor,
 )
 from extensibility import IO
+from extensibility.managed_tensor_slice import _TensorDataPointer
 from extensibility import (
     DynamicTensor,
     _shape_types_compatible,
@@ -144,56 +144,71 @@ def create_tensor_spec_async_value[
 
 
 struct OwnedByteBuffer(DeviceGraphInput, ImplicitlyCopyable, Movable):
-    """Owning composite for an `mgp.buffer` value: a non-owning `MutByteBuffer`
-    view (precomputed pointer + shape) plus an `AnyAsyncValueRef` storage handle
-    that keeps the backing memory alive.
+    """Owns an `mgp.buffer` through retained asynchronous storage.
 
-    Structurally mirrors the C++ `TensorBufferRef` (`{data, size, storageRef}`).
-    Copying shares the backing memory (retains the storage); at the pack site the
-    storage is surrendered net-zero into a real `TensorBufferRef`.
+    Raw backends carry a pointer/shape view; opaque backends carry allocation,
+    offset and extent metadata. Copying retains storage, and packing preserves
+    the representation in a C++ `TensorBufferRef`.
     """
 
-    var view: MutByteBuffer
+    var view: Optional[MutByteBuffer]
     var storage: AnyAsyncValueRef
+    var _opaque_view: Optional[Tuple[UInt64, UInt64, UInt64]]
+    var _byte_size: Int
 
     def __init__(out self, view: MutByteBuffer, var storage: AnyAsyncValueRef):
-        """Builds the composite from a view and its storage handle.
-
-        Args:
-            view: A non-owning `MutByteBuffer` over the memory.
-            storage: The owning storage handle that keeps the memory alive.
-        """
         self.view = view
         self.storage = storage^
+        self._opaque_view = None
+        self._byte_size = view.size()
+
+    def __init__(
+        out self,
+        *,
+        opaque_view: Tuple[UInt64, UInt64, UInt64],
+        var storage: AnyAsyncValueRef,
+    ):
+        self.view = None
+        self.storage = storage^
+        self._opaque_view = opaque_view
+        self._byte_size = Int(opaque_view[2])
 
     def __init__(out self, var buffer: DeviceBuffer[.int8]):
-        """Builds the composite from a DeviceBuffer.
+        var opaque = buffer._opaque_allocation_view()
+        if opaque:
+            self = Self(
+                opaque_view=opaque.value(),
+                storage=AnyAsyncValueRef(storage_buf=buffer^),
+            )
+        else:
+            var view = MutByteBuffer(buffer.unsafe_ptr(), Index(len(buffer)))
+            self = Self(view, AnyAsyncValueRef(storage_buf=buffer^))
 
-        Args:
-            buffer: A DeviceBuffer which owns the underlying memory.
-        """
-        var shape = Index(len(buffer))
+    def is_opaque(self) -> Bool:
+        return Bool(self._opaque_view)
 
-        var view = MutByteBuffer(buffer.unsafe_ptr(), shape)
-        var storage = AnyAsyncValueRef(storage_buf=buffer^)
+    def raw_view(self) -> MutByteBuffer:
+        if not self.view:
+            abort(
+                "opaque graph buffers have no raw view; use a typed device"
+                " buffer"
+            )
+        return self.view.value()
 
-        self = Self(view, storage^)
+    def tensor_view(self) -> MutByteBuffer:
+        """Borrows a view suitable for ordinary typed kernel arguments."""
+        if self._opaque_view:
+            return MutByteBuffer(
+                opaque_view=self._opaque_view.value(),
+                shape=IndexList[1](self._byte_size),
+            )
+        return self.raw_view()
 
     def unsafe_ptr(self) -> Pointer[Int8, MutAnyOrigin]:
-        """Returns the view's raw device data pointer.
-
-        Returns:
-            The non-owning device data pointer of the view.
-        """
-        return self.view.unsafe_ptr()
+        return self.raw_view().unsafe_ptr()
 
     def size(self) -> Int:
-        """Returns the view's size in bytes.
-
-        Returns:
-            The byte size of the view.
-        """
-        return self.view.size()
+        return self._byte_size
 
     def take_storage(deinit self) -> AnyAsyncValueRef:
         """Hands the owning storage handle to the pack site, consuming self.
@@ -214,6 +229,14 @@ struct OwnedByteBuffer(DeviceGraphInput, ImplicitlyCopyable, Movable):
         Returns:
             An owning reference to the new `AsyncValue`.
         """
+        if self._opaque_view:
+            var parts = self._opaque_view.value()
+            var storage = AnyAsyncValueRef(copy=self.storage)
+            var handle = external_call[
+                "MGP_RT_CreateOpaqueBufferRefAsyncValue",
+                _AsyncValuePtr[mut=True],
+            ](storage^.take_handle(), parts[0], parts[1], parts[2])
+            return AnyAsyncValueRef(handle)
         var ptr = self.unsafe_ptr()
         var n = self.size()
         var storage = AnyAsyncValueRef(copy=self.storage)
@@ -237,6 +260,8 @@ struct OwnedByteBuffer(DeviceGraphInput, ImplicitlyCopyable, Movable):
         Returns:
             A non-owning `DeviceBuffer` over the view's memory.
         """
+        if self.is_opaque():
+            return self.storage.borrow_opaque_device_buffer()
         return MutByteBuffer(
             self.unsafe_ptr(), Index(self.size())
         ).to_device_buffer(ctx)
@@ -284,8 +309,10 @@ struct OwnedTensor[
             for one graph's `add_input`.
     """
 
-    var tensor: DynamicTensor[Self.dtype, Self.rank]
+    var _tensor: Optional[DynamicTensor[Self.dtype, Self.rank]]
     var storage: AnyAsyncValueRef
+    var _opaque_view: Optional[Tuple[UInt64, UInt64, UInt64]]
+    var _shape: IndexList[Self.rank]
 
     def __init__(
         out self,
@@ -298,8 +325,37 @@ struct OwnedTensor[
             tensor: A non-owning `DynamicTensor` over the memory.
             storage: The owning storage handle that keeps the memory alive.
         """
-        self.tensor = tensor
+        self._tensor = tensor
         self.storage = storage^
+        self._opaque_view = None
+        self._shape = tensor.shape()
+
+    def __init__(
+        out self,
+        *,
+        opaque_view: Tuple[UInt64, UInt64, UInt64],
+        shape: IndexList[Self.rank],
+        var storage: AnyAsyncValueRef,
+    ):
+        self._tensor = None
+        self.storage = storage^
+        self._opaque_view = opaque_view
+        self._shape = shape
+
+    def is_opaque(self) -> Bool:
+        return Bool(self._opaque_view)
+
+    def raw_view(self) -> DynamicTensor[Self.dtype, Self.rank]:
+        if not self._tensor:
+            abort("Opaque graph tensors require typed device projection")
+        return self._tensor.value()
+
+    def tensor_view(self) -> DynamicTensor[Self.dtype, Self.rank]:
+        if self._opaque_view:
+            return DynamicTensor[Self.dtype, Self.rank](
+                opaque_view=self._opaque_view.value(), shape=self._shape
+            )
+        return self.raw_view()
 
     @staticmethod
     def shape_only() -> Bool:
@@ -311,7 +367,7 @@ struct OwnedTensor[
         Returns:
             The non-owning device data pointer of the view.
         """
-        return self.tensor.unsafe_ptr()
+        return self.raw_view().unsafe_ptr()
 
     def shape(self) -> IndexList[Self.rank]:
         """Returns the tensor view's shape.
@@ -319,7 +375,7 @@ struct OwnedTensor[
         Returns:
             The shape of the tensor view.
         """
-        return self.tensor.shape()
+        return self._shape
 
     def bytecount(self) -> Int:
         """Returns the tensor view's size in bytes.
@@ -327,7 +383,10 @@ struct OwnedTensor[
         Returns:
             The byte size of the tensor view.
         """
-        return self.tensor.bytecount()
+        var count = size_of[Self.dtype]()
+        for i in range(Self.rank):
+            count *= self._shape[i]
+        return count
 
     def take_storage(deinit self) -> AnyAsyncValueRef:
         """Hands the owning storage handle to the pack site, consuming self.
@@ -349,6 +408,22 @@ struct OwnedTensor[
             An owning reference to the new `AsyncValue`.
         """
         var shape = self.shape()
+        if self._opaque_view:
+            var view = self._opaque_view.value()
+            var storage = AnyAsyncValueRef(copy=self.storage)
+            var handle = external_call[
+                "MGP_RT_CreateOpaqueTensorRefAsyncValue",
+                _AsyncValuePtr[mut=True],
+            ](
+                storage^.take_handle(),
+                view[0],
+                view[1],
+                view[2],
+                Self.rank,
+                Pointer(to=shape.data),
+                self.dtype,
+            )
+            return AnyAsyncValueRef(handle)
         var ptr = self.unsafe_ptr()
         var n = self.bytecount()
         var storage = AnyAsyncValueRef(copy=self.storage)
@@ -384,7 +459,13 @@ struct OwnedTensor[
         Returns:
             The same view and storage under `new_kind`.
         """
-        return {self.tensor, self.storage}
+        if self._opaque_view:
+            return OwnedTensor[Self.dtype, Self.rank, new_kind](
+                opaque_view=self._opaque_view.value(),
+                shape=self._shape,
+                storage=AnyAsyncValueRef(copy=self.storage),
+            )
+        return {self.raw_view(), self.storage}
 
     def write_graph_key(self, mut writer: Some[Writer]):
         comptime match Self.kind:
@@ -393,6 +474,12 @@ struct OwnedTensor[
                 # so the address is part of what distinguishes graphs: a moved
                 # buffer must miss the cache and rebuild rather than replay stale
                 # addresses.
+                if self._opaque_view:
+                    writer.write(
+                        t"MutTensor({self.dtype}, {self.shape()},"
+                        t" {self._opaque_view.value()})"
+                    )
+                    return
                 writer.write(
                     t"MutTensor({self.dtype}, {self.shape()}, "
                     t"{Int(self.unsafe_ptr())})"
@@ -499,6 +586,19 @@ def unpack_buffer_ref(
     async_ref: AnyAsyncValueRef,
 ) -> OwnedByteBuffer:
     var value = async_ref.get_handle()
+    var allocation: UInt64 = 0
+    var offset: UInt64 = 0
+    var opaque_size: UInt64 = 0
+    if external_call["MGP_RT_GetOpaqueViewFromBuffer", Bool](
+        value,
+        Pointer(to=allocation),
+        Pointer(to=offset),
+        Pointer(to=opaque_size),
+    ):
+        return OwnedByteBuffer(
+            opaque_view=(allocation, offset, opaque_size),
+            storage=AnyAsyncValueRef(retained_storage_of=value),
+        )
     var size: UInt64 = 0
     var data_ptr = external_call[
         "MGP_RT_GetDataFromBuffer",
@@ -525,6 +625,23 @@ def unpack_tensor[
     )
     var value = async_ref.get_handle()
     var shapes = IndexList[buffer_rank]()
+    var allocation: UInt64 = 0
+    var offset: UInt64 = 0
+    var extent: UInt64 = 0
+    if external_call["MGP_RT_GetOpaqueViewFromTensor", Bool](
+        value,
+        Pointer(to=shapes.data),
+        Pointer(to=allocation),
+        Pointer(to=offset),
+        Pointer(to=extent),
+    ):
+        comptime if tensor_rank == 0:
+            shapes[0] = 1
+        return OwnedTensor[dtype, buffer_rank, kind](
+            opaque_view=(allocation, offset, extent),
+            shape=shapes,
+            storage=AnyAsyncValueRef(retained_storage_of=value),
+        )
     var buffer_ptr = external_call[
         "MGP_RT_GetShapeAndDataFromTensor",
         OpaquePointer[MutAnyOrigin],
@@ -579,6 +696,17 @@ def mgp_tensor_create[
     # The tensor shares the buffer's backing memory, so it retains the buffer's
     # storage handle (copy) to keep it alive independently.
     var storage = AnyAsyncValueRef(copy=buffer.storage)
+    if buffer.is_opaque():
+        var shape = IndexList[buffer_rank]()
+        comptime if spec_rank == 0:
+            shape[0] = 1
+        else:
+            shape = rebind[IndexList[buffer_rank]](spec)
+        return OwnedTensor[dtype, buffer_rank, kind](
+            opaque_view=buffer._opaque_view.value(),
+            shape=shape,
+            storage=storage^,
+        )
     comptime if spec_rank == 0:
         # We promote scalar tensor to tensor<[1]>
         comptime assert buffer_rank == 1
@@ -659,10 +787,16 @@ def mgp_tensor_extract_buffer[
 ](tensor: OwnedTensor[dtype, buffer_rank, _]) -> OwnedByteBuffer:
     comptime assert not tensor.shape_only()
 
+    if tensor.is_opaque():
+        var view = tensor._opaque_view.value()
+        return OwnedByteBuffer(
+            opaque_view=(view[0], view[1], UInt64(tensor.bytecount())),
+            storage=AnyAsyncValueRef(copy=tensor.storage),
+        )
     # Unwrap the tensor into a size-less buffer view, retaining the tensor's
     # storage so the buffer keeps the backing memory alive independently.
     var view = MutByteBuffer(
-        tensor.tensor.unsafe_ptr[.int8](),
+        tensor.raw_view().unsafe_ptr[.int8](),
         IndexList[1](tensor.bytecount()),
     )
     return OwnedByteBuffer(view, AnyAsyncValueRef(copy=tensor.storage))
@@ -717,22 +851,16 @@ def mgp_tensor_slice[
     # Slice via the byte-buffer path so the slice is registered with the device
     # runtime where required. The transient byte buffer retains the input's
     # storage handle, which the slice then hands to the output tensor.
-    var base_bytes = OwnedByteBuffer(
-        MutByteBuffer(
-            input.unsafe_ptr().unsafe_bitcast[Int8](), Index(input.bytecount())
-        ),
-        AnyAsyncValueRef(copy=input.storage),
-    )
+    var base_bytes = mgp_tensor_extract_buffer(input)
     var slice_bytes = mgp_buffer_slice(
         base_bytes,
         elem_offset * dtype_size,
         out_elems * dtype_size,
         dev_context,
     )
-    var view = DynamicTensor[dtype, rank](
-        slice_bytes.unsafe_ptr().unsafe_bitcast[Scalar[dtype]](), output_spec
+    return mgp_tensor_create[rank, rank, dtype, input.kind](
+        slice_bytes, output_spec
     )
-    return {view, slice_bytes.take_storage()}
 
 
 # ===-----------------------------------------------------------------------===#
@@ -799,9 +927,9 @@ def mgp_buffer_set_with_index[
 
     var elSize = bufSize // numArgs
     if elSize == 4:
-        fill_buffer[.int32](buffer.view, *vals)
+        fill_buffer[.int32](buffer.raw_view(), *vals)
     elif elSize == 8:
-        fill_buffer[.int64](buffer.view, *vals)
+        fill_buffer[.int64](buffer.raw_view(), *vals)
     else:
         raise Error("unsupported element size")
 
@@ -858,6 +986,8 @@ def mgp_buffer_slice(
     """
     var parent = buffer.to_device_buffer(dev_context)
     var sub = parent.create_sub_buffer[.int8](offset, size)
+    if buffer.is_opaque():
+        return OwnedByteBuffer(sub^)
     var view = MutByteBuffer(sub.unsafe_ptr(), Index(size))
     return OwnedByteBuffer(view, AnyAsyncValueRef(copy=buffer.storage))
 
@@ -995,6 +1125,24 @@ def mgp_buffer_concat[
     inputs: Array[OwnedByteBuffer, ...],
     call_ctx: DeviceContext,
 ) raises:
+    comptime if is_accelerator[bDevice]():
+        # These are contiguous byte buffers. Use the driver's ordered copies
+        # and sub-buffer views, preserving opaque allocation handles on hosts.
+        var size = 0
+        for i in range(len(inputs)):
+            size += inputs[i].size()
+        if size != output.size():
+            raise Error("buffer concat size does not match output")
+        var destination = output.to_device_buffer(call_ctx)
+        var offset = 0
+        for i in range(len(inputs)):
+            var source = inputs[i].to_device_buffer(call_ctx)
+            var part = destination.create_sub_buffer[.int8](
+                offset, inputs[i].size()
+            )
+            call_ctx.enqueue_copy(part, source)
+            offset += inputs[i].size()
+        return
     var output_lt = TileTensor(
         output.unsafe_ptr(),
         row_major(output.size()),
@@ -1092,12 +1240,8 @@ def _memset_buffer[
     comptime if is_accelerator[bDevice]():
         # Wrap the existing device memory in a non-owning typed DeviceBuffer
         # (no allocation), then memset it -- mirrors `to_device_buffer`.
-        var dev_buf = DeviceBuffer[dtype](
-            dev_context,
-            buffer.unsafe_ptr().unsafe_bitcast[Scalar[dtype]](),
-            count,
-            owning=False,
-        )
+        var parent = buffer.to_device_buffer(dev_context)
+        var dev_buf = parent.create_sub_buffer[dtype](0, count)
         dev_context.enqueue_memset[dtype](dev_buf, val)
     else:
         # cpu: fill the raw bytes directly via a typed store loop.
@@ -1417,9 +1561,7 @@ struct StateContext(ImplicitlyCopyable, RegisterPassable):
         return external_call["MGP_RT_GetCachedInt", Int](slot, self._handle)
 
     @inline(.always)
-    def get_cached_buffer(
-        self, slot: Int
-    ) -> Tuple[MutByteBuffer, AnyAsyncValueRef]:
+    def get_cached_buffer(self, slot: Int) -> OwnedByteBuffer:
         """Returns a reference to the buffer cached in the given state slot.
 
         Args:
@@ -1430,6 +1572,23 @@ struct StateContext(ImplicitlyCopyable, RegisterPassable):
             cached `TensorBufferRef`'s backing storage. The caller takes ownership
             of this reference.
         """
+        var allocation: UInt64 = 0
+        var offset: UInt64 = 0
+        var size: UInt64 = 0
+        var opaque = external_call[
+            "MGP_RT_GetCachedOpaqueBuffer", _AsyncValuePtr[mut=True]
+        ](
+            slot,
+            self._handle,
+            Pointer(to=allocation),
+            Pointer(to=offset),
+            Pointer(to=size),
+        )
+        if opaque:
+            return OwnedByteBuffer(
+                opaque_view=(allocation, offset, size),
+                storage=AnyAsyncValueRef(handle=opaque),
+            )
         var buffer_size: UInt64 = 0
         var buffer_data = Optional[OpaquePointer[MutAnyOrigin]]()
 
@@ -1447,7 +1606,7 @@ struct StateContext(ImplicitlyCopyable, RegisterPassable):
             Index(buffer_size),
         )
 
-        return {buffer, AnyAsyncValueRef(handle=async_value)}
+        return OwnedByteBuffer(buffer, AnyAsyncValueRef(handle=async_value))
 
     @inline(.always)
     def get_device_graph_cache(
@@ -1538,6 +1697,13 @@ def mogg_async_pack_value[
 
 def mogg_async_pack_value(var data: OwnedByteBuffer) -> AnyAsyncValueRef:
     """Packs an `OwnedByteBuffer` into a fresh `AsyncValue[TensorBufferRef]`."""
+    if data._opaque_view:
+        var parts = data._opaque_view.value()
+        var storage = data^.take_storage()
+        var handle = external_call[
+            "MGP_RT_CreateOpaqueBufferRefAsyncValue", _AsyncValuePtr[mut=True]
+        ](storage^.take_handle(), parts[0], parts[1], parts[2])
+        return AnyAsyncValueRef(handle)
     var ptr = data.unsafe_ptr()
     var n = data.size()
 
@@ -1557,6 +1723,21 @@ def mogg_async_pack_owned_tensor_value[
 ](var data: OwnedTensor) -> AnyAsyncValueRef:
     """Packs an `OwnedTensor` into a fresh `AsyncValue[Tensor]`."""
     var shape = data.shape()
+    if data._opaque_view:
+        var view = data._opaque_view.value()
+        var storage = data^.take_storage()
+        var handle = external_call[
+            "MGP_RT_CreateOpaqueTensorRefAsyncValue", _AsyncValuePtr[mut=True]
+        ](
+            storage^.take_handle(),
+            view[0],
+            view[1],
+            view[2],
+            spec_rank,
+            Pointer(to=shape.data),
+            data.dtype,
+        )
+        return AnyAsyncValueRef(handle=handle)
     var ptr = data.unsafe_ptr()
     var n = data.bytecount()
 
@@ -1684,6 +1865,36 @@ def mogg_tensor_init[
     }
 
 
+@inline(.always)
+def mogg_tensor_init[
+    LayoutType: TensorLayout,
+    //,
+    dtype: DType,
+    rank: Int,
+    mut: Bool,
+    input: IO,
+    alignment: Int,
+](
+    storage: _TensorDataPointer[.int8],
+    layout: LayoutType,
+) -> ManagedTensorSlice[
+    io_spec=IOSpec[mut, input](),
+    static_spec=StaticTensorSpec[
+        dtype,
+        rank,
+        static_layout=LayoutType,
+    ](alignment, .GENERIC),
+]:
+    """
+    Constructs a tensor view without extracting a host device address.
+    """
+    return {
+        storage.reinterpret_as[dtype](),
+        layout.shape_coord(),
+        layout.stride_coord(),
+    }
+
+
 @register_internal("mogg.tensor.__init__.stable")
 @inline(.always)
 def mogg_stable_tensor_init[
@@ -1722,6 +1933,37 @@ def mogg_stable_tensor_init[
             layout.shape_coord(), layout.stride_coord()
         ),
     }
+
+
+@inline(.always)
+def mogg_stable_tensor_init[
+    LayoutType: TensorLayout,
+    //,
+    dtype: DType,
+    rank: Int,
+    mut: Bool,
+    input: IO,
+    alignment: Int,
+](
+    storage: _TensorDataPointer[.int8],
+    layout: LayoutType,
+    out result: StableTensor[
+        io_spec=IOSpec[mut, input](),
+        static_spec=StaticTensorSpec[
+            dtype,
+            rank,
+            static_layout=LayoutType,
+        ](alignment, .GENERIC),
+    ],
+):
+    """
+    Helper for constructing a StableTensor from a layout and the data pointer
+    of a stable `mgp.tensor`, which is the address of its slot. Selected by
+    `mogg.tensor.__init__` when its result `!mo.tensor` is marked `stable`.
+    """
+    result = mogg_stable_tensor_init[dtype, rank, mut, input, alignment](
+        storage.unsafe_ptr().unsafe_bitcast[NoneType](), layout
+    )
 
 
 @register_internal("mogg.async.join")
@@ -1794,10 +2036,7 @@ def mgp_buffer_get_cached(
     """
     Get a reference to the cached buffer, retaining its backing storage.
     """
-    var ptr, storage = ctx.get_cached_buffer(buffer_slot)
-    # cached is (view, mem_handle); fold the cached buffer's memory handle into
-    # the composite's storage by retaining it.
-    return OwnedByteBuffer(ptr, storage^)
+    return ctx.get_cached_buffer(buffer_slot)
 
 
 @register_internal("mgp.assert")
@@ -2479,17 +2718,18 @@ def mogg_tensor_create_slice[
             per rank.
         steps: One-dimensional tensor of strides, one per rank.
     """
-    var view = slice_as_view(
-        input.to_tile_tensor[DType.int64](),
-        starts.to_tile_tensor[DType.int64](),
-        stops.to_tile_tensor[DType.int64](),
-        steps.to_tile_tensor[DType.int64](),
+    var offset, view_layout = slice_view_layout(
+        input.shape(),
+        input.strides(),
+        starts.to_tile_tensor().as_imm(),
+        stops.to_tile_tensor().as_imm(),
+        steps.to_tile_tensor().as_imm(),
     )
     return {
-        view._storage,
-        rebind[IndexList[rank]](coord_to_index_list(view.layout.shape_coord())),
+        input._ptr.unsafe_offset(offset),
+        rebind[IndexList[rank]](coord_to_index_list(view_layout.shape_coord())),
         rebind[IndexList[rank]](
-            coord_to_index_list(view.layout.stride_coord())
+            coord_to_index_list(view_layout.stride_coord())
         ),
     }
 
@@ -2574,7 +2814,7 @@ def mogg_tensor_create_broadcast[
                 new_strides[i] = 0
             else:
                 new_strides[i] = input.stride_length[i - delta]()
-    return {input.unsafe_ptr(), new_shape, new_strides}
+    return {input._ptr, new_shape, new_strides}
 
 
 @register_internal("mogg.tensor.create.reshape")
@@ -2629,15 +2869,10 @@ def mogg_tensor_create_reshape[
     comptime assert out_rank == len(
         output_static_shape
     ), "out_rank must match output_static_shape's own rank"
-    var view = reshape(input.to_tile_tensor[DType.int64](), output_shape)
     return {
-        view._storage,
-        rebind[IndexList[out_rank]](
-            coord_to_index_list(view.layout.shape_coord())
-        ),
-        rebind[IndexList[out_rank]](
-            coord_to_index_list(view.layout.stride_coord())
-        ),
+        input._ptr,
+        output_shape,
+        output_shape.get_row_major_strides(),
     }
 
 
@@ -2726,7 +2961,7 @@ def mogg_tensor_create_transpose[
             comptime src = Int(static_permutations[i])
             new_shape[i] = input.dim_size[src]()
             new_strides[i] = input.stride_length[src]()
-    return {input.unsafe_ptr(), new_shape, new_strides}
+    return {input._ptr, new_shape, new_strides}
 
 
 @fieldwise_init

@@ -1,0 +1,384 @@
+{
+  "device": {
+    "serial": "DEVICE_SERIAL",
+    "model": "SM-S942U1",
+    "soc": "SM8850",
+    "gpu": "Adreno 840",
+    "hexagon": "v81",
+    "vtcm_bytes": 8388608
+  },
+  "date": "2026-10-25",
+  "selected": {
+    "default": "GPU",
+    "opt_in": "Packed-W2 HVX vocabulary GEMV",
+    "vtcm_prototypes_selected": false
+  },
+  "reports": {
+    "final-comparison.json": "final-comparison.json",
+    "row-sweep.json": "row-sweep.json",
+    "normalization-selection.json": "normalization-selection.json",
+    "final-profile-summary.json": "final-profile-summary.json",
+    "vtcm-comparison.json": "vtcm-comparison.json",
+    "power-control.json": "power-control.json",
+    "validation.json": "validation.json",
+    "long-validation.json": "long-validation.json",
+    "validation-12288.json": "validation-12288.json",
+    "long-validation-12288.json": "long-validation-12288.json"
+  },
+  "microbench": [
+    {
+      "log": "logs/microbench/bench-ieee-1792967571038976000.log",
+      "passed": false,
+      "milliseconds": [
+        4.243,
+        3.489,
+        3.766
+      ],
+      "max_abs_error": 1.487741
+    },
+    {
+      "log": "logs/microbench/bench-ieee-1792967610574463000.log",
+      "passed": false,
+      "milliseconds": [
+        3.967,
+        3.362,
+        3.599
+      ],
+      "max_abs_error": 1.487741
+    },
+    {
+      "log": "logs/microbench/bench-ieee-1792967619398807000.log",
+      "passed": false,
+      "milliseconds": [
+        4.005,
+        3.27,
+        3.482
+      ],
+      "max_abs_error": 1.487741
+    },
+    {
+      "log": "logs/microbench/bench-lut-1792967846673333000.log",
+      "passed": true,
+      "milliseconds": [
+        2.155,
+        2.659,
+        1.393
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut-1792967849801595000.log",
+      "passed": true,
+      "milliseconds": [
+        3.294,
+        3.205,
+        3.172
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut-prefetch-1792968007970527000.log",
+      "passed": true,
+      "milliseconds": [
+        2.503,
+        1.108,
+        1.155
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut-prefetch-1792968023920788000.log",
+      "passed": true,
+      "milliseconds": [
+        3.266,
+        3.333,
+        3.329
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut-w2-1792968023487397000.log",
+      "passed": true,
+      "milliseconds": [
+        3.784,
+        2.512,
+        3.902
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut-w4-1792968007516557000.log",
+      "passed": true,
+      "milliseconds": [
+        2.919,
+        1.466,
+        2.866
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut256-1792968397899308000.log",
+      "passed": true,
+      "milliseconds": [
+        3.099,
+        2.984,
+        2.962
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-lut256-1792968398369494000.log",
+      "passed": true,
+      "milliseconds": [
+        4.092,
+        4.193,
+        4.248
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-qfloat-1792967667089733000.log",
+      "passed": true,
+      "milliseconds": [
+        3.87,
+        3.372,
+        3.781
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-qfloat-1792967748095841000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-qfloat-1792967753099799000.log",
+      "passed": true,
+      "milliseconds": [
+        4.295,
+        3.778,
+        3.35
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-qfloat-1792967831793946000.log",
+      "passed": true,
+      "milliseconds": [
+        2.603,
+        2.426,
+        2.39
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-source-hmx-1792970419467929000.log",
+      "passed": true,
+      "milliseconds": [
+        1.058,
+        1.208,
+        1.143
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-source-hvx-1792968562698362000.log",
+      "passed": true,
+      "milliseconds": [
+        1.987,
+        0.579,
+        0.565
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969206856878000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969256147774000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969322273958000.log",
+      "passed": false,
+      "milliseconds": [
+        1.575,
+        1.746,
+        1.546
+      ],
+      "max_abs_error": 2.3733749
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969349328901000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969402456579000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969426749083000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969461953600000.log",
+      "passed": true,
+      "milliseconds": [
+        0.503,
+        0.218,
+        0.191
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969477313515000.log",
+      "passed": true,
+      "milliseconds": [
+        0.41,
+        0.214,
+        0.222
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969477749064000.log",
+      "passed": true,
+      "milliseconds": [
+        0.531,
+        0.318,
+        0.23
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969552178028000.log",
+      "passed": true,
+      "milliseconds": [
+        0.829,
+        0.567,
+        0.555
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969586852700000.log",
+      "passed": true,
+      "milliseconds": [
+        0.341,
+        0.197,
+        0.187
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969669651011000.log",
+      "passed": false,
+      "milliseconds": null,
+      "max_abs_error": null
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969742716268000.log",
+      "passed": true,
+      "milliseconds": [
+        54.954,
+        55.312,
+        55.524
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969815642216000.log",
+      "passed": true,
+      "milliseconds": [
+        54.891,
+        55.535,
+        55.519
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969889865396000.log",
+      "passed": true,
+      "milliseconds": [
+        2.312,
+        3.247,
+        3.17
+      ],
+      "max_abs_error": 0.0
+    },
+    {
+      "log": "logs/microbench/bench-vtcm-1792969940095932000.log",
+      "passed": true,
+      "milliseconds": [
+        2.106,
+        2.222,
+        0.989
+      ],
+      "max_abs_error": 0.0
+    }
+  ],
+  "source_sha256": {
+    "Target/lib/Hexagon/Projection.cpp": "b84e88e0232e04cfc043c833f5060e1e183656ec60d5178073278fb26e1878de",
+    "Target/lib/Hexagon/build.py": "793651be49812f2ef24742e225dea4f21b9d5e01b92d20f78b16e6c3f8792016",
+    "Target/lib/Hexagon/projection_bench.cpp": "ee9d8eaa1e01a61e54b26ebecafe5781d4b89e002c101410d33a3f6e68519cda",
+    "Target/lib/Hexagon/hvx_projection.mojo": "b5e567a820a4e615f5f96843d0a76a24981b32a1e29ec54a392406b94d4f0b80",
+    "Target/lib/Hexagon/hvx_projection_skel.c": "79c9ccbad06c594a454223937dec6a7357b02c1bd0c2a6e4017bcab227d023d1",
+    "max/examples/android-llm/benchmark.py": "c947fe5c8b640406a27eeef0d2977755b55b5ad724b1903d51b15452412dcd8f",
+    "max/examples/android-llm/engine.cpp": "196677619c6ca611b3d7b2ef2a2af6875df8ee8c08ea100b04134754734faae8",
+    "max/examples/android-llm/model.mojo": "255d71dc12abe17bba5df4199782e26f23c49cd5e2ef3d13c4fc38b1c1082a9b",
+    "max/examples/android-llm/runtime/model_runtime.mojo": "3175b71d9a3a40a4351229582ea35042a9c52deeb0de937bee085e883d11ccbb",
+    "max/examples/android-llm/bonsai/model.mojo": "13d48fa6c10749baadeb76cd65596200df1ab6f2ed5dc4e1f2ddc75b313eaae5",
+    "max/examples/android-llm/bonsai/kernels.mojo": "37f8bb7115c7c009cc5546f47162ebe387120bb5a51ab998a424a081b8fd1742"
+  },
+  "artifact_sha256": {
+    "hvx-final/model.o": "1c01e5d1fa81ba31bf58754be453f66190bcb5c3df7fe69d20c9d5685485d438",
+    "hvx-final/runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+    "hvx-final-max/bonsai.mef": "456de58fd9d93fdea9b11878f6e606aaf38d9dd9b789e730869645d9b07fcbdd",
+    "hvx-final-max/graph_runner": "594f5fa6a0f6ceac72806f1e84b776ba16f8163ba11672fc7b8f5d181e89d37a",
+    "hvx-work/source-hvx/libmodular_hexagon.so": "091a5904449e906060bf10885cb2e56603555ff9129ec20a09ed99f18f615b81",
+    "hvx-work/source-hvx/HexagonProjection.so": "52cfb7731ceda0e94ad307a4c36b4faddaa251d1fa1ff176c67f41fabd12b4ab",
+    "hvx-work/vtcm/libmodular_hexagon.so": "c8b899a7ea1c8c2debeaeb963930ccc8fde0abcdc841ec3c97dfa05a7367caf3"
+  },
+  "prototype_source_sha256": {
+    "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-work/vtcm/hvx.mojo": "2bbd753f3cfc84b60a843dfa8eb64d34c502e5458480d9356fd8b5a2db9cb3a9",
+    "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-work/vtcm/hvx_skel.c": "b93483da60def7fb5e5e33a270ff8570123ee390a6ec5d658b0b870c379bd079",
+    "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-work/vtcm/persistent_skel.c": "f8c5a2c59768ef485941571f495dfce17860093a7e81403670290c3c295009ee",
+    "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-work/vtcm/serial_stage_skel.c": "cefec39171b6f31412bb9f9ae3f9a88dbedc11859a79ecaceba5d1f029235fe5",
+    "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-work/vtcm/idle_bench.cpp": "4537ffebe5c81e6a6ca7a4aec48e88081ce8c78fdf80d770cbc3278a142c36ed"
+  },
+  "cache": "/Users/REDACTED/Library/Caches/modular-android-integration",
+  "validation": {
+    "expected_ids_per_fixture": 96,
+    "full_logits": true,
+    "direct_prompts": 2,
+    "max_prompts": 1,
+    "smollm2_runtime_compile": true
+  },
+  "limits": [
+    "Short repeated runs, not a thermal steady-state ceiling.",
+    "Do not combine full-logit-check timings with generation-only measurements.",
+    "Phone rate drift exceeds the small hybrid speedup in some batches.",
+    "GPU event times exclude DSP execution and host/RPC overhead. Repeated argument signatures are elided in copied profile logs; each header preserves original cache path and SHA256.",
+    "VTCM retained contents failed idle integrity checks; refresh is required by the tested prototype.",
+    "No app update, commit, global clock or thermal-policy changes."
+  ],
+  "final_device_state": {
+    "owned_benchmark_processes_running": false,
+    "kgsl_perfcounter": 0,
+    "scratch_directory_removed": "/data/local/tmp/modular-hvx-20261025",
+    "sdk_cache_retained": true,
+    "app_repackaged": false
+  }
+}

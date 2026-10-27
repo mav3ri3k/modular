@@ -1,0 +1,68 @@
+{
+  "2B": {
+    "n_prompt": 0,
+    "n_gen": 128,
+    "n_depth": 0,
+    "n_batch": 1,
+    "n_ubatch": 1,
+    "capacity": 128,
+    "seed": 1,
+    "avg_ts": 8.672172503,
+    "stddev_ts": 1.694723062,
+    "logit_readback": true,
+    "samples_ns": [
+      19056128693,
+      13363077462,
+      13167523386
+    ],
+    "sample_rates": [
+      6.716999137763957,
+      9.578631895533645,
+      9.720886475591334
+    ]
+  },
+  "4B": {
+    "n_prompt": 0,
+    "n_gen": 128,
+    "n_depth": 0,
+    "n_batch": 1,
+    "n_ubatch": 1,
+    "capacity": 512,
+    "seed": 1,
+    "avg_ts": 6.884933384,
+    "stddev_ts": 0.038566696,
+    "logit_readback": true,
+    "samples_ns": [
+      18560259463,
+      18506668232,
+      18708201847
+    ],
+    "sample_rates": [
+      6.8964553138477855,
+      6.916425927962245,
+      6.841918910583368
+    ]
+  },
+  "9B": {
+    "n_prompt": 0,
+    "n_gen": 128,
+    "n_depth": 0,
+    "n_batch": 1,
+    "n_ubatch": 1,
+    "capacity": 512,
+    "seed": 1,
+    "avg_ts": 4.983433271,
+    "stddev_ts": 0.55247538,
+    "logit_readback": true,
+    "samples_ns": [
+      24922480386,
+      29285740233,
+      23513649924
+    ],
+    "sample_rates": [
+      5.135925398175976,
+      4.370727834830891,
+      5.443646580335981
+    ]
+  }
+}

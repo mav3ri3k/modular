@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.22)
+project(ModularOpenCLPlugin LANGUAGES CXX)
+# HAL plugins intentionally support independent vendor builds; see Target/README.md.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_path(OPENCL_INCLUDE_DIR CL/cl.h REQUIRED)
+get_filename_component(MODULAR_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+set(SDK_INCLUDE "${MODULAR_ROOT}/SDK/include")
+file(GLOB HAL_HEADERS CONFIGURE_DEPENDS "${SDK_INCLUDE}/HAL/*.h")
+set(STUBS "${CMAKE_CURRENT_BINARY_DIR}/Unsupported.cpp")
+add_custom_command(OUTPUT "${STUBS}"
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/generate_unsupported.py"
+    "${SDK_INCLUDE}" "${CMAKE_CURRENT_SOURCE_DIR}/OpenCLPlugin.cpp" "${STUBS}"
+  DEPENDS generate_unsupported.py OpenCLPlugin.cpp ${HAL_HEADERS}
+  VERBATIM)
+add_library(OpenCLPlugin SHARED OpenCLPlugin.cpp "${STUBS}")
+target_include_directories(OpenCLPlugin PRIVATE "${SDK_INCLUDE}" "${OPENCL_INCLUDE_DIR}" "${MODULAR_ROOT}/Target/include")
+target_compile_features(OpenCLPlugin PRIVATE cxx_std_17)
+target_compile_options(OpenCLPlugin PRIVATE -Wall -Wextra -Werror -Wno-unused-parameter)
+target_link_libraries(OpenCLPlugin PRIVATE ${CMAKE_DL_LIBS})
+set_target_properties(OpenCLPlugin PROPERTIES PREFIX "" CXX_VISIBILITY_PRESET hidden)
+add_executable(opencl_hal_smoke "${MODULAR_ROOT}/Target/test/OpenCLPluginSmoke.cpp")
+target_include_directories(opencl_hal_smoke PRIVATE "${SDK_INCLUDE}")
+target_compile_features(opencl_hal_smoke PRIVATE cxx_std_17)
+target_compile_options(opencl_hal_smoke PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(opencl_hal_smoke PRIVATE ${CMAKE_DL_LIBS})
+add_executable(opencl_buffer_views "${MODULAR_ROOT}/Target/test/OpenCLBufferViews.cpp")
+target_include_directories(opencl_buffer_views PRIVATE "${SDK_INCLUDE}" "${MODULAR_ROOT}/Target/include")
+target_compile_features(opencl_buffer_views PRIVATE cxx_std_17)
+target_compile_options(opencl_buffer_views PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(opencl_buffer_views PRIVATE ${CMAKE_DL_LIBS})

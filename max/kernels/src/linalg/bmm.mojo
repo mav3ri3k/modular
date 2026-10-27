@@ -48,6 +48,8 @@ from layout import (
     Idx,
     TensorLayout,
     TileTensor,
+    TensorEngine,
+    DefaultEngine,
     coord_to_index_list,
     row_major,
 )
@@ -158,6 +160,7 @@ def _reshape_tile_tensor_with_batch_to_3d(
         ],
         tensor.dtype,
         origin=tensor.origin,
+        Engine=tensor.Engine,
         address_space=tensor.address_space,
         linear_idx_type=tensor.linear_idx_type,
     ],
@@ -209,7 +212,7 @@ def _reshape_tile_tensor_with_batch_to_3d(
                 )
 
     return type_of(result)(
-        tensor.ptr,
+        tensor._storage,
         TileLayout[out_shape_types, out_stride_types](
             Coord[*out_shape_types](shape^), Coord[*out_stride_types](strides^)
         ),
@@ -493,10 +496,19 @@ def naive_batched_matmul_kernel[
     ComputeFnType: ElementwiseComputeFn = type_of(no_compute_fn),
     has_epilogue_fn: Bool = False,
     has_compute_fn: Bool = False,
+    CEngine: TensorEngine = DefaultEngine[],
+    AEngine: TensorEngine = DefaultEngine[],
+    BEngine: TensorEngine = DefaultEngine[],
 ](
-    c_tensor: TileTensor[c_type, CTensorType, MutAnyOrigin],  # m
-    a_tensor: TileTensor[a_type, ATensorType, ImmutAnyOrigin],  # m * k
-    b_tensor: TileTensor[b_type, BTensorType, ImmutAnyOrigin],  # 1 * k
+    c_tensor: TileTensor[
+        c_type, CTensorType, MutAnyOrigin, Engine=CEngine
+    ],  # m
+    a_tensor: TileTensor[
+        a_type, ATensorType, ImmutAnyOrigin, Engine=AEngine
+    ],  # m * k
+    b_tensor: TileTensor[
+        b_type, BTensorType, ImmutAnyOrigin, Engine=BEngine
+    ],  # 1 * k
     c_buff_nd_shape: IndexList[rank],
     epilogue_fn: EpilogueFnType,
     compute_fn: ComputeFnType,
@@ -521,6 +533,9 @@ def naive_batched_matmul_kernel[
             `c_tensor` (defaults to False).
         has_compute_fn: Whether `compute_fn` maps each value before it is
             stored into `c_tensor` (defaults to False).
+        CEngine: Storage engine of the output tensor.
+        AEngine: Storage engine of the LHS tensor.
+        BEngine: Storage engine of the RHS tensor.
 
     Args:
         c_tensor: Rank-3 output tensor of shape `(batch, m, n)`.
@@ -559,8 +574,13 @@ def naive_batched_matmul_kernel[
 
     comptime acc_type = Scalar[accum_type]
     for ki in range(k):
-        var b_val = b_tensor[z, x, ki] if transpose_b else b_tensor[z, ki, x]
-        val += a_tensor[z, y, ki].cast[accum_type]() * b_val.cast[accum_type]()
+        var b_val = b_tensor.load[width=1](
+            Coord(z, x, ki)
+        ) if transpose_b else b_tensor.load[width=1](Coord(z, ki, x))
+        val += (
+            a_tensor.load[width=1](Coord(z, y, ki)).cast[accum_type]()
+            * b_val.cast[accum_type]()
+        )
 
     comptime assert not (
         has_epilogue_fn and has_compute_fn
@@ -605,10 +625,19 @@ def batched_matmul_kernel_gpu[
     ComputeFnType: ElementwiseComputeFn = type_of(no_compute_fn),
     has_epilogue_fn: Bool = False,
     has_compute_fn: Bool = False,
+    CEngine: TensorEngine = DefaultEngine[],
+    AEngine: TensorEngine = DefaultEngine[],
+    BEngine: TensorEngine = DefaultEngine[],
 ](
-    c_tensor: TileTensor[c_type, CTensorType, MutAnyOrigin],  # m
-    a_tensor: TileTensor[a_type, ATensorType, ImmutAnyOrigin],  # m * k
-    b_tensor: TileTensor[b_type, BTensorType, ImmutAnyOrigin],  # 1 * k
+    c_tensor: TileTensor[
+        c_type, CTensorType, MutAnyOrigin, Engine=CEngine
+    ],  # m
+    a_tensor: TileTensor[
+        a_type, ATensorType, ImmutAnyOrigin, Engine=AEngine
+    ],  # m * k
+    b_tensor: TileTensor[
+        b_type, BTensorType, ImmutAnyOrigin, Engine=BEngine
+    ],  # 1 * k
     c_buff_nd_shape: IndexList[rank],
     epilogue_fn: EpilogueFnType,
     compute_fn: ComputeFnType,
@@ -634,6 +663,9 @@ def batched_matmul_kernel_gpu[
             `c_tensor` (defaults to False).
         has_compute_fn: Whether `compute_fn` maps each value before it is
             stored into `c_tensor` (defaults to False).
+        CEngine: Storage engine of the output tensor.
+        AEngine: Storage engine of the LHS tensor.
+        BEngine: Storage engine of the RHS tensor.
 
     Args:
         c_tensor: Rank-3 output tensor of shape `(batch, m, n)`.
@@ -1055,6 +1087,9 @@ def _batched_matmul_gpu_impl[
             ComputeFnType=ComputeFnType,
             has_epilogue_fn=has_epilogue_fn,
             has_compute_fn=has_compute_fn,
+            CEngine=c_tensor_reshaped.Engine,
+            AEngine=a_tensor_reshaped.Engine,
+            BEngine=b_tensor_reshaped.Engine,
         ]
 
         var grid_dim = kernels.ampere_128x128_4.grid_dim(m, n)
@@ -1099,6 +1134,9 @@ def _batched_matmul_gpu_impl[
                 ComputeFnType=ComputeFnType,
                 has_epilogue_fn=has_epilogue_fn,
                 has_compute_fn=has_compute_fn,
+                CEngine=c_tensor_reshaped.Engine,
+                AEngine=a_tensor_reshaped.Engine,
+                BEngine=b_tensor_reshaped.Engine,
             ]
 
             ctx.enqueue_function[batched_matmul_type](
@@ -1139,6 +1177,9 @@ def _batched_matmul_gpu_impl[
             ComputeFnType=ComputeFnType,
             has_epilogue_fn=has_epilogue_fn,
             has_compute_fn=has_compute_fn,
+            CEngine=c_tensor_reshaped.Engine,
+            AEngine=a_tensor_reshaped.Engine,
+            BEngine=b_tensor_reshaped.Engine,
         ]
         ctx.enqueue_function[bmm](
             c_tensor_reshaped,

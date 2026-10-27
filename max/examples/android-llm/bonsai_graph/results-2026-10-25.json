@@ -1,0 +1,198 @@
+{
+  "date": "2026-10-25",
+  "device": "DEVICE_SERIAL / Galaxy S26 / Adreno 840",
+  "checkpoint_sha256": "da5095b9f34d7f0d5094090afeeadf124eef821c75136dc28957ce586ae7ac0c",
+  "prompt_tokens": 24,
+  "output_tokens": 24,
+  "protocol": "one warmup each, three alternating-order repeats; fixed length beyond EOS; same weights and greedy selection; no clock/thermal overrides",
+  "validation": {
+    "median_tokens_per_second": {
+      "mojo": 47.76,
+      "max": 42.9
+    },
+    "runs": [
+      {
+        "variant": "mojo",
+        "warmup": true,
+        "forwards": 23,
+        "seconds": 0.492,
+        "tokens_per_second": 46.78,
+        "max_abs_error": 0.0165186,
+        "relative_l2": 0.000786457
+      },
+      {
+        "variant": "max",
+        "warmup": true,
+        "forwards": 23,
+        "seconds": 0.546,
+        "tokens_per_second": 42.15,
+        "max_abs_error": 0.0197719,
+        "relative_l2": 0.000812919
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.483,
+        "tokens_per_second": 47.61,
+        "max_abs_error": 0.0165186,
+        "relative_l2": 0.000786457
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.536,
+        "tokens_per_second": 42.9,
+        "max_abs_error": 0.0197719,
+        "relative_l2": 0.000812919
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.554,
+        "tokens_per_second": 41.51,
+        "max_abs_error": 0.0197719,
+        "relative_l2": 0.000812919
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.482,
+        "tokens_per_second": 47.76,
+        "max_abs_error": 0.0165186,
+        "relative_l2": 0.000786457
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.48,
+        "tokens_per_second": 47.95,
+        "max_abs_error": 0.0165186,
+        "relative_l2": 0.000786457
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.526,
+        "tokens_per_second": 43.69,
+        "max_abs_error": 0.0197719,
+        "relative_l2": 0.000812919
+      }
+    ]
+  },
+  "generation_only": {
+    "all_token_ids_checked": true,
+    "median_tokens_per_second": {
+      "mojo": 53.74,
+      "max": 49.9
+    },
+    "runs": [
+      {
+        "variant": "mojo",
+        "warmup": true,
+        "forwards": 23,
+        "seconds": 0.416,
+        "tokens_per_second": 55.31,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": true,
+        "forwards": 23,
+        "seconds": 0.462,
+        "tokens_per_second": 49.8,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.43,
+        "tokens_per_second": 53.54,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.456,
+        "tokens_per_second": 50.47,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.466,
+        "tokens_per_second": 49.39,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.428,
+        "tokens_per_second": 53.74,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "mojo",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.424,
+        "tokens_per_second": 54.28,
+        "max_abs_error": null,
+        "relative_l2": null
+      },
+      {
+        "variant": "max",
+        "warmup": false,
+        "forwards": 23,
+        "seconds": 0.461,
+        "tokens_per_second": 49.9,
+        "max_abs_error": null,
+        "relative_l2": null
+      }
+    ]
+  },
+  "paired_gpu_profile": {
+    "mojo": {
+      "decode_samples": 23,
+      "mean_dispatches": 721.0,
+      "mean_span_ms": 17.346217391304346,
+      "mean_kernel_ms": 16.445695652173914
+    },
+    "max": {
+      "decode_samples": 23,
+      "mean_dispatches": 599.0,
+      "mean_span_ms": 19.893434782608697,
+      "mean_kernel_ms": 16.499
+    }
+  },
+  "artifact_sha256": {
+    "max/graph_runner": "df806e7a412e4fdafe0e04af0ba5f67747af6ed2835ba3fe24e81c369cc8e299",
+    "max/bonsai.mef": "eb149ec859e547fe2f78f0e43c823ec4754d7cd15a060cd39e80f6a6977c584c",
+    "max/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+    "max/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+    "max/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+    "max/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+    "max/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+    "max/libHALDeviceContextMojo.so": "8301697ac9c866216fbe6fad5e4d0d198393b7667f0dbc2692a79662eb7d9570",
+    "max/libAsyncRTMojoBindings.so": "d172b1de5928ec17e0d700f90a160058c35d82ed085e0fed3f1f14196b461f09",
+    "max/libMGPRT.so": "d102c459eb300cbc3f269837f91e59f19dbcdc6f8ab01a01053c338d39f36447",
+    "max/libmax.so": "962433cddb3c4911ff3f6b0d769ab93ed030ef29bca360ea48b881824a042f7d",
+    "max/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+    "mojo/runner": "bc2a710602b745cc29d16fc0a5d8c68e8d24a84ff5c773efc43016f82d5d9183"
+  }
+}

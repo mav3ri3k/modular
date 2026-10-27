@@ -15,6 +15,7 @@
 #include "CABIAAPCS.h"
 #include "CABISystemV.h"
 #include "LLVMLoweringUtils.h"
+#include "Target/TargetLowering.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMTypes.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -205,6 +206,10 @@ SignatureClassification::getResultAttrs(mlir::MLIRContext *ctx) const {
 std::unique_ptr<CABIInfo>
 M::KGEN::createCABIInfo(const llvm::Triple &triple, mlir::MLIRContext *ctx,
                         const LLVMDataLayout &dataLayout) {
+
+  auto lowering = TargetLoweringRegistry::get().lookup(triple);
+  if (!lowering.isError() && !(*lowering)->usesHostCABI())
+    return std::make_unique<DefaultCABIInfo>(ctx, dataLayout);
 
   // Check if C ABI functionality is enabled
   if (!CabiUtils::isCABIEnabled()) {

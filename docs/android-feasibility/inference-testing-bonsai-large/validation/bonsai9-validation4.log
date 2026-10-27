@@ -1,0 +1,10 @@
+Device allocations: 2382.42 MiB; context capacity: 512
+GPU: QUALCOMM Adreno(TM) 840
+Prefill: 19 tokens, 1.123 s, 16.92 tok/s
+TOKEN 0 760
+TOKEN 1 6511
+TOKEN 2 314
+TOKEN 3 9338
+Decode: 3 forwards, 0.148 s, 20.29 tok/s (includes token selection readback, full-logit readback and validation)
+Logits: max_abs_error=0.0108857 relative_l2=0.000439762
+PASS: all generated tokens and logits match reference

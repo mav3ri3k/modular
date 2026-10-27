@@ -8,7 +8,7 @@
 // the contrast: same lowering, `mut = false`.
 
 // CHECK-LABEL: mo.graph @sliceStrideOverBuffer
-// CHECK:       mogg.tensor.create({{%[^ ]+}}, {{%[^ ]+}})
+// CHECK:       mogg.tensor.create({{%[^ ]+}} : !mogg.storage, {{%[^ ]+}})
 // CHECK-SAME:    : !mogg.buffer
 // CHECK:       mogg.tensor.create.slice
 // CHECK-SAME:    mut = true

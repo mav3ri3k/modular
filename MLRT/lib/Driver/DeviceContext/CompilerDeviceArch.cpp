@@ -21,14 +21,15 @@
 // would form a build-time bootstrap cycle; the legacy C++ DeviceContext runtime
 // is not linked either. This TU provides just that one static by `dlopen`ing
 // the driver plugin named in `MODULAR_DRIVER_PLUGINS` and querying device 0's
-// compute capability over the `M_driver_*` C ABI directly. It returns the
-// `vendor:sm_<cc>` form `ObjectCompiler` expects (an arch starting with `sm_`).
+// API and architecture over the `M_driver_*` C ABI directly. It returns the
+// `vendor:arch` form expected by the target registry.
 //===----------------------------------------------------------------------===//
 
 #include "MLRT/Driver/DeviceContext/HALDeviceContext.h"
 
 #include "HAL/M_driver_api.h"
 #include "MLRT/Driver/DeviceContext/DeviceAPINames.h"
+#include "MLRT/Driver/DeviceContext/HALDeviceArch.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Process.h"
@@ -43,14 +44,9 @@ namespace Driver {
 
 namespace {
 
-// CUDA `CU_DEVICE_ATTRIBUTE_*` codes, mirroring `Device::Attribute` in
-// DeviceContext.h and the Mojo `DeviceAttribute`.
-constexpr int32_t kComputeCapabilityMajor = 75;
-constexpr int32_t kComputeCapabilityMinor = 76;
-
 // `dlopen`s the plugin from `MODULAR_DRIVER_PLUGINS`
-// ("Name@/path/to/plugin.so"), queries device 0's compute capability, and
-// returns "nvidia:sm_<cc>" (with the `a` variant for cc >= 90). Returns "" when
+// ("Name@/path/to/plugin.so") and queries device 0's API and architecture.
+// Returns "" when
 // no plugin/device is available (e.g. a GPU-less build host); callers then fall
 // back to an explicit target arch, exactly as with the previous legacy
 // DeviceContext implementation.
@@ -78,7 +74,11 @@ std::string queryAcceleratorArch() {
       ::dlsym(lib, "M_driver_device_get"));
   auto deviceAttribute = reinterpret_cast<M_driver_device_attribute_func_ptr_t>(
       ::dlsym(lib, "M_driver_device_attribute"));
-  if (!create || !destroy || !deviceGet || !deviceAttribute) {
+  auto property = reinterpret_cast<M_driver_property_func_ptr_t>(
+      ::dlsym(lib, "M_driver_property"));
+  auto deviceProperty = reinterpret_cast<M_driver_device_property_func_ptr_t>(
+      ::dlsym(lib, "M_driver_device_property"));
+  if (!create || !destroy || !deviceGet) {
     ::dlclose(lib);
     return {};
   }
@@ -94,21 +94,10 @@ std::string queryAcceleratorArch() {
 
   std::string arch;
   M_driver_device_t device = nullptr;
-  int32_t major = 0;
-  int32_t minor = 0;
   if (deviceGet(driver, /*device_id=*/0, &device) == M_DRIVER_STATUS_SUCCESS &&
-      device &&
-      deviceAttribute(device, kComputeCapabilityMajor, &major) ==
-          M_DRIVER_STATUS_SUCCESS &&
-      deviceAttribute(device, kComputeCapabilityMinor, &minor) ==
-          M_DRIVER_STATUS_SUCCESS) {
-    // The HAL backend is CUDA-only today, so the arch is the CUDA `sm_<cc>`
-    // form; cc >= 90 uses the "a" variant. Mirrors the Mojo HAL `arch_name`.
-    int cc = major * 10 + minor;
-    arch = "nvidia:sm_" + std::to_string(cc);
-    if (cc >= 90)
-      arch += "a";
-  }
+      device)
+    arch = detail::queryHALDeviceArch(driver, device, property, deviceProperty,
+                                      deviceAttribute);
 
   destroy(driver);
   ::dlclose(lib);

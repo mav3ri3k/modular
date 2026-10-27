@@ -3,6 +3,12 @@ load("//bazel:api.bzl", "modular_cc_library")
 package(default_visibility = ["//visibility:public"])
 
 exports_files([
+    "xz-android-gettext.patch",
+    "rules_cc-android-soname.patch",
+    "rules_mojo-optional-python.patch",
+    "curl-pthread.patch",
+    "tcmalloc-android-address-bits.patch",
+    "tcmalloc-android-no-rseq.patch",
     "torch-cuda-deps.patch",
     "hip_version.h.in",
 ])

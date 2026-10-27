@@ -1,0 +1,2 @@
+Mojo Hexagon Bonsai projection 12288x2048: ms=0.531,0.318,0.230 max_abs_error=0
+PASS: real packed Bonsai weights executed on Hexagon

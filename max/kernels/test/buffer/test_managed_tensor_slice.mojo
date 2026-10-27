@@ -19,16 +19,69 @@ from extensibility.managed_tensor_slice import (
     OutputFusion,
     StaticTensorSpec,
     _IndexListToTileLayout,
+    _FusionPack,
 )
+from std.builtin.device_passable import DevicePassable, DeviceTypeEncoder
 from layout import coord_to_index_list
 from std.memory import AddressSpace
 from std.sys import align_of
 from max.gpu.host import DeviceContext
+from max.gpu.host._legacy.device_context import DefaultDeviceTypeEncoder
 from extensibility import foreach
 from layout import Coord
-from std.testing import assert_equal, TestSuite
+from std.testing import assert_equal, assert_false, assert_true, TestSuite
 
 from std.utils import IndexList
+
+
+@fieldwise_init
+struct _PackScaledWord(
+    DevicePassable, ImplicitlyCopyable, TrivialRegisterPassable
+):
+    comptime device_type = Self
+    var value: UInt32
+
+    def _to_device_type(
+        self, mut encoder: Some[DeviceTypeEncoder], target: MutOpaquePointer[_]
+    ):
+        encoder.encode(self.value * 2, target)
+
+    @staticmethod
+    def get_type_name() -> String:
+        return "PackScaledWord"
+
+
+def test_fusion_pack_encodes_values_with_target_alignment() raises:
+    # Different field alignments exercise padding in the opaque value pack.
+    # The scaled field makes an incorrect bit-copy observably different.
+    var pack = _FusionPack(
+        UInt8(3), _PackScaledWord(7), UInt16(99), UInt64(0x100000003)
+    )
+    var storage = Array[type_of(pack), 1](uninitialized=True)
+    var encoder = DefaultDeviceTypeEncoder()
+    pack._to_device_type(
+        encoder, storage.unsafe_ptr().unsafe_bitcast[NoneType]()
+    )
+    var encoded = storage[0]
+    assert_equal(encoded[0], UInt8(3))
+    assert_equal(encoded[1].value, UInt32(14))
+    assert_equal(encoded[2], UInt16(99))
+    assert_equal(encoded[3], UInt64(0x100000003))
+    assert_equal(pack[1].value, UInt32(7))
+
+
+def test_opaque_storage_alignment_does_not_request_an_address() raises:
+    comptime spec = get_row_major_tensor_spec_static[.float32, 1, 4]()
+    # This is a metadata-only view: no device or memory access is required to
+    # establish that its address alignment is unknown on the host.
+    var tensor = ManagedTensorSlice[io_spec=IOSpec.Input, static_spec=spec](
+        opaque_view=(UInt64(7), UInt64(0), UInt64(16)),
+        shape=IndexList[1](4),
+    )
+    var tile = tensor.to_tile_tensor()
+    assert_true(tile.is_storage_aligned[1]())
+    assert_false(tile.is_storage_aligned[4]())
+    assert_false(tile.is_storage_aligned[16]())
 
 
 def test_basic_construction() raises:

@@ -1,0 +1,16 @@
+{
+  "4b": {
+    "relative_l2": 9.974423277605764e-05,
+    "max_abs": 0.0036377906799316406,
+    "argmax_matches": 32,
+    "steps": 32,
+    "finite": true
+  },
+  "9b": {
+    "relative_l2": 9.20178215057763e-05,
+    "max_abs": 0.0035190582275390625,
+    "argmax_matches": 32,
+    "steps": 32,
+    "finite": true
+  }
+}

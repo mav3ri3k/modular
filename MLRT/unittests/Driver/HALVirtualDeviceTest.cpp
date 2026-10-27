@@ -195,6 +195,7 @@ TEST_F(HALVirtualDeviceTest, AmdVendorNamesAreSynonymsForHip) {
 // the two agree, so this does -- in both backends, since each declares its own
 // copy of the constants.
 TEST(DeviceAPINamesTest, MatchesTheDeviceApiConstants) {
+  EXPECT_EQ(canonicalDeviceAPI("opencl"), Device::openclAPI);
   EXPECT_EQ(canonicalDeviceAPI("nvidia"), Device::cudaAPI);
   EXPECT_EQ(canonicalDeviceAPI("amdgpu"), Device::hipAPI);
   EXPECT_EQ(canonicalDeviceAPI("amd"), Device::hipAPI);

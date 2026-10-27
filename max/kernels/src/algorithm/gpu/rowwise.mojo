@@ -78,6 +78,20 @@ from algorithm.reduce_op import ReduceOp, Reducer
 from max.algorithm.reduction import _get_nd_indices_from_flat_index
 
 
+from layout import TileTensor, row_major
+from layout.tensor_engine import DevicePointerEngine
+
+# Scratch crosses the launch boundary as an encoded allocation view. Resolve
+# its raw pointer only in the device entry point; opaque backends have none
+# to unwrap while the host constructs the launch.
+comptime _SplitkScratch[dtype: DType] = TileTensor[
+    dtype,
+    type_of(row_major(Int(0))),
+    MutUntrackedOrigin,
+    Engine=DevicePointerEngine[],
+]
+
+
 comptime _PDL_LEVEL = PDLLevel.ON
 
 # Kernel-name suffix of the 64-bit row-decode instantiations.
@@ -1269,8 +1283,8 @@ struct _SplitkKernel[
     var body: Self.Body
     var shape: DynamicCoord[.int64, Self.rank]
     var rows: _RowIndexer[Self.rank, Self.params.axis, Self.wide]
-    var partials: MutPointer[UInt8, MutUntrackedOrigin]
-    var counters: MutPointer[Int32, MutUntrackedOrigin]
+    var partials: _SplitkScratch[.uint8]
+    var counters: _SplitkScratch[.int32]
     var blocks_per_row: Int32
 
     @inline(.always)
@@ -1278,8 +1292,8 @@ struct _SplitkKernel[
         out self,
         body: Self.Body,
         shape: DynamicCoord[.int64, Self.rank],
-        partials: MutPointer[UInt8, MutUntrackedOrigin],
-        counters: MutPointer[Int32, MutUntrackedOrigin],
+        partials: _SplitkScratch[.uint8],
+        counters: _SplitkScratch[.int32],
         blocks_per_row: Int32,
     ):
         self.body = body
@@ -1311,8 +1325,12 @@ struct _SplitkKernel[
         var row_coords = self.rows.coords(self.shape, row_idx_)
         with PDL():
             var ctx = Context[Self.params](
-                partials_base=self.partials,
-                counters_base=self.counters,
+                partials_base=self.partials.ptr.unsafe_origin_cast[
+                    MutUntrackedOrigin
+                ](),
+                counters_base=self.counters.ptr.unsafe_origin_cast[
+                    MutUntrackedOrigin
+                ](),
                 blocks_per_row=self.blocks_per_row,
                 block_in_row=Int32(block_in_row_),
                 row_idx=Int32(row_idx_),
@@ -1333,7 +1351,7 @@ struct _PointwiseSplitkKernel[
     var body: Self.Body
     var shape: DynamicCoord[.int64, Self.rank]
     var rows: _RowIndexer[Self.rank, Self.params.axis, Self.wide]
-    var partials: MutPointer[UInt8, MutUntrackedOrigin]
+    var partials: _SplitkScratch[.uint8]
     var num_splits: Int32
     var phase: Int32
 
@@ -1342,7 +1360,7 @@ struct _PointwiseSplitkKernel[
         out self,
         body: Self.Body,
         shape: DynamicCoord[.int64, Self.rank],
-        partials: MutPointer[UInt8, MutUntrackedOrigin],
+        partials: _SplitkScratch[.uint8],
         num_splits: Int32,
         phase: Int32,
     ):
@@ -1372,7 +1390,9 @@ struct _PointwiseSplitkKernel[
 
         var row_coords = self.rows.coords(self.shape, row_idx_)
         var ctx = Context[Self.params](
-            partials_base=self.partials,
+            partials_base=self.partials.ptr.unsafe_origin_cast[
+                MutUntrackedOrigin
+            ](),
             counters_base=MutPointer[Int32, MutUntrackedOrigin](
                 unsafe_from_address=1
             ),
@@ -1717,9 +1737,12 @@ def _launch[
             var partials_buf = ctx.enqueue_create_buffer[.uint8](
                 num_rows * (num_phases - 1) * num_splits * _SPLITK_STATE_BYTES
             )
-            var partials_ptr = partials_buf.unsafe_ptr().unsafe_origin_cast[
-                MutUntrackedOrigin
-            ]()
+            var partials_ptr = TileTensor(
+                partials_buf.device_ptr().unsafe_origin_cast[
+                    MutUntrackedOrigin
+                ](),
+                row_major(len(partials_buf)),
+            )
 
             def dispatch_pointwise[
                 use_simd: Bool
@@ -1893,12 +1916,18 @@ def _launch[
             var counters_buf = ctx.enqueue_create_buffer[.int32](num_rows)
             ctx.enqueue_memset(counters_buf, Int32(0))
 
-            var partials_ptr = partials_buf.unsafe_ptr().unsafe_origin_cast[
-                MutUntrackedOrigin
-            ]()
-            var counters_ptr = counters_buf.unsafe_ptr().unsafe_origin_cast[
-                MutUntrackedOrigin
-            ]()
+            var partials_ptr = TileTensor(
+                partials_buf.device_ptr().unsafe_origin_cast[
+                    MutUntrackedOrigin
+                ](),
+                row_major(len(partials_buf)),
+            )
+            var counters_ptr = TileTensor(
+                counters_buf.device_ptr().unsafe_origin_cast[
+                    MutUntrackedOrigin
+                ](),
+                row_major(len(counters_buf)),
+            )
 
             def dispatch_splitk[
                 use_simd: Bool

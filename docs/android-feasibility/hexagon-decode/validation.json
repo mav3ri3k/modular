@@ -1,0 +1,20 @@
+[
+  {
+    "label": "gpu-bonsai-reference-96-validate",
+    "tok_s": 65.81,
+    "errors": "Logits: max_abs_error=0.0222683 relative_l2=0.000634382",
+    "log": "logs/validation/gpu-bonsai-reference-96-validate.log"
+  },
+  {
+    "label": "hvx-bonsai-reference-96-validate",
+    "tok_s": 66.23,
+    "errors": "Logits: max_abs_error=0.0222683 relative_l2=0.000642699",
+    "log": "logs/validation/hvx-bonsai-reference-96-validate.log"
+  },
+  {
+    "label": "max-bonsai-reference-96-validate",
+    "tok_s": 56.01,
+    "errors": "Logits: max_abs_error=0.0206356 relative_l2=0.000648266",
+    "log": "logs/validation/max-bonsai-reference-96-validate.log"
+  }
+]

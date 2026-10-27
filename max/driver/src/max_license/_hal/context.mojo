@@ -69,6 +69,8 @@ def _bundle_file_type[target: CompilationTarget]() -> StaticString:
         return "hsaco"
     if target.is_triple["nvptx64-nvidia-cuda"]():
         return "cubin"
+    if target.is_triple["aarch64-unknown-opencl"]():
+        return "mojo-opencl-v3"
     return "object"
 
 
@@ -438,6 +440,8 @@ struct Context[device_spec: DeviceSpec](Deinitable, Movable):
         )
 
     def free_sync(self, var mem: Buffer[Self.device_spec]) raises HALError:
+        if mem._is_view:
+            return
         self._raw[].free_sync(self._handle, mem._handle)
 
     def alloc_host_pinned(

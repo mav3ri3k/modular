@@ -32,6 +32,7 @@ from max.gpu.host import DeviceContext
 from max.gpu.host.info import is_gpu
 from std.math import sqrt
 from layout import Coord, Idx, TensorLayout, TileTensor, row_major
+from layout.tensor_engine import TensorEngine
 from layout.tile_tensor import stack_allocation
 from std.utils import IndexList
 from linalg.utils import TileConsumer
@@ -50,6 +51,8 @@ struct _NaiveRMSNormTileAdapter[
     InLayout: TensorLayout,
     GammaLayout: TensorLayout,
     TileConsumerType: TileConsumer,
+    InEngine: TensorEngine,
+    GammaEngine: TensorEngine,
     //,
     tile_shape: IndexList[2],
 ](ImplicitlyCopyable, RegisterPassable, def() -> None):
@@ -75,8 +78,15 @@ struct _NaiveRMSNormTileAdapter[
         Idx[Self.tile_shape[0]], Idx[Self.tile_shape[1]]
     )
 
-    var input: TileTensor[Self.dtype, Self.InLayout, MutUntrackedOrigin]
-    var gamma: TileTensor[Self.dtype, Self.GammaLayout, MutUntrackedOrigin]
+    var input: TileTensor[
+        Self.dtype, Self.InLayout, MutUntrackedOrigin, Engine=Self.InEngine
+    ]
+    var gamma: TileTensor[
+        Self.dtype,
+        Self.GammaLayout,
+        MutUntrackedOrigin,
+        Engine=Self.GammaEngine,
+    ]
     var n_dim: Int
     var epsilon: Float32
     var weight_offset: Scalar[Self.dtype]
@@ -84,6 +94,10 @@ struct _NaiveRMSNormTileAdapter[
 
     @inline(.always)
     def __call__(self):
+        comptime assert (
+            Self.InEngine.element_size == 1
+            and Self.GammaEngine.element_size == 1
+        )
         comptime TM = Self.tile_shape[0]
         comptime TN = Self.tile_shape[1]
 
@@ -96,12 +110,12 @@ struct _NaiveRMSNormTileAdapter[
 
         var sum_sq = Float32(0)
         for k in range(self.n_dim):
-            var v = self.input.load((row, k)).cast[DType.float32]()
+            var v = self.input.load((row, k))[0].cast[DType.float32]()
             sum_sq += v * v
         var inv_rms = 1.0 / sqrt(sum_sq / Float32(self.n_dim) + self.epsilon)
 
-        var x_val = self.input.load((row, col)).cast[DType.float32]()
-        var g_val = self.gamma.load((col,)).cast[.float32]()
+        var x_val = self.input.load((row, col))[0].cast[DType.float32]()
+        var g_val = self.gamma.load((col,))[0].cast[.float32]()
         var w_off = self.weight_offset.cast[.float32]()
         var y = (x_val * inv_rms) * (g_val + w_off)
 

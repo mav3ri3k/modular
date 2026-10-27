@@ -127,6 +127,25 @@ trait DevicePointerLike:
         """Returns the owning driver buffer's handle, if available."""
         return None
 
+    def _buffer_view(
+        ref self,
+    ) -> Optional[Tuple[UInt64, UInt64, UInt64]]:
+        """Returns an opaque allocation handle, byte offset and remaining size.
+
+        Backends without raw device addresses use this launch representation.
+        The view borrows the allocation and must be consumed during enqueue.
+        """
+        return None
+
+    def _has_raw_address(ref self) -> Bool:
+        """Whether the host can query the numeric device address.
+
+        Opaque allocation views override this to prevent address-based host
+        checks. Having a numeric device address does not imply that the host
+        can dereference it.
+        """
+        return True
+
 
 def _contains_device_passable_field[T: AnyType]() -> Bool:
     """Returns whether `T` is a struct transitively containing a
@@ -142,25 +161,19 @@ def _contains_device_passable_field[T: AnyType]() -> Bool:
         `True` if a `DevicePassable` field exists anywhere in `T`'s field tree,
         `False` otherwise (including for non-struct types).
     """
-    comptime if not reflect[T].is_struct():
-        return False
-    comptime r = reflect[T]
-    # TODO: Remove this workaround once _RegTuple has been removed. Field
-    # reflection is not functional for _RegTuple, assume it is bit copyable.
-    comptime if r.base_name() == "_RegTuple":
-        return False
-    # `Bool` stores a `!kgen.scalar<bool>`, which `is_struct()` reports as a
-    # struct but `field_types()` rejects, so recursing into it fails to
-    # elaborate. It holds nothing `DevicePassable` either way.
-    comptime if r.base_name() == "Bool":
-        return False
-    comptime field_types = r.field_types()
-    comptime for i in range(r.field_count()):
-        comptime FieldType = field_types[i]
-        comptime if conforms_to(FieldType, DevicePassable):
-            return True
-        elif _contains_device_passable_field[FieldType]():
-            return True
+    # Keep reflection inside the comptime branch: a preceding return does not
+    # guard later comptime expressions from instantiation on primitive fields.
+    comptime if reflect[T].is_struct():
+        comptime r = reflect[T]
+        # Field reflection is not functional for _RegTuple (MOCO-4018).
+        comptime if r.base_name() != "_RegTuple":
+            comptime field_types = r.field_types()
+            comptime for i in range(r.field_count()):
+                comptime FieldType = field_types[i]
+                comptime if conforms_to(FieldType, DevicePassable):
+                    return True
+                elif _contains_device_passable_field[FieldType]():
+                    return True
     return False
 
 
@@ -192,10 +205,11 @@ trait DeviceTypeEncoder:
     def encode[
         ValueType: AnyType
     ](mut self, value: ValueType, dst: MutOpaquePointer[_]):
-        """Encodes `value` into `dst` by copying its bits.
+        """Encodes `value` into `dst`, preserving nested device conversions.
 
-        This is the default device encoding for a type whose
-        `DevicePassable.device_type` is `Self`.
+        Register-passable composites containing `DevicePassable` fields are
+        encoded field by field. Other values use a bit copy; a
+        `DevicePassable` value must have `device_type` equal to `Self`.
 
         Parameters:
             ValueType: The type of `value`, see constraints.
@@ -208,7 +222,8 @@ trait DeviceTypeEncoder:
 
         Constraints:
             - `ValueType` must conform to `DevicePassable` or `RegisterPassable`.
-            - `ValueType` must conform to `Copyable & Deinitable`.
+            - Bit-copied values must conform to `Copyable & Deinitable`;
+              composites with device-aware fields are encoded recursively.
             - If `ValueType` is `DevicePassable`, it must be its own leaf
               `device_type`
               (`ValueType._is_convertible_to_device_type[ValueType]()`), since a
@@ -235,6 +250,11 @@ trait DeviceTypeEncoder:
                 t"encode: ValueType '{reflect[ValueType].base_name()}' mismatch"
                 t" between host-type and device-type size"
             )
+
+        comptime if not conforms_to(ValueType, DevicePassable):
+            comptime if _contains_device_passable_field[ValueType]():
+                self.encode_fields[ValueType](value, dst)
+                return
 
         comptime if conforms_to(ValueType, Copyable):
             dst.unsafe_bitcast[ValueType]().unsafe_write(copy=value)
@@ -370,7 +390,13 @@ trait DeviceTypeEncoder:
                 .unsafe_bitcast[NoneType]()
             )
 
-            comptime if conforms_to(HostFieldType, DevicePassable):
+            comptime if HostFieldType == Int or HostFieldType == UInt:
+                # Index-valued capture fields use the declared struct layout.
+                # `encode` checks that the host/device widths match. Direct
+                # Int kernel arguments remain rejected by SIMD._to_device_type.
+                comptime assert HostFieldType == DeviceFieldType
+                self.encode(field, sub)
+            elif conforms_to(HostFieldType, DevicePassable):
                 comptime if DeviceStructType != StructType:
                     comptime assert (
                         HostFieldType._is_convertible_to_device_type[

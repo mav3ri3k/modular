@@ -364,6 +364,8 @@ def _reduce_scatter_impl[
 )
 @__name(t"reducescatter_{dtype}_{use_multimem}")
 def _reducescatter_kernel[
+    InBufsEngine: TensorEngine,
+    //,
     dtype: DType,
     in_layout: TensorLayout,
     out_layout: TensorLayout,
@@ -376,7 +378,7 @@ def _reducescatter_kernel[
     domain_id: Int = 0,
 ](
     in_bufs: Array[
-        TileTensor[dtype, in_layout, ImmutAnyOrigin],
+        TileTensor[dtype, in_layout, ImmutAnyOrigin, Engine=InBufsEngine],
         1 if use_multimem else ngpus,
     ],
     output_layout: out_layout,
@@ -423,7 +425,9 @@ def _reducescatter_kernel[
         # `ngpus` input values alone, so every destination accumulates in the
         # same canonical order. The fused `reducescatter_rmsnorm` and the
         # relay kernel below keep the same order for bit-consistency.
-        comptime TileType = TileTensor[dtype, in_layout, ImmutAnyOrigin]
+        comptime TileType = TileTensor[
+            dtype, in_layout, ImmutAnyOrigin, Engine=InBufsEngine
+        ]
         var reordered = Array[_, num_buffers](
             fill_with_unrolled=lambda [i: Int]() -> TileType: in_bufs[i]
         )
@@ -435,11 +439,16 @@ def _reducescatter_kernel[
         comptime if in_layout.rank == 1:
             # Flat: construct sliced 1D tiles from input TileTensors (any rank).
             comptime FlatLayout = type_of(row_major(n_elements))
-            comptime FlatTile = TileTensor[dtype, FlatLayout, ImmutAnyOrigin]
+            comptime FlatTile = TileTensor[
+                dtype,
+                FlatLayout,
+                ImmutAnyOrigin,
+                Engine=InBufsEngine.OffsetResultType[TypeList.of[Int]()],
+            ]
             var elem_start = u_start * config.unit_numel
             var flat_tiles = Array[_, num_buffers](
                 fill_with_unrolled=lambda [i: Int]() -> FlatTile: FlatTile(
-                    reordered[i]._storage.unsafe_offset(elem_start),
+                    reordered[i]._offset_storage(elem_start),
                     row_major(n_elements),
                 )
             )
@@ -854,6 +863,9 @@ def _reducescatter_p2p_relay[
 
 @inline(.always)
 def _reducescatter_p2p[
+    ListOfInBufsEngine: TensorEngine,
+    OutputBuffersEngine: TensorEngine,
+    //,
     dtype: DType,
     ngpus: Int,
     in_layout: TensorLayout,
@@ -868,11 +880,14 @@ def _reducescatter_p2p[
     group_size: Int = ngpus,
 ](
     list_of_in_bufs: Array[
-        TileTensor[dtype, in_layout, in_origin],
+        TileTensor[dtype, in_layout, in_origin, Engine=ListOfInBufsEngine],
         1 if use_multimem else ngpus,
     ],
     output_buffers: Array[
-        TileTensor[mut=True, dtype, out_layout, out_origin], ngpus
+        TileTensor[
+            mut=True, dtype, out_layout, out_origin, Engine=OutputBuffersEngine
+        ],
+        ngpus,
     ],
     rank_sigs: Array[MutPointer[Signal, MutAnyOrigin], ngpus],
     max_num_blocks: Int,
@@ -1117,6 +1132,8 @@ def _reducescatter_p2p[
 
 @inline(.always)
 def _reducescatter_launch[
+    ListOfInBufsEngine: TensorEngine,
+    //,
     dtype: DType,
     ngpus: Int,
     in_layout: TensorLayout,
@@ -1130,7 +1147,7 @@ def _reducescatter_launch[
     group_size: Int,
 ](
     list_of_in_bufs: Array[
-        TileTensor[dtype, in_layout, in_origin],
+        TileTensor[dtype, in_layout, in_origin, Engine=ListOfInBufsEngine],
         1 if use_multimem else ngpus,
     ],
     output_layout: out_layout,
@@ -1171,13 +1188,14 @@ def _reducescatter_launch[
     # Erase origin to ImmutAnyOrigin for the kernel, slicing down to this
     # device's GROUP.
     # TODO(KERN-2526): is this necessary?
-    comptime KernelInputType = TileTensor[dtype, in_layout, ImmutAnyOrigin]
+    comptime KernelInputType = TileTensor[
+        dtype, in_layout, ImmutAnyOrigin, Engine=ListOfInBufsEngine
+    ]
     var kernel_in_bufs = Array[_, num_buffers](
         fill_with=lambda (i: Int) -> KernelInputType: KernelInputType(
             list_of_in_bufs[0 if use_multimem else group_start + i]
-            ._storage.as_imm()
+            .as_imm()
             .as_unsafe_any_origin(),
-            list_of_in_bufs[0 if use_multimem else group_start + i].layout,
         )
     )
 
@@ -1196,6 +1214,7 @@ def _reducescatter_launch[
         return
 
     comptime kernel = _reducescatter_kernel[
+        InBufsEngine=ListOfInBufsEngine,
         dtype,
         in_layout,
         out_layout,
@@ -1224,6 +1243,8 @@ def _reducescatter_launch[
 
 @inline(.always)
 def _reducescatter_plan[
+    InputBuffersEngine: TensorEngine,
+    //,
     dtype: DType,
     ngpus: Int,
     in_layout: TensorLayout,
@@ -1234,7 +1255,7 @@ def _reducescatter_plan[
     group_size: Int,
 ](
     input_buffers: Array[
-        TileTensor[dtype, in_layout, in_origin],
+        TileTensor[dtype, in_layout, in_origin, Engine=InputBuffersEngine],
         1 if use_multimem else ngpus,
     ],
     output_layout: Some[TensorLayout],
@@ -1388,6 +1409,9 @@ def _reducescatter_plan[
 
 
 def reducescatter[
+    InputBuffersEngine: TensorEngine,
+    OutputBuffersEngine: TensorEngine,
+    //,
     dtype: DType,
     ngpus: Int,
     in_layout: TensorLayout,
@@ -1402,11 +1426,14 @@ def reducescatter[
     group_size: Int = ngpus,
 ](
     input_buffers: Array[
-        TileTensor[dtype, in_layout, in_origin],
+        TileTensor[dtype, in_layout, in_origin, Engine=InputBuffersEngine],
         1 if use_multimem else ngpus,
     ],
     output_buffers: Array[
-        TileTensor[mut=True, dtype, out_layout, out_origin], ngpus
+        TileTensor[
+            mut=True, dtype, out_layout, out_origin, Engine=OutputBuffersEngine
+        ],
+        ngpus,
     ],
     rank_sigs: Array[MutPointer[Signal, MutAnyOrigin], ngpus],
     ctx: DeviceContext,
@@ -1528,6 +1555,7 @@ def reducescatter[
     in_origin: Origin,
     out_layout: TensorLayout,
     OutputLambdaType: CollectiveEpilogueFn,
+    InputBuffersEngine: TensorEngine,
     //,
     pdl_level: PDLLevel = PDLLevel(),
     *,
@@ -1536,7 +1564,7 @@ def reducescatter[
     group_size: Int = ngpus,
 ](
     input_buffers: Array[
-        TileTensor[dtype, in_layout, in_origin],
+        TileTensor[dtype, in_layout, in_origin, Engine=InputBuffersEngine],
         1 if use_multimem else ngpus,
     ],
     output_layouts: Array[out_layout, ngpus],

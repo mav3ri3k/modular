@@ -590,8 +590,11 @@ static std::optional<int> compileModuleToArchive(
     if (!outFile)
       return state.reportError("could not open .s output file");
 
-    if (failed(objectCompiler->emitAssembly(std::move(module), outFile->os())))
-      return state.reportError("could not emit assembly");
+    if (auto error =
+            objectCompiler->emitAssembly(std::move(module), outFile->os());
+        failed(error))
+      return state.reportError("could not emit assembly: " +
+                               Twine(error.getError()));
     outFile->keep();
     return EXIT_SUCCESS;
   }

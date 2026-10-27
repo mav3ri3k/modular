@@ -91,6 +91,7 @@ public:
   /// Simple accessor to the buffer ref. To maintain the value semantics of this
   /// tensor it should not be modified.
   TensorBufferRef &getBufferRef() { return bufferRef; }
+  const TensorBufferRef &getBufferRef() const { return bufferRef; }
 
   /// Returns a shallow copy of this tensor, with the underlying buffer borrowed
   /// from this tensor. This tensor may owning or itself be borrowing the

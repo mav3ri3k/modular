@@ -146,11 +146,12 @@ public:
   // API is a constexpr StringLiteral for fast comparison, while being
   // human-readable at the same time.
   using API = StringLiteral;
-  static constexpr API cpuAPI = "cpu";     // Generic CPU device
-  static constexpr API gpuAPI = "gpu";     // Generic GPU device
-  static constexpr API cudaAPI = "cuda";   // NVIDIA CUDA device
-  static constexpr API hipAPI = "hip";     // AMDGPU HIP device
-  static constexpr API metalAPI = "metal"; // Apple Metal device
+  static constexpr API cpuAPI = "cpu";       // Generic CPU device
+  static constexpr API gpuAPI = "gpu";       // Generic GPU device
+  static constexpr API cudaAPI = "cuda";     // NVIDIA CUDA device
+  static constexpr API hipAPI = "hip";       // AMDGPU HIP device
+  static constexpr API metalAPI = "metal";   // Apple Metal device
+  static constexpr API openclAPI = "opencl"; // OpenCL device
 
   // How a pointer is obtained.
   enum class AllocMode : uint8_t {

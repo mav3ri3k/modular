@@ -1,0 +1,110 @@
+{
+  "serial": "DEVICE_SERIAL",
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "prompt": "What is the opposite of hot? Answer in one word.",
+  "prompt_tokens": 24,
+  "output_tokens": 96,
+  "repeats": 2,
+  "validation_included": false,
+  "token_ids_validated": true,
+  "profiling": false,
+  "cooldown_seconds": 3.0,
+  "hexagon_rows": {},
+  "hexagon_artifact_sha256": {},
+  "variants": {
+    "base": "/private/tmp/bonsai-projection-base",
+    "tiled": "/private/tmp/bonsai-projection-tiled"
+  },
+  "artifact_sha256": {
+    "base": {
+      "runner": "cd0e3ad8ab3c800ce019ad95f1990d027c15bf1286c2f7d67052341755234a49",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "tiled": {
+      "runner": "969bbb3fbff5f2bd7faac5f32b3ab7aa191a4a3e40214465df7be00507ba6c82",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    }
+  },
+  "runs": [
+    {
+      "variant": "base",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.323,
+      "tokens_per_second": 71.83,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/000-base.log"
+    },
+    {
+      "variant": "tiled",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.216,
+      "tokens_per_second": 78.13,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/001-tiled.log"
+    },
+    {
+      "variant": "base",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.234,
+      "tokens_per_second": 77.01,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/002-base.log"
+    },
+    {
+      "variant": "tiled",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.216,
+      "tokens_per_second": 78.1,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/003-tiled.log"
+    },
+    {
+      "variant": "tiled",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.423,
+      "tokens_per_second": 66.76,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/004-tiled.log"
+    },
+    {
+      "variant": "base",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.228,
+      "tokens_per_second": 77.36,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-projection-model-check/005-base.log"
+    }
+  ],
+  "median_tokens_per_second": {
+    "base": 77.185,
+    "tiled": 72.43
+  }
+}

@@ -443,13 +443,13 @@ def generic_fused_qkv_matmul_kv_cache_paged_ragged_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     kv_collection: PagedKVCacheCollection,
     layer_idx: UInt32,
@@ -797,13 +797,13 @@ def _fused_qkv_matmul_kv_cache_ragged_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     kv_collection: collection_t,
     layer_idx: UInt32,
@@ -1455,13 +1455,13 @@ def _fused_qkv_matmul_kv_cache_ragged_impl_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     k_cache: cache_t,
     v_cache: OptionalReg[cache_t],
@@ -1655,13 +1655,13 @@ def generic_fused_qkv_index_matmul_kv_cache_paged_ragged_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     kv_collection: PagedKVCacheCollection,
     index_kv_collection: PagedKVCacheCollection,
@@ -1808,13 +1808,13 @@ def _fused_qkv_index_matmul_kv_cache_ragged_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     kv_collection: collection_t,
     index_kv_collection: index_collection_t,
@@ -1884,13 +1884,13 @@ def _fused_qkv_index_matmul_kv_cache_ragged_impl_scale_float4[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[dtype, a_layout, ImmutAnyOrigin, Engine=_],
     input_row_offsets: TileTensor[
         mut=False, .uint32, address_space=.GENERIC, ...
     ],
-    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin],
+    weight: TileTensor[weight_dtype, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scale_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[scale_dtype, sfb_layout, ImmutAnyOrigin, Engine=_],
     tensor_sf: Float32,
     k_cache: cache_t,
     v_cache: cache_t,
@@ -2578,10 +2578,12 @@ def _matmul_blockwise_scaled_fp4_common[
     mx_format: MXFormat = MXFormat.FP8_E4M3,
     preshuffled_b: Bool = False,
 ](
-    hidden_state: TileTensor[a_type, a_layout, ImmutAnyOrigin],
-    weight: TileTensor[b_type, b_layout, ImmutAnyOrigin],
-    input_scale: TileTensor[scales_dtype, sfa_layout, ImmutAnyOrigin],
-    weight_scale: TileTensor[scales_dtype, sfb_layout, ImmutAnyOrigin],
+    hidden_state: TileTensor[a_type, a_layout, ImmutAnyOrigin, Engine=_],
+    weight: TileTensor[b_type, b_layout, ImmutAnyOrigin, Engine=_],
+    input_scale: TileTensor[scales_dtype, sfa_layout, ImmutAnyOrigin, Engine=_],
+    weight_scale: TileTensor[
+        scales_dtype, sfb_layout, ImmutAnyOrigin, Engine=_
+    ],
     tensor_sf: Float32,
     epilogue_fn: EpilogueFnType,
     context: DeviceContext,
@@ -4087,14 +4089,14 @@ def generic_flash_attention_kv_cache_ragged_rel_logits[
 ](
     q: TileTensor[mut=False, dtype, address_space=.GENERIC, ...],
     input_row_offsets: ImmTileTensor[
-        .uint32, RowOffsetsLayout, row_offsets_origin
+        .uint32, RowOffsetsLayout, row_offsets_origin, Engine=_
     ],
     kv_collection: collection_t,
     layer_idx: UInt32,
     scale: Float32,
-    bias: ImmTileTensor[dtype, BiasLayout, bias_origin],
+    bias: ImmTileTensor[dtype, BiasLayout, bias_origin, Engine=_],
     cache_lengths: ImmTileTensor[
-        .uint32, CacheLengthsLayout, cache_lengths_origin
+        .uint32, CacheLengthsLayout, cache_lengths_origin, Engine=_
     ],
     output: TileTensor[mut=True, output_dtype, address_space=.GENERIC, ...],
     context: DeviceContext,

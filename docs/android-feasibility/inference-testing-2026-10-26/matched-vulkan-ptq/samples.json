@@ -1,0 +1,233 @@
+[
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 0,
+    "variant": "prism",
+    "command": "cd /data/local/tmp/modular-inference-testing/prism-vulkan && LD_LIBRARY_PATH=. ./llama-bench -m ../Ternary-Bonsai-2-2B-PTQ1_0.gguf -p 0 -n 128 -d 0 -r 1 -t 4 -ngl 99 -o json -b 1 -ub 1",
+    "metrics": {
+      "build_commit": "c96baf4ab",
+      "build_number": 10827,
+      "cpu_info": "CPU",
+      "gpu_info": "Adreno (TM) 840",
+      "backends": "Vulkan",
+      "model_filename": "../Ternary-Bonsai-2-2B-PTQ1_0.gguf",
+      "model_type": "qwen35 2B PTQ1_0 - 1.75 bpw ternary (group 128)",
+      "model_size": 418184448,
+      "model_n_params": 1881825088,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "n_threads": 4,
+      "cpu_mask": "0x0",
+      "cpu_strict": false,
+      "poll": 50,
+      "type_k": "f16",
+      "type_v": "f16",
+      "n_gpu_layers": 99,
+      "n_cpu_moe": 0,
+      "split_mode": "layer",
+      "main_gpu": 0,
+      "no_kv_offload": false,
+      "flash_attn": -1,
+      "devices": "auto",
+      "tensor_split": "0.00",
+      "tensor_buft_overrides": "none",
+      "load_mode": "auto",
+      "embeddings": false,
+      "no_op_offload": 0,
+      "no_host": false,
+      "fit_target": 0,
+      "fit_min_ctx": 0,
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "test_time": "2026-10-26T09:44:32Z",
+      "avg_ns": 2628439531,
+      "stddev_ns": 0,
+      "avg_ts": 48.698096,
+      "stddev_ts": 0.0,
+      "samples_ns": [
+        2628439531
+      ],
+      "samples_ts": [
+        48.6981
+      ]
+    }
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 0,
+    "variant": "modular",
+    "command": "cd /data/local/tmp/modular-inference-testing/bonsai && LD_LIBRARY_PATH=. ./bench ./libOpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "metrics": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 76.543691062,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        1672247552
+      ]
+    }
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 1,
+    "variant": "modular",
+    "command": "cd /data/local/tmp/modular-inference-testing/bonsai && LD_LIBRARY_PATH=. ./bench ./libOpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "metrics": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 65.972457974,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        1940203593
+      ]
+    }
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 1,
+    "variant": "prism",
+    "command": "cd /data/local/tmp/modular-inference-testing/prism-vulkan && LD_LIBRARY_PATH=. ./llama-bench -m ../Ternary-Bonsai-2-2B-PTQ1_0.gguf -p 0 -n 128 -d 0 -r 1 -t 4 -ngl 99 -o json -b 1 -ub 1",
+    "metrics": {
+      "build_commit": "c96baf4ab",
+      "build_number": 10827,
+      "cpu_info": "CPU",
+      "gpu_info": "Adreno (TM) 840",
+      "backends": "Vulkan",
+      "model_filename": "../Ternary-Bonsai-2-2B-PTQ1_0.gguf",
+      "model_type": "qwen35 2B PTQ1_0 - 1.75 bpw ternary (group 128)",
+      "model_size": 418184448,
+      "model_n_params": 1881825088,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "n_threads": 4,
+      "cpu_mask": "0x0",
+      "cpu_strict": false,
+      "poll": 50,
+      "type_k": "f16",
+      "type_v": "f16",
+      "n_gpu_layers": 99,
+      "n_cpu_moe": 0,
+      "split_mode": "layer",
+      "main_gpu": 0,
+      "no_kv_offload": false,
+      "flash_attn": -1,
+      "devices": "auto",
+      "tensor_split": "0.00",
+      "tensor_buft_overrides": "none",
+      "load_mode": "auto",
+      "embeddings": false,
+      "no_op_offload": 0,
+      "no_host": false,
+      "fit_target": 0,
+      "fit_min_ctx": 0,
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "test_time": "2026-10-26T09:45:14Z",
+      "avg_ns": 2675830676,
+      "stddev_ns": 0,
+      "avg_ts": 47.835613,
+      "stddev_ts": 0.0,
+      "samples_ns": [
+        2675830676
+      ],
+      "samples_ts": [
+        47.8356
+      ]
+    }
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 2,
+    "variant": "prism",
+    "command": "cd /data/local/tmp/modular-inference-testing/prism-vulkan && LD_LIBRARY_PATH=. ./llama-bench -m ../Ternary-Bonsai-2-2B-PTQ1_0.gguf -p 0 -n 128 -d 0 -r 1 -t 4 -ngl 99 -o json -b 1 -ub 1",
+    "metrics": {
+      "build_commit": "c96baf4ab",
+      "build_number": 10827,
+      "cpu_info": "CPU",
+      "gpu_info": "Adreno (TM) 840",
+      "backends": "Vulkan",
+      "model_filename": "../Ternary-Bonsai-2-2B-PTQ1_0.gguf",
+      "model_type": "qwen35 2B PTQ1_0 - 1.75 bpw ternary (group 128)",
+      "model_size": 418184448,
+      "model_n_params": 1881825088,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "n_threads": 4,
+      "cpu_mask": "0x0",
+      "cpu_strict": false,
+      "poll": 50,
+      "type_k": "f16",
+      "type_v": "f16",
+      "n_gpu_layers": 99,
+      "n_cpu_moe": 0,
+      "split_mode": "layer",
+      "main_gpu": 0,
+      "no_kv_offload": false,
+      "flash_attn": -1,
+      "devices": "auto",
+      "tensor_split": "0.00",
+      "tensor_buft_overrides": "none",
+      "load_mode": "auto",
+      "embeddings": false,
+      "no_op_offload": 0,
+      "no_host": false,
+      "fit_target": 0,
+      "fit_min_ctx": 0,
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "test_time": "2026-10-26T09:45:28Z",
+      "avg_ns": 2671379166,
+      "stddev_ns": 0,
+      "avg_ts": 47.915325,
+      "stddev_ts": 0.0,
+      "samples_ns": [
+        2671379166
+      ],
+      "samples_ts": [
+        47.9153
+      ]
+    }
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "repeat": 2,
+    "variant": "modular",
+    "command": "cd /data/local/tmp/modular-inference-testing/bonsai && LD_LIBRARY_PATH=. ./bench ./libOpenCLPlugin.so ./weights.bin 0 128 0 1 1",
+    "metrics": {
+      "n_prompt": 0,
+      "n_gen": 128,
+      "n_depth": 0,
+      "n_batch": 1,
+      "n_ubatch": 1,
+      "capacity": 2048,
+      "seed": 1,
+      "avg_ts": 66.69773402,
+      "stddev_ts": 0.0,
+      "logit_readback": true,
+      "samples_ns": [
+        1919105677
+      ]
+    }
+  }
+]

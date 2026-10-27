@@ -264,6 +264,11 @@ public:
   virtual void emitBitcode(llvm::Module &module,
                            llvm::raw_pwrite_stream &os) const;
 
+  /// Whether LLVM optimization should use the emission target machine's cost
+  /// model and target callbacks. Source/portable-IR backends may borrow a
+  /// target machine for layout without sharing its ISA or CPU cost model.
+  virtual bool usesTargetMachineForOptimization() const { return true; }
+
   /// Builds the backend's complete LLVM pass pipeline into `mpm`, returning
   /// true if it fully owns the pipeline (so the generic optimization pipeline
   /// is skipped). The default returns false; backends that need a fully custom
@@ -331,6 +336,12 @@ public:
   virtual ErrorOr<BufferRef>
   createArchive(llvm::MutableArrayRef<BufferRef> objects,
                 llvm::StringRef moduleName, EmitContext &ctx) const = 0;
+
+  /// Emit a standalone LLVM module through emitAssembly/emitObject rather than
+  /// the MC assembler/linker. Used by targets whose artifact is device source
+  /// or a kernel bundle, not a machine-code archive. Offload emission already
+  /// calls those hooks; this opt-in supplies the equivalent standalone path.
+  virtual bool usesModuleEmitterForArchive() const { return false; }
 
   friend class TargetBackendRegistry;
 };

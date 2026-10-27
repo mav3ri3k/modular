@@ -1416,18 +1416,38 @@ def multistage_gemm_split_k_kernel[
     b_linear_idx_type: DType,
     workspace_linear_idx_type: DType,
     config: MatmulConfig[a_type, b_type, c_type, transpose_b],
+    *,
+    c_engine: TensorEngine = DefaultEngine[],
+    a_engine: TensorEngine = DefaultEngine[],
+    b_engine: TensorEngine = DefaultEngine[],
+    workspace_engine: TensorEngine = DefaultEngine[],
 ](
-    c: TileTensor[c_type, CLT, MutAnyOrigin, linear_idx_type=c_linear_idx_type],
+    c: TileTensor[
+        c_type,
+        CLT,
+        MutAnyOrigin,
+        Engine=c_engine,
+        linear_idx_type=c_linear_idx_type,
+    ],
     a: TileTensor[
-        a_type, ALT, ImmutAnyOrigin, linear_idx_type=a_linear_idx_type
+        a_type,
+        ALT,
+        ImmutAnyOrigin,
+        Engine=a_engine,
+        linear_idx_type=a_linear_idx_type,
     ],
     b: TileTensor[
-        b_type, BLT, ImmutAnyOrigin, linear_idx_type=b_linear_idx_type
+        b_type,
+        BLT,
+        ImmutAnyOrigin,
+        Engine=b_engine,
+        linear_idx_type=b_linear_idx_type,
     ],
     work_space: TileTensor[
         work_space_type,
         WLT,
         MutAnyOrigin,
+        Engine=workspace_engine,
         linear_idx_type=workspace_linear_idx_type,
     ],
     num_partitions: Int32,

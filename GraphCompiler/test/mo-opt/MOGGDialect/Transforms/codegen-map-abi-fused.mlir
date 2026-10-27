@@ -37,7 +37,7 @@
 // (the epilogue's `$outputPtr`). The bound tensor is the DPS output of the
 // execute call.
 // CHECK: var [[CAP0:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, True, extensibility.IO.Output, {{.*}}]
-// CHECK: var [[PTR0:.*]] = [[CAP0]].unsafe_ptr()
+// CHECK: var [[PTR0:.*]] = [[CAP0]]._ptr
 // CHECK: var [[F0:.*]] = EpilogueStoreFunctor{{[0-9_]*}}[{{.*}}]([[PTR0]], {{.*}})
 // CHECK: var [[BASE0:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, False, extensibility.IO.Input, {{.*}}]({{.*}})
 // CHECK: var [[W0:.*]] = [[BASE0]]._bind_to_fused_output([[F0]])
@@ -70,10 +70,10 @@ mo.graph @partial_fused(%a: !mo.tensor<[2, 2], f32>) -> (!mo.tensor<[2, 2], f32>
 // feeds a runtime `Scalar[DType.int]` Coord component instead of an
 // all-compile-time `layout.Idx` Coord; the fused-output functor/bind/
 // execute shape is otherwise identical to the static case above.
-// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], [[DIM:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], [[DIM:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
 // CHECK:   var {{.*}} = layout.Coord(Scalar[DType.int]([[DIM]]), layout.Idx[2])
 // CHECK:   var [[CAPD:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, True, extensibility.IO.Output, {{.*}}]
-// CHECK:   var [[PTRD:.*]] = [[CAPD]].unsafe_ptr()
+// CHECK:   var [[PTRD:.*]] = [[CAPD]]._ptr
 // CHECK:   var [[FD:.*]] = EpilogueStoreFunctor{{[0-9_]*}}[{{.*}}]([[PTRD]], {{.*}})
 // CHECK:   var [[BASED:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, False, extensibility.IO.Input, {{.*}}]({{.*}})
 // CHECK:   var [[WD:.*]] = [[BASED]]._bind_to_fused_output([[FD]])
@@ -99,11 +99,11 @@ mo.graph @one_fused_dynamic(%a: !mo.tensor<[batch, 2], f32>) -> !mo.tensor<[batc
 // check below (which lands in the later struct section); its own struct-body
 // check (the fused elementwise-add specific one) is placed after that check
 // instead, further down.
-// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], [[DIM2:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], [[DIM2:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
 // CHECK:   var {{.*}} = layout.Coord(Scalar[DType.int]([[DIM2]]), layout.Idx[2])
 // CHECK:   var [[CAPR:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, True, extensibility.IO.Output, {{.*}}]
-// CHECK:   var [[PTRR:.*]] = [[CAPR]].unsafe_ptr()
-// CHECK:   var [[PTRB:.*]] = {{.*}}.unsafe_ptr()
+// CHECK:   var [[PTRR:.*]] = [[CAPR]]._ptr
+// CHECK:   var [[PTRB:.*]] = {{.*}}._ptr
 // CHECK:   var [[FR:.*]] = EpilogueStoreFunctor{{[0-9_]*}}[{{.*}}, {{.*}}]([[PTRR]], {{.*}}, [[PTRB]], {{.*}})
 // CHECK:   var [[BASER:.*]] = builtin_primitives.primitives.mogg_tensor_init[{{.*}}, False, extensibility.IO.Input, {{.*}}]({{.*}})
 // CHECK:   var [[WR:.*]] = [[BASER]]._bind_to_fused_output([[FR]])
@@ -132,8 +132,7 @@ mo.graph @real_kernel_fused_dynamic(%a: !mo.tensor<[batch, 2], f32>, %b: !mo.ten
 // store type-checks against a concrete type. NO `@__parameter`, NO
 // `ManagedTensorSlice` field.
 // CHECK:      struct EpilogueStoreFunctor{{[0-9_]*}}[[[SPEC:[a-zA-Z0-9_]+]]: {{.*}}StaticTensorSpec[DType.float32, _, ...]](managed_tensor_slice.OutputFusion, TrivialRegisterPassable):
-// CHECK-NEXT:     @__allow_legacy_any_origin_fields
-// CHECK-NEXT:     var [[PTRF:[a-zA-Z0-9_]+]]: Pointer[Scalar[DType.float32], MutAnyOrigin]
+// CHECK-NEXT:     var [[PTRF:[a-zA-Z0-9_]+]]: managed_tensor_slice._TensorDataPointer[DType.float32]
 // CHECK-NEXT:     var [[SHF:[a-zA-Z0-9_]+]]: std.utils.IndexList[Self.[[SPEC]].rank]
 // CHECK-NEXT:     var [[STF:[a-zA-Z0-9_]+]]: std.utils.IndexList[Self.[[SPEC]].rank]
 // CHECK:          @inline(.always)
@@ -160,12 +159,10 @@ mo.graph @real_kernel_fused_dynamic(%a: !mo.tensor<[batch, 2], f32>, %b: !mo.ten
 // its own defining `mogg.tensor.create`.
 // CHECK-COUNT-4: struct EpilogueStoreFunctor{{[0-9_]*}}[{{[a-zA-Z0-9_]+}}: {{.*}}StaticTensorSpec[DType.float32, _, ...]](managed_tensor_slice.OutputFusion, TrivialRegisterPassable):
 // CHECK:      struct EpilogueStoreFunctor{{[0-9_]*}}[[[SPEC0:[a-zA-Z0-9_]+]]: {{.*}}StaticTensorSpec[DType.float32, _, ...], [[SPEC1:[a-zA-Z0-9_]+]]: {{.*}}StaticTensorSpec[DType.float32, _, ...]](managed_tensor_slice.OutputFusion, TrivialRegisterPassable):
-// CHECK-NEXT:     @__allow_legacy_any_origin_fields
-// CHECK-NEXT:     var {{.*}}: Pointer[Scalar[DType.float32], MutAnyOrigin]
+// CHECK-NEXT:     var {{.*}}: managed_tensor_slice._TensorDataPointer[DType.float32]
 // CHECK-NEXT:     var {{.*}}: std.utils.IndexList[Self.[[SPEC0]].rank]
 // CHECK-NEXT:     var {{.*}}: std.utils.IndexList[Self.[[SPEC0]].rank]
-// CHECK-NEXT:     @__allow_legacy_any_origin_fields
-// CHECK-NEXT:     var {{.*}}: Pointer[Scalar[DType.float32], MutAnyOrigin]
+// CHECK-NEXT:     var {{.*}}: managed_tensor_slice._TensorDataPointer[DType.float32]
 // CHECK-NEXT:     var {{.*}}: std.utils.IndexList[Self.[[SPEC1]].rank]
 // CHECK-NEXT:     var {{.*}}: std.utils.IndexList[Self.[[SPEC1]].rank]
 // CHECK:          def store[dtype : DType, rank : Int, simd_width : SIMDLength, element_alignment : Int = 1](self, idx: std.utils.IndexList[rank], value: SIMD[dtype, simd_width]):

@@ -1,0 +1,260 @@
+{
+  "serial": "DEVICE_SERIAL",
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "prompt": "What is the opposite of hot? Answer in one word.",
+  "prompt_tokens": 24,
+  "output_tokens": 96,
+  "repeats": 5,
+  "validation_included": false,
+  "token_ids_validated": true,
+  "profiling": false,
+  "cooldown_seconds": 8.0,
+  "hexagon_rows": {
+    "hvx": 16384
+  },
+  "hexagon_artifact_sha256": {
+    "hvx": {
+      "HexagonProjection.so": "52cfb7731ceda0e94ad307a4c36b4faddaa251d1fa1ff176c67f41fabd12b4ab",
+      "libmodular_hexagon.so": "091a5904449e906060bf10885cb2e56603555ff9129ec20a09ed99f18f615b81"
+    }
+  },
+  "variants": {
+    "baseline": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-selected",
+    "gpu": "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-final",
+    "hvx": "/Users/REDACTED/Library/Caches/modular-android-integration/hvx-final"
+  },
+  "artifact_sha256": {
+    "baseline": {
+      "runner": "be51afaa276f7205b8b8baec6c31e0ba864668df12bee6254150bfa74a4c9f45",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "gpu": {
+      "runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "hvx": {
+      "runner": "7e97760806e9be295df43380de587d1e124269fbac9b5e5e76f802ed42d6773f",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    }
+  },
+  "runs": [
+    {
+      "variant": "baseline",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.322,
+      "tokens_per_second": 71.85,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/000-baseline.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.257,
+      "tokens_per_second": 75.6,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/001-gpu.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.276,
+      "tokens_per_second": 74.44,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/002-hvx.log"
+    },
+    {
+      "variant": "baseline",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.322,
+      "tokens_per_second": 71.89,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/003-baseline.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.268,
+      "tokens_per_second": 74.92,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/004-gpu.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.275,
+      "tokens_per_second": 74.51,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/005-hvx.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.27,
+      "tokens_per_second": 74.79,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/006-hvx.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.266,
+      "tokens_per_second": 75.04,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/007-gpu.log"
+    },
+    {
+      "variant": "baseline",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.322,
+      "tokens_per_second": 71.89,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/008-baseline.log"
+    },
+    {
+      "variant": "baseline",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.335,
+      "tokens_per_second": 71.18,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/009-baseline.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.332,
+      "tokens_per_second": 71.31,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/010-gpu.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.354,
+      "tokens_per_second": 70.17,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/011-hvx.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.324,
+      "tokens_per_second": 71.77,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/012-hvx.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.394,
+      "tokens_per_second": 68.13,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/013-gpu.log"
+    },
+    {
+      "variant": "baseline",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.395,
+      "tokens_per_second": 68.09,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/014-baseline.log"
+    },
+    {
+      "variant": "baseline",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.384,
+      "tokens_per_second": 68.65,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/015-baseline.log"
+    },
+    {
+      "variant": "gpu",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.348,
+      "tokens_per_second": 70.46,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/016-gpu.log"
+    },
+    {
+      "variant": "hvx",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.339,
+      "tokens_per_second": 70.96,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "logs/final-comparison/017-hvx.log"
+    }
+  ],
+  "median_tokens_per_second": {
+    "baseline": 71.18,
+    "gpu": 71.31,
+    "hvx": 71.77
+  }
+}

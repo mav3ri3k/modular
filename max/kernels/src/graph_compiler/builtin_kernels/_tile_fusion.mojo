@@ -24,11 +24,13 @@ productionized (see GEX-3919).
 """
 
 from layout import Coord, TensorLayout, TileTensor, coord_to_index_list
+from layout.tensor_engine import TensorEngine
 from layout.tile_layout import Layout as _NewLayout
 from layout.tile_io import GenericToLocalTileCopier, LocalToGenericTileCopier
 from std.utils import IndexList
 from linalg.utils import TileConsumer
 from extensibility import ManagedTensorSlice, OutputFusionTile
+from extensibility.managed_tensor_slice import GraphStorageEngine
 
 
 @fieldwise_init
@@ -89,12 +91,15 @@ struct _OutputFusionTileConsumer[
 struct _TileStoreConsumer[
     out_dtype: DType,
     OutLayout: TensorLayout,
+    Engine: TensorEngine,
 ](TileConsumer):
     """Terminal `TileConsumer` that copies each fragment into the output."""
 
     comptime src_address_space = AddressSpace.LOCAL
 
-    var output: TileTensor[Self.out_dtype, Self.OutLayout, MutUntrackedOrigin]
+    var output: TileTensor[
+        Self.out_dtype, Self.OutLayout, MutUntrackedOrigin, Engine=Self.Engine
+    ]
 
     @inline(.always)
     def __call__[
@@ -132,7 +137,9 @@ def _tile_store_consumer(
         _OutputFusionTileConsumer[type_of(output).OutFusionTile] if type_of(
             output
         )._has_output_fusion_tile else _TileStoreConsumer[
-            type_of(output).dtype, type_of(output).RuntimeLayout
+            type_of(output).dtype,
+            type_of(output).RuntimeLayout,
+            GraphStorageEngine[element_width=1],
         ]
     ),
 ):

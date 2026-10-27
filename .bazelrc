@@ -31,6 +31,9 @@ build --remote_instance_name=modular-public
 build --compilation_mode=dbg
 build --//:modular_config=default
 
+# Use the SDK HAL-backed Mojo DeviceContext and its C++ compatibility shim.
+build:hal-device-context --//:hal_device_context=true
+
 build:ci --mojoprecompilecopt=-Werror
 # Match internal CI, which tests optimized builds.
 build:ci --compilation_mode=opt
@@ -44,3 +47,9 @@ build:public-cache --remote_cache=grpcs://modular-public.buildbuddy.io
 # Check for a local gitignored bazel config.
 # NOTE: Import this last so that local configs can override.
 try-import %workspace%/local.bazelrc
+
+# Android ARM64 runtime cross-build. Select NDK through
+# --repo_env=ANDROID_NDK_HOME=/path/to/ndk; host tools retain their host platform.
+build:android-arm64 --platforms=//:android-aarch64-platform
+build:android-arm64 --repo_env=MODULAR_TARGET=android:aarch64
+build:android-arm64 --config=hal-device-context

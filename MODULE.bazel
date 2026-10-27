@@ -15,6 +15,10 @@ macos_sysroot_repository = use_repo_rule("//bazel/internal/cc-toolchain:macos_sy
 
 macos_sysroot_repository(name = "sysroot-macos")
 
+android_ndk_repository = use_repo_rule("//bazel/internal/cc-toolchain:android_ndk_repository.bzl", "android_ndk_repository")
+
+android_ndk_repository(name = "android-ndk")
+
 # SDLC-4549: the prebuilt path is gone. `bazel/mojo.MODULE.bazel` (which unpacked
 # the nightly wheel via `rebuild_wheel` and pulled the prebuilt `@mojo_toolchains`
 # compiler) is no longer generated or included; the whole tree builds from source.

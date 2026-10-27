@@ -242,6 +242,15 @@ def MOGG_Pointer : MOGG_Type<"Pointer", "pointer"> {
   }];
 }
 
+def MOGG_Storage : MOGG_Type<"Storage", "storage"> {
+  let summary = "A borrowed byte view of tensor storage.";
+  let description = [{
+    Carries allocation, offset and extent metadata across outlined host stubs.
+    A backend may expose raw storage or an opaque device allocation. Ownership
+    remains with the surrounding runtime value until enqueue completes.
+  }];
+}
+
 def MOGG_Tensor : MOGG_Type<"Tensor", "tensor",
   [DeclareTypeInterfaceMethods<MO_KernelOperandTypeInterface>]> {
   let summary = "An opaque codegen tensor handle.";

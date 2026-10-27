@@ -161,6 +161,32 @@ config_setting(
     ],
 )
 
+# Native targets using ELF shared libraries and linker conventions.
+selects.config_setting_group(
+    name = "elf",
+    match_any = [
+        "@platforms//os:linux",
+        "@platforms//os:android",
+    ],
+)
+
+# Android is a distinct target OS; dependencies select their Android presets.
+config_setting(
+    name = "android_aarch64",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:android",
+    ],
+)
+
+platform(
+    name = "android-aarch64-platform",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:android",
+    ],
+)
+
 alias(
     name = "lint",
     actual = "//bazel/lint",

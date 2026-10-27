@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsyncRT/CompilerSupport/Context.h"
+#include "GraphCompiler/Driver/Common/CrossCompilationCLOptions.h"
 #include "GraphCompiler/GraphCompiler.h"
 #include "Init/Init.h"
 #include "MLRT/GraphRT/MEFDialect/MEFDialect.h"
@@ -28,6 +29,7 @@
 using namespace M;
 
 int main(int argc, char **argv) {
+  CrossCompilationCLOptions crossCompilation;
   // No llvm::InitLLVM here: `mlir::MlirOptMain` creates the only one.
   llvm::setBugReportMsg(M::MO::BugReportMessage.data());
 
@@ -62,6 +64,8 @@ int main(int argc, char **argv) {
   std::string inputFilename, outputFilename;
   std::tie(inputFilename, outputFilename) =
       registerAndParseCLIOptions(argc, argv, "mo optimizer driver", registry);
+  if (!crossCompilation.apply())
+    return 1;
   KGEN::TraceProfiler tracer(timeTrace, timeTraceGranularity);
   return failed(
       MlirOptMain(argc, argv, inputFilename, outputFilename, registry));

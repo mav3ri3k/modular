@@ -167,9 +167,10 @@ ensureStreamCountForDevices(ArrayRef<AnyAsyncValueRef> deviceContextArgs,
     if (!ctxRefPtr || !ctxRefPtr->getPointer())
       return Error("DeviceContextRef is null");
     Driver::DeviceContextRef ctxRef = *ctxRefPtr;
-    // Only CUDA/HIP device contexts support multi-stream.
+    // These GPU contexts support explicit streams and event dependencies.
     Driver::Device::API api = ctxRef->device().api();
-    if (api != Driver::Device::cudaAPI && api != Driver::Device::hipAPI)
+    if (api != Driver::Device::cudaAPI && api != Driver::Device::hipAPI &&
+        api != Driver::Device::openclAPI)
       continue;
     // Grow the context's stream pool until it holds `streamCount` streams.
     for (unsigned i = ctxRef->numStreams(); i < streamCount; ++i) {

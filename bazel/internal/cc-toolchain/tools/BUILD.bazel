@@ -1,4 +1,5 @@
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
+load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//bazel:config.bzl", "TOP_LEVEL_TAG")
 load(":builtin_module_map.bzl", "builtin_module_map")
 load(":tools.bzl", "declare_tools")
@@ -85,6 +86,7 @@ declare_tools()
 builtin_module_map(
     name = "builtin_module_map",
     include_directories = select({
+        "//:android_aarch64": ["@android-ndk//resource:root", "@android-ndk//sysroot:root"],
         "//:linux_aarch64": [
             "@clang-linux-aarch64//:include_dir",
             "@sysroot-jammy-aarch64//sysroot:root",
@@ -99,4 +101,32 @@ builtin_module_map(
         ],
     }),
     tags = ["manual"],
+)
+
+# Use the NDK compiler and its matching resource headers/runtime as one unit.
+# Host compiler tools remain selected for exec-configuration dependencies.
+[
+    cc_tool(
+        name = "android-" + name,
+        src = ":multi-platform-" + binary + ".sh" if name in ["clang", "clang++"] else ":linker-driver.sh" if name == "linker" else "@android-ndk//toolchain:bin/" + binary,
+        data = ["@android-ndk//toolchain:runtime", "@android-ndk//toolchain:bin/" + binary],
+        env = {"MODULAR_CLANG_EXECUTABLE": "{compiler}"} if name in ["clang", "clang++", "linker"] else {},
+        format = {"compiler": "@android-ndk//toolchain:bin/" + binary} if name in ["clang", "clang++", "linker"] else {},
+    )
+    for name, binary in [
+        ("clang", "clang"), ("clang++", "clang++"), ("linker", "clang++"),
+        ("ar", "llvm-ar"), ("strip", "llvm-strip"), ("objcopy", "llvm-objcopy"),
+    ]
+]
+cc_tool_map(
+    name = "android_tools",
+    tools = {
+        "@rules_cc//cc/toolchains/actions:assembly_actions": ":android-clang",
+        "@rules_cc//cc/toolchains/actions:c_compile": ":android-clang",
+        "@rules_cc//cc/toolchains/actions:cpp_compile_actions": ":android-clang++",
+        "@rules_cc//cc/toolchains/actions:link_actions": ":android-linker",
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":android-ar",
+        "@rules_cc//cc/toolchains/actions:strip": ":android-strip",
+        "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":android-objcopy",
+    },
 )

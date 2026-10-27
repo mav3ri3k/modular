@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-26",
+  "host": "Apple Silicon macOS",
+  "source_revision": "378087fb5fec89841ea7d5e3ac3cc580964ee884",
+  "source_worktree_had_preexisting_changes": true,
+  "python": "3.13.11",
+  "ndk": "29.0.14206865",
+  "macos_sdk_override": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+  "prism_gguf_py_revision": "c96baf4abe24d11a50f326e40b6223b687449d63",
+  "device": {
+    "adb_serial": "DEVICE_SERIAL",
+    "model": "SM-S942U1",
+    "soc": "SM8850",
+    "gpu": "Adreno 840",
+    "android_api": 37,
+    "fingerprint": "samsung/m1quew/m1q:17/CP2A.260605.016/S942U1UES4BZIG_OYM4BZIG:user/release-keys"
+  },
+  "models": {
+    "2B": {
+      "mlx": {
+        "repository": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+        "revision": "1c6cbae21f8c38830ce337972b46fdae7b18eaaa",
+        "model.safetensors_sha256": "da5095b9f34d7f0d5094090afeeadf124eef821c75136dc28957ce586ae7ac0c"
+      },
+      "gguf": {
+        "repository": "prism-ml/Ternary-Bonsai-2-2B-gguf",
+        "revision": "683f7be2629342a50987627b40881e54761a2430",
+        "filename": "Ternary-Bonsai-2-2B-PTQ1_0.gguf",
+        "sha256": "36061ad406df8a4903a6db005be350c50fabfaf717f9ef0acf4b76adcd9929fa"
+      },
+      "weights.bin_sha256": "ac588b263b9d12cef29595efde850e771138990e74e026d654d505f173ecd657",
+      "model.o_sha256": "92c2ee5dcbed1034bcafeb994a642fa52e87b1e149ce1a3c9fa5bd8352933e13",
+      "OpenCLPlugin.so_sha256": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c"
+    },
+    "4B": {
+      "mlx": {
+        "repository": "prism-ml/Ternary-Bonsai-2-4B-mlx-2bit",
+        "revision": "dff2caaa23fa8706164c44c10f1b58feb405f76a",
+        "model.safetensors_sha256": "432f48d0edcb8da2e6a4e0c96078588362397e2603e7fdea99957babfe968259"
+      },
+      "gguf": {
+        "repository": "prism-ml/Ternary-Bonsai-2-4B-gguf",
+        "revision": "8d6557168168f91ea6697a4a49ed2ef622b53adb",
+        "filename": "Ternary-Bonsai-2-4B-PTQ1_0.gguf",
+        "sha256": "56711263ec9a9ffeaa74a3a0e58dece8127cf9268404746c721113ca76994d60"
+      },
+      "weights.bin_sha256": "1c33e9b3521f14025c3c6dc47a40900a23665efaa381ad1a62461777c75e86de",
+      "model.o_sha256": "5d91100ebc303d1f14b1196b9f10894e54dc16b59be66a845f7d70726c6c82e9",
+      "OpenCLPlugin.so_sha256": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c"
+    },
+    "9B": {
+      "mlx": {
+        "repository": "prism-ml/Ternary-Bonsai-2-9B-mlx-2bit",
+        "revision": "f4e28a59531731c41b6dfac88cf271bd58f0a287",
+        "model.safetensors_sha256": "b8ebd13459dcd53504432a4a0a797287c3a4c00d80835466dbb499f05b7512bb"
+      },
+      "gguf": {
+        "repository": "prism-ml/Ternary-Bonsai-2-9B-gguf",
+        "revision": "5b2abb02362efbed46bbe204014b02837778b2c2",
+        "filename": "Ternary-Bonsai-2-9B-PTQ1_0.gguf",
+        "sha256": "3561df7ac7d26a71ffa991ac2db740b10841c3a350aa2676ccd3ff5d428b4e8b"
+      },
+      "weights.bin_sha256": "f989b6bd549be758310855ed2f710dc44251159a9645c97aa5b757f933ba1c8d",
+      "model.o_sha256": "5e6353d578ef06a2eeaafa7ecf25f203f9630074f0eb2bdf75b74cbeb3698e7b",
+      "OpenCLPlugin.so_sha256": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c"
+    }
+  },
+  "bonsai2_harness_binaries_sha256": {
+    "bench": "f341100ce676b323912bf89f56c76f12e3ec798101b07800ddd46a2c0ae6ed58",
+    "runner": "96a73234cd00ee7ba679a4f315a8460a427d76a6194c9fb6ec285fe89b83d9c9",
+    "validate": "1b27aaa9d2ce09a791567596f69de5849992dd9085d3c2000d0f2158d415bfb7"
+  },
+  "android_artifacts.json_sha256": "95655baca7a25e5b85e5e56979bff9195ac8487423da82846df6a6602a2a0bca",
+  "validation": {
+    "2B": 773,
+    "4B": 1029,
+    "9B": 1033
+  },
+  "notes": [
+    "The 2B and 4B model.safetensors checkpoints were removed from /tmp after exporting and hashing to make host space for the 9B checkpoint.",
+    "Benchmark stdout, stderr, thermal snapshots, correctness logs and export-parity records are stored beside this file.",
+    "Fresh build object/plugin hashes differ from some archived hashes; see the root README historical-artifact note."
+  ],
+  "source_worktree_changes_at_build": [
+    "README.md",
+    "max/examples/android-llm/inference_test/README.md",
+    "max/examples/android-llm/inference_test/bench.cpp",
+    "max/examples/android-llm/inference_test/build_bonsai.py",
+    "max/examples/android-llm/macos_sdk.BUILD.bazel (untracked at build time)"
+  ]
+}

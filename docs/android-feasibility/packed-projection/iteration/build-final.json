@@ -1,0 +1,36 @@
+{
+  "kernels": {
+    "original": {
+      "sha256": "32e79c34f07350fdee1d9903d363087ed6f7c2227a96f6bc39675d96b7abaafb",
+      "bytes": 36978,
+      "mojo_source_sha256": "d6be415c647a5424164bec7545938d5ded1177114630999d38e7ebc5b6f1b819",
+      "mojo_build_seconds": 2.02974796295166
+    },
+    "control": {
+      "sha256": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+      "bytes": 37336,
+      "mojo_source_sha256": "fd09f20e0c74bd2338213b62a39107abcbeffa6f1e30d63fc5eb26a8d718bc98",
+      "mojo_build_seconds": 2.0386340618133545
+    },
+    "reduce": {
+      "sha256": "71c4a7fcca35b93be99a3cbca2ce2285b61820df7537bc6d888bfb1e046a9931",
+      "bytes": 1858,
+      "mojo_source_sha256": "38d129501d851520b858c560ab544bb3e772e0ab14881daecadf30004fc32aeb",
+      "mojo_build_seconds": 0.45541810989379883
+    },
+    "t4_g8_w64_u1_p32": {
+      "sha256": "f06aaf9b224b3779506755f38251335ef00d0ca197491d617f46f49ca514291f",
+      "bytes": 27823,
+      "mojo_source_sha256": "212609888fd90be6cc9688d2ad506ecd1a7440f948ee8f729b5ec62bc378c3f0",
+      "mojo_build_seconds": 2.0343849658966064
+    }
+  },
+  "host_source_sha256": "081c175fae7c46e1a01e20ad07c1a4d97cde163a191e713d0e6ba3147f3065d1",
+  "generator_source_sha256": "659a9d77adb1b32f76eac77213417cba00c5891ff0b8b650f20633ddeb1621ee",
+  "compiler_sha256": "9c116377fb9f4a8a6c4897f5e1a1caf231740f911c80e53500ea412726c698ab",
+  "package_sha256": {
+    "std.mojoc": "cde1309e2782aeaa6d076f2286e30a1d333c55b915edbb62f28f5a01dc88a09c",
+    "max.mojoc": "3dcc4fb607f7a5563d3694124d3870ad7ab7043e762aa460635e0d31bad55ab3"
+  },
+  "host_sha256": "f565a470f735951ab058cc74ce1914401a5c084f9710c84e5b17e0d55dd4d2ad"
+}

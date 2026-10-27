@@ -40,6 +40,7 @@ from ._trait import (
 from .cuda import CudaMaxPlugin
 from .hip import HipMaxPlugin
 from .metal import MetalMaxPlugin
+from .opencl.opencl_plugin import OpenCLMaxPlugin
 
 from std.collections.string.string_span import _get_kgen_string
 from std.sys.info import CompilationTarget
@@ -58,7 +59,7 @@ struct _NoMaxPlugin(MaxPlugin):
 
 
 comptime _BUILTIN_MAX_PLUGINS = PluginSelector[
-    Trait=MaxPlugin, CudaMaxPlugin, HipMaxPlugin, MetalMaxPlugin
+    Trait=MaxPlugin, CudaMaxPlugin, HipMaxPlugin, MetalMaxPlugin, OpenCLMaxPlugin
 ]
 
 comptime _payload_plugin[target: CompilationTarget]: MaxPlugin = (

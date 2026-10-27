@@ -1,0 +1,74 @@
+[
+  {
+    "round": 0,
+    "name": "baseline",
+    "tok_s": 67.74,
+    "log": "logs/normalization-selection/generate-gpu-1792968408457806000.log"
+  },
+  {
+    "round": 0,
+    "name": "norms",
+    "tok_s": 70.72,
+    "log": "logs/normalization-selection/generate-gpu-1792968419531452000.log"
+  },
+  {
+    "round": 0,
+    "name": "norms_hvx",
+    "tok_s": 70.47,
+    "log": "logs/normalization-selection/generate-lut-prefetch-1792968430593569000.log"
+  },
+  {
+    "round": 1,
+    "name": "norms_hvx",
+    "tok_s": 71.05,
+    "log": "logs/normalization-selection/generate-lut-prefetch-1792968441835446000.log"
+  },
+  {
+    "round": 1,
+    "name": "norms",
+    "tok_s": 68.47,
+    "log": "logs/normalization-selection/generate-gpu-1792968453106854000.log"
+  },
+  {
+    "round": 1,
+    "name": "baseline",
+    "tok_s": 69.01,
+    "log": "logs/normalization-selection/generate-gpu-1792968464186194000.log"
+  },
+  {
+    "round": 2,
+    "name": "baseline",
+    "tok_s": 67.12,
+    "log": "logs/normalization-selection/generate-gpu-1792968475272541000.log"
+  },
+  {
+    "round": 2,
+    "name": "norms",
+    "tok_s": 70.81,
+    "log": "logs/normalization-selection/generate-gpu-1792968486311340000.log"
+  },
+  {
+    "round": 2,
+    "name": "norms_hvx",
+    "tok_s": 71.65,
+    "log": "logs/normalization-selection/generate-lut-prefetch-1792968497365499000.log"
+  },
+  {
+    "round": 3,
+    "name": "norms_hvx",
+    "tok_s": 70.84,
+    "log": "logs/normalization-selection/generate-lut-prefetch-1792968508594745000.log"
+  },
+  {
+    "round": 3,
+    "name": "norms",
+    "tok_s": 69.98,
+    "log": "logs/normalization-selection/generate-gpu-1792968519830561000.log"
+  },
+  {
+    "round": 3,
+    "name": "baseline",
+    "tok_s": 67.58,
+    "log": "logs/normalization-selection/generate-gpu-1792968530878969000.log"
+  }
+]

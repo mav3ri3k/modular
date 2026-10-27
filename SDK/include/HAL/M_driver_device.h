@@ -65,6 +65,10 @@ typedef M_driver_status_t (*M_driver_device_get_func_ptr_t)(
  * - "name": null-terminated device name string. The value parameter is a
  *   `char *` buffer; the plugin writes up to 256 bytes including the
  *   terminator.
+ * - "arch": null-terminated compile-target architecture (for example
+ *   "gfx942" or "adreno-840"), with the same buffer contract as "name".
+ *   This is distinct from the human-readable name. Backends whose arch is
+ *   derived from attributes may return UNKNOWN_PROPERTY_NAME.
  * - "host_unified": write an `int64_t`, 1 when the device and the host draw
  *   from one physical memory pool. Hardware topology, not addressability.
  * - "max_allocation_size": write a `uint64_t`, the largest single allocation

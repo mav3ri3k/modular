@@ -1451,6 +1451,27 @@ struct DeviceBuffer[dtype: DType](
     var _device_ptr: Self._DevicePtr
     var _handle: _DeviceBufferPtr[mut=True]
 
+    @doc_hidden
+    def _opaque_allocation_view(
+        self,
+    ) -> Optional[Tuple[UInt64, UInt64, UInt64]]:
+        return None
+
+    @staticmethod
+    @doc_hidden
+    def _from_opaque_storage(
+        storage: OpaquePointer[MutUntrackedOrigin],
+    ) -> Self:
+        abort("opaque device buffers require the Mojo HAL runtime")
+
+    @staticmethod
+    @doc_hidden
+    def _borrow_pointer_like[PointerT: DevicePointerLike & TrivialRegisterPassable](
+        ctx: DeviceContext, var pointer: PointerT, size: Int
+    ) -> Self:
+        """Borrows storage without taking allocation ownership."""
+        return Self(ctx, pointer.unsafe_ptr().unsafe_bitcast[Scalar[Self.dtype]](), size, owning=False)
+
     # ===-------------------------------------------------------------------===#
     # Life cycle methods
     # ===-------------------------------------------------------------------===#

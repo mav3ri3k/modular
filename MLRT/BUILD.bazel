@@ -561,6 +561,17 @@ modular_cc_library(
 # under --config=hal-device-context, where the compiler family links it (alongside
 # Driver/CompilationDeviceImpl for PTX->cubin) in place of the DeviceContext runtime.
 modular_cc_library(
+    name = "Driver/HALDeviceArch",
+    hdrs = ["include/MLRT/Driver/DeviceContext/HALDeviceArch.h"],
+    includes = ["include"],
+    deps = [
+        ":Driver/DeviceContextAPI",
+        "//SDK:HAL",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+modular_cc_library(
     name = "Driver/CompilerDeviceArch",
     srcs = ["lib/Driver/DeviceContext/CompilerDeviceArch.cpp"],
     target_compatible_with = select({
@@ -569,10 +580,12 @@ modular_cc_library(
     }),
     visibility = [
         "//Kernels/tools/max_license/gpu-query:__pkg__",
+        "//MLRT/unittests/Driver:__pkg__",
         "//Mojo:__subpackages__",
     ],
     deps = [
         ":Driver/DeviceContextAPI",
+        ":Driver/HALDeviceArch",
         "//SDK:HAL",
         "//Support:Base",
         "@llvm-project//llvm:Support",
@@ -910,6 +923,8 @@ modular_cc_library(
     # runfiles rather than becoming a NEEDED entry on everything that can
     # compile PTX.
     data = select({
+        # The bundled NVPTX compiler targets glibc, not Android's Bionic.
+        "//:android_aarch64": [],
         "@platforms//os:linux": ["//bazel/public-patches:NVPTX"],
         "//conditions:default": [],
     }),

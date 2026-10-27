@@ -309,6 +309,9 @@ public:
       return kComptimeOpaquePointer;
     } else if (isa<MGP::DeviceContextType, ContextType>(mlirType)) {
       return kStructDeviceContext;
+    } else if (isa<StorageType>(mlirType)) {
+      return MojoValue(kStructMsTensorDataPointer)[{
+          MojoValue(kStructDType).get(kEnumDTypeInt8)}];
     } else if (isa<PointerType>(mlirType)) {
       // A raw data pointer at the MOGG-ABI stub boundary.
       return kComptimeOpaquePointer;

@@ -1,0 +1,14 @@
+--- a/cc/toolchains/args/soname_flags/BUILD
++++ b/cc/toolchains/args/soname_flags/BUILD
+@@ -33,7 +33,10 @@
+     args = ["-Wl,-soname,{runtime_solib_name}"],
+     format = {"runtime_solib_name": "//cc/toolchains/variables:runtime_solib_name"},
+     requires_not_none = "//cc/toolchains/variables:runtime_solib_name",
+-    target_compatible_with = ["@platforms//os:linux"],
++    target_compatible_with = select({
++        "@platforms//os:android": [],
++        "//conditions:default": ["@platforms//os:linux"],
++    }),
+     visibility = ["//visibility:public"],
+ )
+ 

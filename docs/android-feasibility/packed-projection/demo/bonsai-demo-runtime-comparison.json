@@ -1,0 +1,132 @@
+{
+  "serial": "DEVICE_SERIAL",
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "prompt": "What is the opposite of hot? Answer in one word.",
+  "prompt_tokens": 24,
+  "output_tokens": 96,
+  "repeats": 3,
+  "validation_included": false,
+  "token_ids_validated": true,
+  "profiling": false,
+  "cooldown_seconds": 3.0,
+  "hexagon_rows": {},
+  "hexagon_artifact_sha256": {},
+  "variants": {
+    "original_runtime": "/private/tmp/bonsai-demo-original-runtime",
+    "rebuilt_runtime": "/private/tmp/bonsai-projection-demo"
+  },
+  "artifact_sha256": {
+    "original_runtime": {
+      "runner": "d1505aa84b2c3b2a64201c87a84dabbe315de74fed92f1e57c1aff1f3441ff01",
+      "runtime/libKGENCompilerRTShared.so": "0df5efc39ccb7378c1ea44662a68edba57d07e10899f5a381a0dd435b21fed00",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "rebuilt_runtime": {
+      "runner": "d1505aa84b2c3b2a64201c87a84dabbe315de74fed92f1e57c1aff1f3441ff01",
+      "runtime/libKGENCompilerRTShared.so": "831d740faae00aa11b910fe7fdfa8dbcdba001d5ef84f1f18b10baeb02608568",
+      "runtime/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+      "runtime/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+      "hal/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+      "hal/OpenCLPlugin.so": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c",
+      "runtime/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    }
+  },
+  "runs": [
+    {
+      "variant": "original_runtime",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.394,
+      "tokens_per_second": 68.16,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/000-original_runtime.log"
+    },
+    {
+      "variant": "rebuilt_runtime",
+      "warmup": true,
+      "forwards": 95,
+      "seconds": 1.392,
+      "tokens_per_second": 68.27,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/001-rebuilt_runtime.log"
+    },
+    {
+      "variant": "original_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.403,
+      "tokens_per_second": 67.69,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/002-original_runtime.log"
+    },
+    {
+      "variant": "rebuilt_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.369,
+      "tokens_per_second": 69.42,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/003-rebuilt_runtime.log"
+    },
+    {
+      "variant": "rebuilt_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.403,
+      "tokens_per_second": 67.71,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/004-rebuilt_runtime.log"
+    },
+    {
+      "variant": "original_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.399,
+      "tokens_per_second": 67.89,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/005-original_runtime.log"
+    },
+    {
+      "variant": "original_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.408,
+      "tokens_per_second": 67.45,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/006-original_runtime.log"
+    },
+    {
+      "variant": "rebuilt_runtime",
+      "warmup": false,
+      "forwards": 95,
+      "seconds": 1.395,
+      "tokens_per_second": 68.12,
+      "max_abs_error": null,
+      "relative_l2": null,
+      "thermal_status": 0,
+      "log": "/tmp/bonsai-demo-runtime-comparison/007-rebuilt_runtime.log"
+    }
+  ],
+  "median_tokens_per_second": {
+    "original_runtime": 67.69,
+    "rebuilt_runtime": 68.12
+  }
+}

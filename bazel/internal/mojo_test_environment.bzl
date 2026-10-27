@@ -219,7 +219,6 @@ mojo_test_environment = rule(
         ),
     },
     toolchains = use_cpp_toolchain() + [
-        "@bazel_tools//tools/test:default_test_toolchain_type",
         "@rules_mojo//:toolchain_type",
     ],
     fragments = ["cpp"],

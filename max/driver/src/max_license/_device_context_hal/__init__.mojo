@@ -50,7 +50,7 @@ from std.utils.lock import BlockingScopedLock, BlockingSpinLock
 from std.memory import unsafe_stack_allocation
 from std.os import abort, getenv
 from std.reflection import call_location, reflect, SourceLocation
-from std.sys import bit_width_of, size_of, CompilationTarget
+from std.sys import bit_width_of, size_of, align_of, CompilationTarget
 from std.sys.info import is_gpu
 from std.time import monotonic
 from max.gpu.host._hal import (
@@ -94,6 +94,7 @@ from max.gpu.host.info import (
 )
 from max.gpu.host._legacy.func_attribute import Attribute, FuncAttribute
 from max.gpu.host import _launch_args
+from max.gpu.host._hal.plugin import M_driver_memory_view, MemoryHandle
 
 
 def _check_device_context_hal_only_supported_exec_config[
@@ -1945,6 +1946,10 @@ struct DeviceContextBase[target: CompilationTarget = default_accelerator()](
         CUDA's default cap is 48KB minus the kernel's static shared memory, so
         the cap is set for every request, not only past a threshold.
         """
+        comptime if default_accelerator().is_triple["aarch64-unknown-opencl"]():
+            # OpenCL allocates the local argument at dispatch and validates the
+            # device limit there; it has no CUDA-style per-function opt-in cap.
+            return func_attribute
         var requested_bytes = shared_mem_bytes.or_else(0)
         if func_attribute or requested_bytes <= 0:
             return func_attribute
@@ -2707,20 +2712,50 @@ struct DeviceFunction[
 
         var translated_arg_offsets = validated_args[1].copy()
 
+        def calculate_arg_alignment() -> Int:
+            var result = 8
+            comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                comptime for i in range(num_encoded):
+                    comptime T = Ts[i].device_type
+                    result = max(
+                        result,
+                        max(align_of[T](), align_of[T, target=Self._target]()),
+                    )
+                comptime for i in range(extra_host_count):
+                    comptime T = HostArgs[i]
+                    result = max(
+                        result,
+                        max(align_of[T](), align_of[T, target=Self._target]()),
+                    )
+            return result
+
+        comptime arg_alignment = calculate_arg_alignment()
+
         def calculate_args_size() -> Int:
-            var tmp_args_size = 8  # reserve 8 extra bytes for alignment
+            var tmp_args_size = arg_alignment
             comptime for i in range(num_encoded):
                 comptime actual_arg_type = Ts[i]
-                tmp_args_size += align_up(
-                    size_of[actual_arg_type.device_type](), 8
-                )
+                comptime size = size_of[actual_arg_type.device_type]()
+                comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                    tmp_args_size += align_up(
+                        4 * align_up(size, 8), arg_alignment
+                    )
+                else:
+                    tmp_args_size += align_up(size, 8)
+            comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                comptime for i in range(extra_host_count):
+                    tmp_args_size += align_up(
+                        4 * align_up(size_of[HostArgs[i]](), 8), arg_alignment
+                    )
             return tmp_args_size
 
         comptime args_size = calculate_args_size()
 
         var translated_args = Array[Byte, args_size](uninitialized=True)
+        comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+            translated_args = Array[Byte, args_size](fill=0)
         var start_addr = Int(translated_args.unsafe_ptr())
-        var extra_align = align_up(start_addr, 8) - start_addr
+        var extra_align = align_up(start_addr, arg_alignment) - start_addr
 
         # Allocation made at function scope to outlive the enqueue, otherwise
         # the stack bytes are free to be reused immediately. A kernel may take
@@ -2737,6 +2772,7 @@ struct DeviceFunction[
         ]()
 
         var translated_arg_idx = 0
+        var opencl_offset = 0
 
         var device_type_encoder = DefaultDeviceTypeEncoder()
 
@@ -2744,11 +2780,20 @@ struct DeviceFunction[
             var translated_arg_offset = translated_arg_offsets[i]
             if translated_arg_offset >= 0:
                 comptime actual_arg_type = Ts[i]
+                comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                    translated_arg_offset = opencl_offset
                 var first_word_addr = Pointer(
                     to=translated_args.unsafe_ptr()[
                         unsafe_offset=translated_arg_offset + extra_align
                     ]
                 ).unsafe_bitcast[NoneType]()
+                device_type_encoder._payload_size = align_up(
+                    size_of[actual_arg_type.device_type, target=Self._target](),
+                    8,
+                )
+                device_type_encoder._argument_start = UInt64(
+                    Int(first_word_addr)
+                )
                 args[i]._to_device_type(device_type_encoder, first_word_addr)
                 dense_args_addrs[
                     unsafe_offset=translated_arg_idx
@@ -2759,6 +2804,14 @@ struct DeviceFunction[
                         target=device_type_encoder.target(),
                     ]()
                 )
+                comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                    dense_args_sizes[unsafe_offset=translated_arg_idx] = UInt64(
+                        4 * device_type_encoder._payload_size
+                    )
+                    opencl_offset += align_up(
+                        4 * align_up(size_of[actual_arg_type.device_type](), 8),
+                        arg_alignment,
+                    )
                 translated_arg_idx += 1
 
         comptime for i in range(extra_host_count):
@@ -2774,8 +2827,30 @@ struct DeviceFunction[
                 .as_unsafe_any_origin()
             )
 
+            comptime if Self._target.is_triple["aarch64-unknown-opencl"]():
+                addr = (
+                    translated_args.unsafe_ptr()
+                    .unsafe_offset(opencl_offset + extra_align)
+                    .unsafe_bitcast[NoneType]()
+                    .as_unsafe_any_origin()
+                )
+                device_type_encoder._argument_start = UInt64(Int(addr))
+                device_type_encoder._payload_size = align_up(
+                    size_of[HostArgs[i], target=Self._target](), 8
+                )
+                comptime if conforms_to(HostArgs[i], DevicePassable):
+                    host_args[i]._to_device_type(device_type_encoder, addr)
+                else:
+                    device_type_encoder.encode(host_args[i], addr)
+                dense_args_sizes[unsafe_offset=translated_arg_idx] = UInt64(
+                    4 * device_type_encoder._payload_size
+                )
+                opencl_offset += align_up(4 * align_up(size, 8), arg_alignment)
+            else:
+                dense_args_sizes[unsafe_offset=translated_arg_idx] = UInt64(
+                    size
+                )
             dense_args_addrs[unsafe_offset=translated_arg_idx] = addr
-            dense_args_sizes[unsafe_offset=translated_arg_idx] = UInt64(size)
             translated_arg_idx += 1
 
         # Kernels that use `with PDL()` emit `griddepcontrol` instructions and
@@ -3915,6 +3990,7 @@ struct _HALBufferInner(Movable):
     # Same, for `DeviceBuffer` views over a `HostBuffer`'s pinned allocation,
     # which the HAL C exports create for the C++ `DeviceContext`.
     var _parent_host: List[ArcPointer[_HostBufferInner]]
+    var _opaque: Bool
 
     def __deinit__(deinit self):
         try:
@@ -3977,7 +4053,9 @@ struct DeviceBuffer[dtype: DType](
         self._device_ptr = Self._DevicePtr(unsafe_from_address=Int(addr))
         self._ctx = ctx
         self._inner = ArcPointer(
-            _HALBufferInner(buffer^, ctx._context, addr, [], [])
+            _HALBufferInner(
+                buffer^, ctx._context, addr, [], [], ctx.api() == "opencl"
+            )
         )
 
     @doc_hidden
@@ -4019,10 +4097,84 @@ struct DeviceBuffer[dtype: DType](
             self._device_ptr = Self._DevicePtr(unsafe_from_address=Int(addr))
             self._ctx = ctx
             self._inner = ArcPointer(
-                _HALBufferInner(buffer^, ctx._context, addr, [], [])
+                _HALBufferInner(
+                    buffer^, ctx._context, addr, [], [], ctx.api() == "opencl"
+                )
             )
         except e:
             abort(String(t"DeviceBuffer: failed to wrap external memory: {e}"))
+
+    @doc_hidden
+    def __init__(
+        out self,
+        ctx: DeviceContext,
+        var buffer: Buffer[get_device_spec[0]()],
+        address: UInt64,
+        *,
+        opaque: Bool,
+    ):
+        """Constructs a non-owning view over an existing allocation handle."""
+        self._device_ptr = Self._DevicePtr(unsafe_from_address=Int(address))
+        self._ctx = ctx
+        self._inner = ArcPointer(
+            _HALBufferInner(buffer^, ctx._context, address, [], [], opaque)
+        )
+
+    @staticmethod
+    @doc_hidden
+    def _borrow_pointer_like[
+        PointerT: DevicePointerLike & TrivialRegisterPassable
+    ](ctx: DeviceContext, var pointer: PointerT, size: Int) -> Self:
+        """Borrows a pointer or opaque view without acquiring allocation ownership.
+
+        The original allocation must outlive this buffer and queued uses.
+        """
+        var view = pointer._buffer_view()
+        if view:
+            var parts = view.value()
+            if size < 0 or UInt64(size) > parts[2] // UInt64(
+                size_of[Self.dtype]()
+            ):
+                abort("DeviceBuffer: borrowed view is out of range")
+            return Self._borrow_allocation_view(
+                ctx,
+                (
+                    parts[0],
+                    parts[1],
+                    UInt64(size) * UInt64(size_of[Self.dtype]()),
+                ),
+            )
+        return Self(
+            ctx,
+            pointer.unsafe_ptr().unsafe_bitcast[Scalar[Self.dtype]](),
+            size,
+            owning=False,
+        )
+
+    @staticmethod
+    @doc_hidden
+    def _borrow_allocation_view(
+        ctx: DeviceContext, view: Tuple[UInt64, UInt64, UInt64]
+    ) -> Self:
+        """Borrows an SDK allocation view; its owner must outlive queued uses.
+        """
+        var buffer = Buffer[get_device_spec[0]()](
+            _handle=MemoryHandle(unsafe_from_address=Int(view[0])),
+            byte_size=view[2],
+            is_host_pinned=False,
+            _context=ctx._context,
+            _extensions=ctx._context[]._extensions,
+            _byte_offset=view[1],
+            _is_view=True,
+        )
+        var addr = UInt64(0)
+        var opaque = ctx.api() == "opencl"
+        if not opaque:
+            try:
+                addr = ctx._context[].memory_get_address(buffer) + view[1]
+            except e:
+                abort(String("DeviceBuffer: cannot resolve borrowed view: ", e))
+        return Self(ctx, buffer^, addr, opaque=opaque)
 
     @staticmethod
     @doc_hidden
@@ -4032,6 +4184,29 @@ struct DeviceBuffer[dtype: DType](
             Self._DevicePtr.unsafe_dangling(),
             0,
             owning=False,
+        )
+
+    @doc_hidden
+    def __init__(
+        out self,
+        ctx: DeviceContext,
+        var buffer: Buffer[get_device_spec[0]()],
+        parent: ArcPointer[_HALBufferInner],
+    ):
+        """Constructs an opaque allocation view while retaining its owner."""
+        self._ctx = ctx
+        self._device_ptr = Self._DevicePtr(
+            unsafe_from_address=Int(parent[]._device_addr)
+        )
+        self._inner = ArcPointer(
+            _HALBufferInner(
+                buffer^,
+                ctx._context,
+                parent[]._device_addr,
+                [parent],
+                [],
+                parent[]._opaque,
+            )
         )
 
     # ===-------------------------------------------------------------------===#
@@ -4102,7 +4277,8 @@ struct DeviceBuffer[dtype: DType](
             A `DevicePointer` referencing offset 0 of this buffer.
 
         Raises:
-            If this buffer has size 0.
+            If this buffer has size 0 on a raw-address backend. OpenCL can
+            encode an empty allocation view for a zero-work kernel.
         """
         comptime assert not is_gpu(), "DeviceBuffer is not supported on GPUs"
         return DevicePointer[Self.dtype, origin_of(self)](self)
@@ -4117,6 +4293,36 @@ struct DeviceBuffer[dtype: DType](
             The device context associated with this buffer.
         """
         return self._ctx
+
+    @doc_hidden
+    def _opaque_allocation_view(
+        self,
+    ) -> Optional[Tuple[UInt64, UInt64, UInt64]]:
+        if not self._inner[]._opaque:
+            return None
+        ref buffer = self._inner[]._buffer
+        return (
+            UInt64(Int(buffer._handle)),
+            buffer._byte_offset,
+            buffer.byte_size,
+        )
+
+    @staticmethod
+    @doc_hidden
+    def _from_opaque_storage(
+        storage: OpaquePointer[MutUntrackedOrigin],
+    ) -> Self:
+        var box = external_call[
+            "AsyncRT_AsyncValue_cloneDeviceBufferBox",
+            Pointer[Self, MutUntrackedOrigin],
+        ](storage)
+        var result = box.unsafe_take_pointee()
+        dealloc(
+            ThinAllocation(unsafe_owned_ptr=box).unsafe_with_layout(
+                Layout[Self].single()
+            )
+        )
+        return result^
 
     @doc_hidden
     @inline(.always)
@@ -4147,6 +4353,8 @@ struct DeviceBuffer[dtype: DType](
         Returns:
             The raw device pointer that was owned by this buffer.
         """
+        if self._inner[]._opaque:
+            abort("OpenCL buffers have no transferable raw device pointer")
         # Ownership of the underlying allocation transfers to the caller: the
         # wrapper handle (freed when the last reference drops) no longer frees
         # the memory.
@@ -4197,10 +4405,28 @@ struct DeviceBuffer[dtype: DType](
             If the operation fails.
         """
         comptime elem_size = size_of[view_type]()
+        var max_elems = Int(self._inner[]._buffer.byte_size) // elem_size
+        if (
+            offset < 0
+            or size < 0
+            or size > max_elems
+            or offset > max_elems - size
+        ):
+            raise Error("create_sub_buffer: view is out of range")
         var byte_offset = UInt64(offset * elem_size)
         var byte_size = UInt64(size * elem_size)
-        if byte_offset + byte_size > self._inner[]._buffer.byte_size:
-            raise Error("create_sub_buffer: view is out of range")
+        if self._inner[]._opaque:
+            ref parent = self._inner[]._buffer
+            var buffer = Buffer[get_device_spec[0]()](
+                _handle=parent._handle,
+                byte_size=byte_size,
+                is_host_pinned=False,
+                _context=parent._context,
+                _extensions=parent._extensions,
+                _byte_offset=parent._byte_offset + byte_offset,
+                _is_view=True,
+            )
+            return DeviceBuffer[view_type](self._ctx, buffer^, self._inner)
         var view = DeviceBuffer[view_type](
             self._ctx,
             Pointer[Scalar[view_type], MutUntrackedOrigin](
@@ -4227,6 +4453,11 @@ struct DeviceBuffer[dtype: DType](
         Returns:
             The raw device pointer owned by this buffer.
         """
+        if self._inner[]._opaque:
+            abort(
+                "OpenCL buffers have no raw device address; use device_ptr for"
+                " launches"
+            )
         return self._device_ptr
 
     def _tensor_map_encode_tiled(
@@ -4941,6 +5172,12 @@ struct DefaultDeviceTypeEncoder(DeviceTypeEncoder):
     """Provides a default implementation of the `DeviceTypeEncoder` trait."""
 
     comptime _raw_mlir_target = _device_type_encoder_target()
+    var _payload_size: Int
+    var _argument_start: UInt64
+
+    def __init__(out self):
+        self._payload_size = 0
+        self._argument_start = 0
 
     def encode_device_ptr[
         DevicePointerType: DevicePointerLike
@@ -4954,7 +5191,32 @@ struct DefaultDeviceTypeEncoder(DeviceTypeEncoder):
             value: The device pointer to encode.
             dst: The opaque destination pointer to encode into.
         """
-        value.unsafe_ptr()._to_device_type(self, dst)
+        comptime if Self.target().is_triple["aarch64-unknown-opencl"]():
+            var offset = Int(dst) - Int(self._argument_start)
+            if offset < 0 or offset % 8 or offset + 8 > self._payload_size:
+                abort("OpenCL pointer field is outside its aggregate payload")
+            var view = value._buffer_view()
+            if not view:
+                abort(
+                    String(
+                        "OpenCL kernel pointer has no allocation view: ",
+                        reflect[DevicePointerType].name(),
+                        " at payload offset ",
+                        offset,
+                    )
+                )
+            var parts = view.value()
+            dst.unsafe_bitcast[Byte]().unsafe_offset(
+                self._payload_size + 2 * offset
+            ).unsafe_bitcast[M_driver_memory_view]().unsafe_write(
+                M_driver_memory_view(
+                    MemoryHandle(unsafe_from_address=Int(parts[0])),
+                    parts[1],
+                    parts[2],
+                )
+            )
+        else:
+            value.unsafe_ptr()._to_device_type(self, dst)
 
 
 # ===-----------------------------------------------------------------------===#
@@ -5003,6 +5265,9 @@ struct DevicePointer[
     var _offset: Int
     var _size: Int
 
+    def _has_raw_address(ref self) -> Bool:
+        return not self._buffer[]._inner[]._opaque
+
     comptime PointeeType: AnyType = Scalar[Self.dtype]
     """DevicePointerLike encoded pointer pointee type."""
 
@@ -5020,10 +5285,14 @@ struct DevicePointer[
                 the resulting `DevicePointer`.
 
         Raises:
-            If `buffer` has size 0.
+            If `buffer` has size 0 on a raw-address backend. OpenCL retains
+            the allocation's opaque handle even for a zero-length view.
         """
         var size = len(buffer)
-        if size == 0:
+        if (
+            size == 0
+            and not default_accelerator().is_triple["aarch64-unknown-opencl"]()
+        ):
             raise Error("DevicePointer: size of DeviceBuffer must not be 0")
         self._buffer = Pointer(to=buffer)
         self._offset = 0
@@ -5078,6 +5347,32 @@ struct DevicePointer[
             The element offset.
         """
         return self._offset
+
+    def _buffer_view(
+        ref self,
+    ) -> Optional[Tuple[UInt64, UInt64, UInt64]]:
+        """Borrows the allocation and range without manufacturing a GPU address.
+        """
+        ref buffer = self._buffer[]._inner[]._buffer
+        var offset = UInt64(self._offset * size_of[Self.dtype]())
+        return Optional(
+            (
+                UInt64(Int(buffer._handle)),
+                buffer._byte_offset + offset,
+                buffer.byte_size - offset,
+            )
+        )
+
+    def _allocation_identity(self) -> UInt64:
+        comptime if default_accelerator().is_triple["aarch64-unknown-opencl"]():
+            return UInt64(Int(self._buffer[]._inner[]._buffer._handle))
+        return UInt64(Int(self._buffer[]._device_ptr))
+
+    def _byte_position(self) -> UInt64:
+        var offset = UInt64(self._offset * size_of[Self.dtype]())
+        comptime if default_accelerator().is_triple["aarch64-unknown-opencl"]():
+            return self._buffer[]._inner[]._buffer._byte_offset + offset
+        return offset
 
     @doc_hidden
     def unsafe_ptr(
@@ -5299,8 +5594,8 @@ struct DevicePointer[
         """
         # Buffer identity = base device address (HAL buffers have no C++ handle).
         return (
-            self._buffer[]._device_ptr == other._buffer[]._device_ptr
-            and self._offset == other._offset
+            self._allocation_identity() == other._allocation_identity()
+            and self._byte_position() == other._byte_position()
         )
 
     @__unsafe_nested_origins_read_only
@@ -5315,8 +5610,8 @@ struct DevicePointer[
             `True` if equal.
         """
         return (
-            self._buffer[]._device_ptr == other._buffer[]._device_ptr
-            and self._offset == other._offset
+            self._allocation_identity() == other._allocation_identity()
+            and self._byte_position() == other._byte_position()
         )
 
     @__unsafe_nested_origins_read_only
@@ -5356,12 +5651,12 @@ struct DevicePointer[
         Raises:
             If `self` and `other` reference different `DeviceBuffer`s.
         """
-        if self._buffer[]._device_ptr != other._buffer[]._device_ptr:
+        if self._allocation_identity() != other._allocation_identity():
             raise Error(
                 "DevicePointer: less than comparison not supported when the"
                 " underlying DeviceBuffer does not match"
             )
-        return self._offset < other._offset
+        return self._byte_position() < other._byte_position()
 
     @__unsafe_nested_origins_read_only
     def __le__(self, other: DevicePointer[Self.dtype, _]) raises -> Bool:
@@ -5377,12 +5672,12 @@ struct DevicePointer[
         Raises:
             If `self` and `other` reference different `DeviceBuffer`s.
         """
-        if self._buffer[]._device_ptr != other._buffer[]._device_ptr:
+        if self._allocation_identity() != other._allocation_identity():
             raise Error(
                 "DevicePointer: less than or equal comparison not supported"
                 " when the underlying DeviceBuffer does not match"
             )
-        return self._offset <= other._offset
+        return self._byte_position() <= other._byte_position()
 
     @__unsafe_nested_origins_read_only
     def __gt__(self, other: DevicePointer[Self.dtype, _]) raises -> Bool:
@@ -5397,12 +5692,12 @@ struct DevicePointer[
         Raises:
             If `self` and `other` reference different `DeviceBuffer`s.
         """
-        if self._buffer[]._device_ptr != other._buffer[]._device_ptr:
+        if self._allocation_identity() != other._allocation_identity():
             raise Error(
                 "DevicePointer: greater than comparison not supported when the"
                 " underlying DeviceBuffer does not match"
             )
-        return self._offset > other._offset
+        return self._byte_position() > other._byte_position()
 
     @__unsafe_nested_origins_read_only
     def __ge__(self, other: DevicePointer[Self.dtype, _]) raises -> Bool:
@@ -5418,12 +5713,12 @@ struct DevicePointer[
         Raises:
             If `self` and `other` reference different `DeviceBuffer`s.
         """
-        if self._buffer[]._device_ptr != other._buffer[]._device_ptr:
+        if self._allocation_identity() != other._allocation_identity():
             raise Error(
                 "DevicePointer: greater than or equal comparison not supported"
                 " when the underlying DeviceBuffer does not match"
             )
-        return self._offset >= other._offset
+        return self._byte_position() >= other._byte_position()
 
     # ===------------------------------------------------------------------=== #
     # Writable

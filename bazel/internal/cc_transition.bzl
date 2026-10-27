@@ -1,13 +1,18 @@
 """Transition that runs the Mojo build action with the production compiler under asan.
 
-Applied to the `_mojo_override` compiler attribute of
-`_transitioned_mojo_library` / `_transitioned_mojo_shared_library` (gated behind
+Applied inside the `production_mojo_compiler` alias selected by the
+`_mojo_override` attribute of `_transitioned_mojo_library` /
+`_transitioned_mojo_shared_library` (gated behind
 `use_production_compiler_for_asan`), this flips `//:modular_config` to
 `production` ONLY when the incoming config is `asan`. Under `--config=asan` the
 Mojo build action then runs the *non-instrumented* compiler -- fast -- while
 producing the same artifact (a `.mojoc` / object is config-invariant: neither
 `mojo precompile` nor `mojo build` is passed `--sanitize`), instead of the
 ASAN-instrumented compiler that makes asan builds slow.
+
+The override first selects the execution configuration, so cross builds run a
+compiler for the build machine. The alias then applies this attribute transition
+to compiler instrumentation. Target libraries never change configuration.
 
 It is an ATTRIBUTE transition, not a rule-level `cfg`, and that distinction is
 load-bearing. A rule-level `cfg` reconfigures the target and everything beneath
@@ -72,4 +77,32 @@ cc_transition = transition(
     outputs = [
         "//:modular_config",
     ],
+)
+
+def _production_mojo_compiler_impl(ctx):
+    compiler = ctx.attr.compiler[0]
+    executable = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.symlink(
+        output = executable,
+        target_file = ctx.executable.compiler,
+        is_executable = True,
+    )
+    return [DefaultInfo(
+        executable = executable,
+        runfiles = ctx.runfiles(files = [ctx.executable.compiler]).merge(
+            compiler[DefaultInfo].default_runfiles,
+        ),
+    )]
+
+production_mojo_compiler = rule(
+    implementation = _production_mojo_compiler_impl,
+    attrs = {
+        "compiler": attr.label(
+            default = Label("//Mojo/tools/mojo"),
+            executable = True,
+            cfg = cc_transition,
+        ),
+        "new_config": attr.string(mandatory = True),
+    },
+    doc = "Selects compiler instrumentation after selecting the execution platform.",
 )

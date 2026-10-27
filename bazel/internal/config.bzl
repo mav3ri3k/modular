@@ -287,6 +287,7 @@ def env_for_available_tools(
     # no longer points at an unpacked prebuilt wheel — only the debug-server path is set.
     os_specifics = select({
         "@platforms//os:linux": {"LLDB_DEBUGSERVER_PATH": build_path(Label("@llvm-project//lldb:lldb-server"), lambda x: x)},
+        "@platforms//os:android": {"LLDB_DEBUGSERVER_PATH": build_path(Label("@llvm-project//lldb:lldb-server"), lambda x: x)},
         "@platforms//os:macos": {"LLDB_DEBUGSERVER_PATH": build_path(Label("@llvm-project//lldb:debugserver"), lambda x: x)},
     })
     if os == "linux_x86_64":

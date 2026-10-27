@@ -1,0 +1,584 @@
+{
+  "baseline_profile": {
+    "calls": 599,
+    "span_ms": 16.604347826086958,
+    "gpu_ms": 15.864,
+    "groups_ms": {
+      "GatedNorm": 0.2535217391304348,
+      "rowwise": 1.1569999999999998,
+      "HeadRope": 0.31482608695652187,
+      "NormalizeQk": 0.23626086956521736,
+      "Hadamard": 0.42782608695652175,
+      "AttentionScores": 0.27217391304347827,
+      "AttentionValues": 0.10360869565217393,
+      "Embedding": 0.016043478260869576,
+      "GatePartials": 0.3984347826086957,
+      "DeltaGates": 0.07165217391304347,
+      "PackedHead": 2.3082608695652174,
+      "rms": 0.31013043478260865,
+      "DeltaUpdate": 1.2719565217391304,
+      "PackedLinear": 8.607217391304346,
+      "CacheKv": 0.013043478260869571,
+      "Convolve": 0.10160869565217394
+    }
+  },
+  "selected_profile": {
+    "calls": 599,
+    "span_ms": 14.592391304347826,
+    "gpu_ms": 12.940739130434782,
+    "groups_ms": {
+      "GatedNorm": 0.2629565217391304,
+      "rowwise": 0.3835217391304347,
+      "HeadRope": 0.31447826086956526,
+      "NormalizeQk": 0.2476086956521739,
+      "Hadamard": 0.4259130434782609,
+      "AttentionScores": 0.2692608695652174,
+      "AttentionValues": 0.10200000000000001,
+      "Embedding": 0.015652173913043486,
+      "GatePartials": 0.3832608695652174,
+      "DeltaGates": 0.0714782608695652,
+      "PackedHead": 2.2728260869565218,
+      "rms": 0.3085652173913044,
+      "DeltaUpdate": 0.6234347826086957,
+      "PackedLinear": 7.147478260869565,
+      "CacheKv": 0.013043478260869571,
+      "Convolve": 0.09908695652173913
+    }
+  },
+  "normal_decode_counters": {
+    "forwards": 95,
+    "read_bytes_per_token": 546190364.6315789,
+    "write_bytes_per_token": 32460848.842105262,
+    "raw": {
+      "A8XX_PERF_SP_BUSY_CYCLES": 15855327215,
+      "A8XX_PERF_SP_NON_EXECUTION_CYCLES": 2044851068,
+      "A8XX_PERF_SP_WAVE_CONTEXTS": 79503967283,
+      "A8XX_PERF_SP_WAVE_CONTEXT_CYCLES": 15855327215,
+      "A8XX_PERF_SP_ICL1_REQUESTS": 2887475709,
+      "A8XX_PERF_SP_GPR_READ": 12014289793,
+      "A8XX_PERF_SP_GPR_WRITE": 14862171718,
+      "A8XX_PERF_SP_SEQUENCER_WORKING_CYCLES": 8109186361,
+      "A8XX_PERF_SP_STARVE_CYCLES_HLSQ": 3714521483,
+      "A8XX_PERF_SP_NON_EXECUTION_LS_CYCLES": 1696914022,
+      "A8XX_PERF_SP_GPR_READ_PREFETCH": 1359082998,
+      "A8XX_PERF_SP_GPR_READ_CONFLICT": 212972374,
+      "A8XX_PERF_SP_GPR_WRITE_CONFLICT": 712932874,
+      "A8XX_PERF_SP_EXECUTABLE_WAVES": 75997868278,
+      "A8XX_PERF_SP_FS_STAGE_1X_WAVES": 3229200,
+      "A8XX_PERF_SP_CS_INVOCATIONS": 207708928,
+      "A8XX_PERF_SP_ALU_GPR_READ_CYCLES": 10235488141,
+      "A8XX_PERF_SP_ALU_DATA_FORWARDING_CYCLES": 4658253744,
+      "A8XX_PERF_SP_BRANCH_TAKEN": 59407428,
+      "A8XX_PERF_SP_BRANCH_NOT_TAKEN": 22389653,
+      "A8XX_PERF_SP_BRANCH_INS_COUNT": 78767886,
+      "A8XX_PERF_GBIF_AXI0_READ_DATA_BEATS_TOTAL": 810943951,
+      "A8XX_PERF_GBIF_AXI1_READ_DATA_BEATS_TOTAL": 810558694,
+      "A8XX_PERF_GBIF_AXI0_WRITE_DATA_BEATS_TOTAL": 48232923,
+      "A8XX_PERF_GBIF_AXI1_WRITE_DATA_BEATS_TOTAL": 48135222
+    }
+  },
+  "kernel_capture": {
+    "forwards": 2,
+    "dispatches": 1198,
+    "launched_threads": 4368640,
+    "counter_threads": 4368640,
+    "families": {
+      "Embedding": {
+        "calls": 2,
+        "read_bytes": 75072,
+        "write_bytes": 25920,
+        "context_sum": 642104,
+        "context_cycles": 326558,
+        "private_bytes": [
+          112
+        ],
+        "calls_per_token": 1.0,
+        "read_MB_per_token": 0.037536,
+        "write_MB_per_token": 0.01296,
+        "resident_contexts": 1.966278578384238
+      },
+      "Hadamard": {
+        "calls": 196,
+        "read_bytes": 8353536,
+        "write_bytes": 4461600,
+        "context_sum": 3748804,
+        "context_cycles": 3748804,
+        "private_bytes": [
+          224,
+          368
+        ],
+        "calls_per_token": 98.0,
+        "read_MB_per_token": 4.176768,
+        "write_MB_per_token": 2.2308,
+        "resident_contexts": 1.0
+      },
+      "rowwise_warp_t1_r1_ax0_w4_bs256_a80f148d": {
+        "calls": 2,
+        "read_bytes": 58816,
+        "write_bytes": 25184,
+        "context_sum": 12882,
+        "context_cycles": 8036,
+        "private_bytes": [
+          400
+        ],
+        "calls_per_token": 1.0,
+        "read_MB_per_token": 0.029408,
+        "write_MB_per_token": 0.012592,
+        "resident_contexts": 1.6030363364858138
+      },
+      "GatePartials": {
+        "calls": 36,
+        "read_bytes": 10169472,
+        "write_bytes": 308704,
+        "context_sum": 13607576,
+        "context_cycles": 10186879,
+        "private_bytes": [
+          96
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 5.084736,
+        "write_MB_per_token": 0.154352,
+        "resident_contexts": 1.335794407688557
+      },
+      "DeltaGates": {
+        "calls": 36,
+        "read_bytes": 801024,
+        "write_bytes": 170400,
+        "context_sum": 91834,
+        "context_cycles": 91834,
+        "private_bytes": [
+          240
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 0.400512,
+        "write_MB_per_token": 0.0852,
+        "resident_contexts": 1.0
+      },
+      "PackedLinear": {
+        "calls": 300,
+        "read_bytes": 737009184,
+        "write_bytes": 12067328,
+        "context_sum": 1023667140,
+        "context_cycles": 195290717,
+        "private_bytes": [
+          528
+        ],
+        "calls_per_token": 150.0,
+        "read_MB_per_token": 368.504592,
+        "write_MB_per_token": 6.033664,
+        "resident_contexts": 5.241760364882064
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_5a45cc43": {
+        "calls": 84,
+        "read_bytes": 2314016,
+        "write_bytes": 1064448,
+        "context_sum": 514829,
+        "context_cycles": 514829,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 42.0,
+        "read_MB_per_token": 1.157008,
+        "write_MB_per_token": 0.532224,
+        "resident_contexts": 1.0
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_ba4c4b15": {
+        "calls": 84,
+        "read_bytes": 5072064,
+        "write_bytes": 2442144,
+        "context_sum": 2264873,
+        "context_cycles": 1316924,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 42.0,
+        "read_MB_per_token": 2.536032,
+        "write_MB_per_token": 1.221072,
+        "resident_contexts": 1.7198205819014614
+      },
+      "Convolve": {
+        "calls": 36,
+        "read_bytes": 7510208,
+        "write_bytes": 3699840,
+        "context_sum": 14669243,
+        "context_cycles": 1974357,
+        "private_bytes": [
+          128
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 3.755104,
+        "write_MB_per_token": 1.84992,
+        "resident_contexts": 7.4298837545590795
+      },
+      "NormalizeQk": {
+        "calls": 36,
+        "read_bytes": 1309472,
+        "write_bytes": 1046368,
+        "context_sum": 34939463,
+        "context_cycles": 6571975,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 0.654736,
+        "write_MB_per_token": 0.523184,
+        "resident_contexts": 5.316432731408747
+      },
+      "DeltaUpdate": {
+        "calls": 36,
+        "read_bytes": 39359072,
+        "write_bytes": 38533824,
+        "context_sum": 118537619,
+        "context_cycles": 15849558,
+        "private_bytes": [
+          496
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 19.679536,
+        "write_MB_per_token": 19.266912,
+        "resident_contexts": 7.4789226929861385
+      },
+      "GatedNorm": {
+        "calls": 36,
+        "read_bytes": 1061312,
+        "write_bytes": 457120,
+        "context_sum": 17914637,
+        "context_cycles": 6756147,
+        "private_bytes": [
+          96
+        ],
+        "calls_per_token": 18.0,
+        "read_MB_per_token": 0.530656,
+        "write_MB_per_token": 0.22856,
+        "resident_contexts": 2.6516055674928327
+      },
+      "rms_norm_fused_residual_gpu_block_float32_False_d0fce4cf": {
+        "calls": 96,
+        "read_bytes": 4923744,
+        "write_bytes": 2003840,
+        "context_sum": 4313917,
+        "context_cycles": 556035,
+        "private_bytes": [
+          320
+        ],
+        "calls_per_token": 48.0,
+        "read_MB_per_token": 2.461872,
+        "write_MB_per_token": 1.00192,
+        "resident_contexts": 7.758355139514599
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_a62e4959": {
+        "calls": 48,
+        "read_bytes": 4101856,
+        "write_bytes": 1394656,
+        "context_sum": 1784004,
+        "context_cycles": 1043859,
+        "private_bytes": [
+          144
+        ],
+        "calls_per_token": 24.0,
+        "read_MB_per_token": 2.050928,
+        "write_MB_per_token": 0.697328,
+        "resident_contexts": 1.7090469115081635
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_90ffbe9b": {
+        "calls": 48,
+        "read_bytes": 2950880,
+        "write_bytes": 611488,
+        "context_sum": 548020,
+        "context_cycles": 548020,
+        "private_bytes": [
+          144
+        ],
+        "calls_per_token": 24.0,
+        "read_MB_per_token": 1.47544,
+        "write_MB_per_token": 0.305744,
+        "resident_contexts": 1.0
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_a2d08b5d": {
+        "calls": 24,
+        "read_bytes": 363488,
+        "write_bytes": 156448,
+        "context_sum": 30980,
+        "context_cycles": 30980,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 12.0,
+        "read_MB_per_token": 0.181744,
+        "write_MB_per_token": 0.078224,
+        "resident_contexts": 1.0
+      },
+      "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_22bd2693": {
+        "calls": 12,
+        "read_bytes": 531840,
+        "write_bytes": 250880,
+        "context_sum": 186840,
+        "context_cycles": 145007,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 6.0,
+        "read_MB_per_token": 0.26592,
+        "write_MB_per_token": 0.12544,
+        "resident_contexts": 1.2884895211955285
+      },
+      "HeadRope": {
+        "calls": 48,
+        "read_bytes": 750880,
+        "write_bytes": 369632,
+        "context_sum": 14370193,
+        "context_cycles": 7154455,
+        "private_bytes": [
+          80
+        ],
+        "calls_per_token": 24.0,
+        "read_MB_per_token": 0.37544,
+        "write_MB_per_token": 0.184816,
+        "resident_contexts": 2.008565711853663
+      },
+      "CacheKv": {
+        "calls": 12,
+        "read_bytes": 194912,
+        "write_bytes": 103904,
+        "context_sum": 72643,
+        "context_cycles": 72643,
+        "private_bytes": [
+          64
+        ],
+        "calls_per_token": 6.0,
+        "read_MB_per_token": 0.097456,
+        "write_MB_per_token": 0.051952,
+        "resident_contexts": 1.0
+      },
+      "AttentionScores": {
+        "calls": 12,
+        "read_bytes": 935584,
+        "write_bytes": 66816,
+        "context_sum": 2390392,
+        "context_cycles": 2390392,
+        "private_bytes": [
+          176
+        ],
+        "calls_per_token": 6.0,
+        "read_MB_per_token": 0.467792,
+        "write_MB_per_token": 0.033408,
+        "resident_contexts": 1.0
+      },
+      "AttentionValues": {
+        "calls": 12,
+        "read_bytes": 896192,
+        "write_bytes": 152320,
+        "context_sum": 5374407,
+        "context_cycles": 2029036,
+        "private_bytes": [
+          112
+        ],
+        "calls_per_token": 6.0,
+        "read_MB_per_token": 0.448096,
+        "write_MB_per_token": 0.07616,
+        "resident_contexts": 2.6487489625615317
+      },
+      "PackedHead": {
+        "calls": 2,
+        "read_bytes": 270290080,
+        "write_bytes": 1996064,
+        "context_sum": 392572951,
+        "context_cycles": 68224670,
+        "private_bytes": [
+          560
+        ],
+        "calls_per_token": 1.0,
+        "read_MB_per_token": 135.14504,
+        "write_MB_per_token": 0.998032,
+        "resident_contexts": 5.7541201884890025
+      }
+    }
+  },
+  "selection_runs": [
+    {
+      "variant": "bonsai-hill-max-final",
+      "warmup": true,
+      "validation": false,
+      "tok_s": 52.57,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-0.log"
+    },
+    {
+      "variant": "tune3-clean8delta8-max",
+      "warmup": true,
+      "validation": false,
+      "tok_s": 64.54,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-1.log"
+    },
+    {
+      "variant": "tune3-clean16delta8-max",
+      "warmup": true,
+      "validation": false,
+      "tok_s": 64.03,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-2.log"
+    },
+    {
+      "variant": "bonsai-hill-max-final",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 56.85,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-3.log"
+    },
+    {
+      "variant": "tune3-clean8delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 64.35,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-4.log"
+    },
+    {
+      "variant": "tune3-clean16delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 63.44,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-5.log"
+    },
+    {
+      "variant": "tune3-clean16delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 63.62,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-6.log"
+    },
+    {
+      "variant": "tune3-clean8delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 63.08,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-7.log"
+    },
+    {
+      "variant": "bonsai-hill-max-final",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 56.67,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-8.log"
+    },
+    {
+      "variant": "bonsai-hill-max-final",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 56.84,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-9.log"
+    },
+    {
+      "variant": "tune3-clean8delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 64.4,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-10.log"
+    },
+    {
+      "variant": "tune3-clean16delta8-max",
+      "warmup": false,
+      "validation": false,
+      "tok_s": 63.78,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-11.log"
+    },
+    {
+      "variant": "tune3-clean8delta8-max",
+      "warmup": true,
+      "validation": true,
+      "tok_s": 43.1,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-12.log"
+    },
+    {
+      "variant": "tune3-clean16delta8-max",
+      "warmup": true,
+      "validation": true,
+      "tok_s": 49.54,
+      "log": "/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-13.log"
+    }
+  ],
+  "final_source_verification": [
+    {
+      "label": "fixture",
+      "tokens": 0,
+      "validation": false,
+      "tok_s": null,
+      "log": "tune3-verify-fixture.log"
+    },
+    {
+      "label": "direct-generation",
+      "tokens": 96,
+      "validation": false,
+      "tok_s": 67.95,
+      "log": "tune3-verify-direct-generation.log"
+    },
+    {
+      "label": "direct-logits",
+      "tokens": 96,
+      "validation": true,
+      "tok_s": 63.02,
+      "log": "tune3-verify-direct-logits.log"
+    },
+    {
+      "label": "max-logits",
+      "tokens": 96,
+      "validation": true,
+      "tok_s": 45.93,
+      "log": "tune3-verify-max-logits.log"
+    },
+    {
+      "label": "baseline-profile",
+      "tokens": 24,
+      "validation": false,
+      "tok_s": 52.29,
+      "log": "tune3-verify-baseline-profile.log"
+    },
+    {
+      "label": "selected-profile",
+      "tokens": 24,
+      "validation": false,
+      "tok_s": 58.77,
+      "log": "tune3-verify-selected-profile.log"
+    },
+    {
+      "label": "counters",
+      "tokens": 96,
+      "validation": false,
+      "tok_s": 65.18,
+      "log": "tune3-verify-counters.log"
+    },
+    {
+      "label": "kernel-counters",
+      "tokens": 3,
+      "validation": true,
+      "tok_s": 2.5,
+      "log": "tune3-verify-kernel-counters.log"
+    }
+  ],
+  "source_sha256": {
+    "max/examples/android-llm/bonsai/kernels.mojo": "4bf1e526cd8604ff32d252ae044ad14b7097cf88b38f4164c1b54291c9477171",
+    "max/examples/android-llm/bonsai/model.mojo": "d476bee912eaa00655b94b9462ba9e6ef0767607cbcf337c22b60b086dde98e5",
+    "max/examples/android-llm/bonsai_graph/ops/model_ops.mojo": "2f378c4292199cf83dde7a0d8c2d6fbf5f877d0fe38c88babd173ea27c3b7dfe",
+    "max/examples/android-llm/bonsai_graph/export_graph.py": "883008c57888141c80c6028ae6419fe13af6fec11d44fbd5563942ff6c217ef8",
+    "max/examples/android-llm/model_spec.h": "3f3deaa8fc8a663a2abe3f3e5ffa0eb63286eaf4c4ec820c26f3fd6843379469",
+    "max/examples/android-llm/bonsai/test_packed.mojo": "9986a0277916c3849302e35c02428938374984f3d2407e77b1d389718b0e5d3e"
+  },
+  "artifact_sha256": {
+    "tune3-selected/runner": "be51afaa276f7205b8b8baec6c31e0ba864668df12bee6254150bfa74a4c9f45",
+    "tune3-selected-max/bonsai.mef": "74dc834693a5c3ab738738a7945d9649c6e5e984dde04f2128cec8965ca66de3",
+    "tune3-selected-max/graph_runner": "594f5fa6a0f6ceac72806f1e84b776ba16f8163ba11672fc7b8f5d181e89d37a",
+    "tune3-selected-max/hal/OpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e"
+  },
+  "notes": [
+    "Unprofiled selection: 3 interleaved measured cycles, 15s idle gaps, all thermal status 0.",
+    "GPU profiles: separate 23-forward captures; per-kernel counters serialize and are for attribution only.",
+    "Private bytes are not register counts or spill bytes.",
+    "Long numbers prompt: 96 IDs/all logits pass; maxabs0.0191193 relL20.000417992."
+  ],
+  "evidence_sha256": {
+    "tune3-max-round2.log": "ea64d156ff387994032c5668b397495dca30418f8fead669e1dda4ae66126bf8",
+    "tune3-verify-max-logits.log": "f195188ce9b0a7e1e734eee48379365569b8215d8622c88da66b91fdc814e760",
+    "tune3-verify-direct-logits.log": "f01e97535a38ed967525f9f20b9870166d1a58e5a703b5aa9d8fdceb61190cea",
+    "tune3-selected-long.log": "7b2847f2ca80bea747b0f293570c0e9195c38ac2433448dd591def1d794abf84",
+    "tune3-verify-counters.log": "3ef686d5b539a7db4cb8191a3a5a94f50601feff0a2d14df6e7eb502cd632b4d",
+    "tune3-verify-kernel-counters.log": "8676ed8020e0103d49a42e3775699e4404f530e395b52d1c5e74640cd47f17c5",
+    "tune3-verify-fixture.log": "655cb161d916584e139a8b069eba47f8f34260ab60728b7f4fd8746914435053"
+  }
+}

@@ -23,7 +23,7 @@ func.func @too_few(%a: !mo.tensor<[2, 2], f32>) {
 // A non-pointer where a per-tensor pointer block arg is required (a !mogg.dim
 // leads the inputs group, so body block arg #0 is not a pointer).
 func.func @not_pointer(%a: !mo.tensor<[2, 2], f32>) {
-  // expected-error @+1 {{body block argument #0 must be a !mogg.pointer}}
+  // expected-error @+1 {{body block argument #0 must be a !mogg.storage or !mogg.pointer}}
   %k = mogg.routine (%a : !mo.tensor<[2, 2], f32>) -> !mo.tensor<[2, 2], f32>
     inputs(%d : !mogg.dim, %p : !mogg.pointer)
     context(%ctx : !mogg.context) attributes {device = #M.device_ref<"gpu", 0>} {

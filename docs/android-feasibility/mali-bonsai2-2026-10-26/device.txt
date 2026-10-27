@@ -1,0 +1,9 @@
+OnePlus/CPH2717IN/OP613BL1:16/BP2A.250605.015/V.12ce21f_12f810b_12aacdd:user/release-keys
+OnePlus
+CPH2717
+MT6897
+36
+MemTotal:        7653648 kB
+MemFree:          356236 kB
+MemAvailable:    1534568 kB
+Buffers:            1612 kB

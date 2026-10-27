@@ -1,0 +1,218 @@
+[
+  {
+    "shape": "6144x2048",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.044237,
+    "samples_ms": [
+      0.044221,
+      0.044273,
+      0.044237
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.067405,
+    "samples_ms": [
+      0.067405,
+      0.06745,
+      0.067288
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.046557,
+    "samples_ms": [
+      0.046574,
+      0.046557,
+      0.046514
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.056874,
+    "samples_ms": [
+      0.056932,
+      0.056811,
+      0.056874
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.070713,
+    "samples_ms": [
+      0.070709,
+      0.070713,
+      0.070733
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.058362,
+    "samples_ms": [
+      0.058325,
+      0.058588,
+      0.058362
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.013924,
+    "samples_ms": [
+      0.013924,
+      0.013935,
+      0.013922
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.025986,
+    "samples_ms": [
+      0.025978,
+      0.025995,
+      0.025986
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.016732,
+    "samples_ms": [
+      0.016732,
+      0.016723,
+      0.016737
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.02159,
+    "samples_ms": [
+      0.021635,
+      0.02159,
+      0.02157
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.028288,
+    "samples_ms": [
+      0.028259,
+      0.028288,
+      0.028318
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.023506,
+    "samples_ms": [
+      0.023506,
+      0.023573,
+      0.023456
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "hot",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.044168,
+    "samples_ms": [
+      0.044168,
+      0.044321,
+      0.044111
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "hot",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.067358,
+    "samples_ms": [
+      0.067358,
+      0.067479,
+      0.067325
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "hot",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.04673,
+    "samples_ms": [
+      0.046715,
+      0.046767,
+      0.04673
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "load",
+    "layout": "baseline",
+    "median_mean_ms": 0.057278,
+    "samples_ms": [
+      0.057265,
+      0.057295,
+      0.057278
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "unpack",
+    "layout": "baseline",
+    "median_mean_ms": 0.070826,
+    "samples_ms": [
+      0.070836,
+      0.070826,
+      0.070669
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.058631,
+    "samples_ms": [
+      0.058836,
+      0.058631,
+      0.058582
+    ]
+  }
+]

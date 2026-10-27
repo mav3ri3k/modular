@@ -1,0 +1,11 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -332,7 +332,7 @@
+                 "-Wl,-framework,SystemConfiguration",
+             ],
+             "//conditions:default": [
+-                "-lpthread",
++                "-pthread",
+             ],
+         }),
+         linkstatic = True,

@@ -1,0 +1,22 @@
+[
+  [
+    "prism-ml/Ternary-Bonsai-2-2B-gguf",
+    "683f7be2629342a50987627b40881e54761a2430",
+    "Ternary-Bonsai-2-2B-PQ2_0.gguf"
+  ],
+  [
+    "bartowski/Qwen_Qwen3-1.7B-GGUF",
+    "dcb19155b962dbb6389f4691a982043a8e651022",
+    "Qwen_Qwen3-1.7B-Q4_K_M.gguf"
+  ],
+  [
+    "bartowski/Qwen_Qwen3.5-2B-GGUF",
+    "7d26695454df6de5fbcce2e58681e62dae06ce43",
+    "Qwen_Qwen3.5-2B-Q4_K_M.gguf"
+  ],
+  [
+    "prism-ml/Ternary-Bonsai-2-2B-gguf",
+    "683f7be2629342a50987627b40881e54761a2430",
+    "Ternary-Bonsai-2-2B-PTQ1_0.gguf"
+  ]
+]

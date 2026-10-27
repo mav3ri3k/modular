@@ -1,0 +1,18 @@
+Y 0 got 0.24127388 expected 0.24127388
+Y 1 got -0.309702396 expected -0.309702396
+Y 2 got 0.591922283 expected 0.591922283
+Y 3 got 0.145607948 expected 0.145607948
+Y 4 got -0.103656769 expected -0.103656769
+Y 5 got 0.577480793 expected 0.577480793
+Y 6 got 0.800281525 expected 0.800281525
+Y 7 got 0.68863678 expected 0.68863678
+Y 8 got 0.713425159 expected 0.713425159
+Y 9 got 0.723430634 expected 0.723430634
+Y 10 got 0.447144508 expected 0.447144508
+Y 11 got 0.627936363 expected 0.627936363
+Y 12 got 1.16111755 expected 1.16111755
+Y 13 got 0.467880249 expected 0.467880249
+Y 14 got 0.899886131 expected 0.899886131
+Y 15 got 0.201142311 expected 0.201142311
+Mojo HMX Bonsai projection 32768x2048: ms=2.503,1.108,1.155 max_abs_error=0
+PASS: real packed Bonsai weights executed on HMX

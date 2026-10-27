@@ -8,9 +8,9 @@
 // `dyn`, so MergeIdenticalFuncs sees the two stubs as identical.
 
 // CHECK-LABEL: mgp.model @dyn_batch
-// CHECK: mogg.call @[[STUB:__[A-Za-z0-9_]+]] %{{.*}} : !mogg.pointer, !mogg.pointer, !mogg.dim, !mogg.context
+// CHECK: mogg.call @[[STUB:__[A-Za-z0-9_]+]] %{{.*}} : !mogg.storage, !mogg.storage, !mogg.dim, !mogg.context
 // CHECK-LABEL: mgp.model @dyn_seq
-// CHECK: mogg.call @[[STUB]] %{{.*}} : !mogg.pointer, !mogg.pointer, !mogg.dim, !mogg.context
+// CHECK: mogg.call @[[STUB]] %{{.*}} : !mogg.storage, !mogg.storage, !mogg.dim, !mogg.context
 
 // STUBS-COUNT-1: mogg.func @
 // STUBS-NOT: mogg.func @

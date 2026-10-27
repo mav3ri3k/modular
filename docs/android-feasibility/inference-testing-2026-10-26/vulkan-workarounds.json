@@ -1,0 +1,14 @@
+{
+  "no-async-fusion": {
+    "max_abs": 0.01124429702758789,
+    "relative_l2": 0.00024809704266821436,
+    "argmax_agreement": 1.0,
+    "finite": true
+  },
+  "no-f16": {
+    "max_abs": NaN,
+    "relative_l2": NaN,
+    "argmax_agreement": 0.0,
+    "finite": false
+  }
+}

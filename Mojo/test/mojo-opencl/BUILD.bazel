@@ -1,0 +1,14 @@
+load("//bazel:api.bzl", "lit_tests")
+
+package(default_visibility = ["//visibility:private"])
+
+# Compile-only OpenCL coverage; no accelerator is needed on the test host.
+lit_tests(
+    name = "test",
+    srcs = glob(["*.mojo"]),
+    mojo_deps = [
+        "//max:max_mojo",
+        "@mojo//:std",
+    ],
+    tools = ["//Mojo/tools/mojo"],
+)

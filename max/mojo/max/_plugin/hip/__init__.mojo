@@ -65,6 +65,9 @@ struct HipMaxPluginHooks[target: CompilationTarget](MaxPluginHooks):
     # gfx9 (GCN and CDNA 2 through 4) runs wave64; gfx10 and later, RDNA and
     # CDNA 5, run wave32.
     comptime warp_size = 64 if Self.target._arch().startswith("gfx9") else 32
+    comptime max_threads_per_block_metadata: StaticString = (
+        "rocdl.flat_work_group_size"
+    )
     comptime barrier_fn: OptionalReg[_BarrierPluginHookFnType] = _barrier
     comptime syncwarp_fn: OptionalReg[_SyncwarpPluginHookFnType] = _syncwarp
 

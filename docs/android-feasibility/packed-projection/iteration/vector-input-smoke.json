@@ -1,0 +1,486 @@
+{
+  "build": {
+    "kernels": {
+      "control": {
+        "sha256": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+        "bytes": 37336,
+        "mojo_build_seconds": 0.5907928943634033
+      },
+      "word2": {
+        "sha256": "a8ca97afdcc7cb4282b5ca0b6adf06e4afb706b7754e93fa0774dac768b9eac8",
+        "bytes": 50310,
+        "mojo_build_seconds": 0.595463752746582
+      },
+      "word4": {
+        "sha256": "10489284faa486dc9cab5a7e0d30b41723f566b010239d318e3fde5a4f88687c",
+        "bytes": 76074,
+        "mojo_build_seconds": 2.425008773803711
+      },
+      "inputs8": {
+        "sha256": "8d25d0b9c0680aa351ecb7a2b5030f198243a4f828578230ecdfd00ce40210a3",
+        "bytes": 37088,
+        "mojo_build_seconds": 2.421989917755127
+      },
+      "word2_inputs": {
+        "sha256": "c2e7e3b10c1d0199bb4b3b9e2b962945420ca1cd0f2c80e06d69dedcca623812",
+        "bytes": 49674,
+        "mojo_build_seconds": 2.419428825378418
+      }
+    },
+    "host_sha256": "889f91ca799a59ae0596626d5dc3c400cf588bf7150f1531d15cad5b215252cc"
+  },
+  "run_artifacts": {
+    "control": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+    "word2": "a8ca97afdcc7cb4282b5ca0b6adf06e4afb706b7754e93fa0774dac768b9eac8",
+    "word4": "10489284faa486dc9cab5a7e0d30b41723f566b010239d318e3fde5a4f88687c",
+    "inputs8": "8d25d0b9c0680aa351ecb7a2b5030f198243a4f828578230ecdfd00ce40210a3",
+    "word2_inputs": "c2e7e3b10c1d0199bb4b3b9e2b962945420ca1cd0f2c80e06d69dedcca623812"
+  },
+  "config": {
+    "names": [
+      "control",
+      "word2",
+      "word4",
+      "inputs8",
+      "word2_inputs"
+    ],
+    "repeats": 1,
+    "shapes": [
+      "64x1024"
+    ],
+    "ring_mib": 0,
+    "random_inputs": false
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "shape": "64x1024",
+      "variant": "control",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 46.445313,
+          "candidate_ms": 45.928541
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 320,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.026875
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.026875,
+          "first_finish_ms": 1.200417,
+          "first_device_ms": 0.010986
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 1024,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 16384,
+          "resident_weight_bytes": 16384,
+          "resident_scale_bytes": 1024,
+          "device_mean_ms": 0.008492,
+          "device_median_ms": 0.008301,
+          "device_p95_ms": 0.009521,
+          "device_sum_ms": 1.086914,
+          "device_span_ms": 1.199951,
+          "host_wall_ms": 1.663021,
+          "enqueue_mean_ms": 0.008087,
+          "enqueue_max_ms": 0.038125,
+          "queued_to_submit_mean_ms": 0.043329,
+          "submit_to_start_mean_ms": 0.37265
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 1024,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 16384,
+        "resident_weight_bytes": 16384,
+        "resident_scale_bytes": 1024,
+        "device_mean_ms": 0.008492,
+        "device_median_ms": 0.008301,
+        "device_p95_ms": 0.009521,
+        "device_sum_ms": 1.086914,
+        "device_span_ms": 1.199951,
+        "host_wall_ms": 1.663021,
+        "enqueue_mean_ms": 0.008087,
+        "enqueue_max_ms": 0.038125,
+        "queued_to_submit_mean_ms": 0.043329,
+        "submit_to_start_mean_ms": 0.37265
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.23003387451171875
+    },
+    {
+      "repeat": 0,
+      "shape": "64x1024",
+      "variant": "word2",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 49.622136,
+          "candidate_ms": 59.081614
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 384,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.040625
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.040625,
+          "first_finish_ms": 5.938177,
+          "first_device_ms": 0.009521
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 1024,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 16384,
+          "resident_weight_bytes": 16384,
+          "resident_scale_bytes": 1024,
+          "device_mean_ms": 0.007786,
+          "device_median_ms": 0.007568,
+          "device_p95_ms": 0.008789,
+          "device_sum_ms": 0.996582,
+          "device_span_ms": 1.154785,
+          "host_wall_ms": 1.822135,
+          "enqueue_mean_ms": 0.008622,
+          "enqueue_max_ms": 0.078802,
+          "queued_to_submit_mean_ms": 0.061954,
+          "submit_to_start_mean_ms": 0.076464
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 1024,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 16384,
+        "resident_weight_bytes": 16384,
+        "resident_scale_bytes": 1024,
+        "device_mean_ms": 0.007786,
+        "device_median_ms": 0.007568,
+        "device_p95_ms": 0.008789,
+        "device_sum_ms": 0.996582,
+        "device_span_ms": 1.154785,
+        "host_wall_ms": 1.822135,
+        "enqueue_mean_ms": 0.008622,
+        "enqueue_max_ms": 0.078802,
+        "queued_to_submit_mean_ms": 0.061954,
+        "submit_to_start_mean_ms": 0.076464
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.29563164710998535
+    },
+    {
+      "repeat": 0,
+      "shape": "64x1024",
+      "variant": "word4",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 47.390781,
+          "candidate_ms": 87.465156
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 496,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.037865
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.037865,
+          "first_finish_ms": 5.521667,
+          "first_device_ms": 0.01001
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 1024,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 16384,
+          "resident_weight_bytes": 16384,
+          "resident_scale_bytes": 1024,
+          "device_mean_ms": 0.00774,
+          "device_median_ms": 0.007568,
+          "device_p95_ms": 0.008789,
+          "device_sum_ms": 0.990723,
+          "device_span_ms": 1.10376,
+          "host_wall_ms": 1.641979,
+          "enqueue_mean_ms": 0.00566,
+          "enqueue_max_ms": 0.025782,
+          "queued_to_submit_mean_ms": 0.037712,
+          "submit_to_start_mean_ms": 0.443211
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 1024,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 16384,
+        "resident_weight_bytes": 16384,
+        "resident_scale_bytes": 1024,
+        "device_mean_ms": 0.00774,
+        "device_median_ms": 0.007568,
+        "device_p95_ms": 0.008789,
+        "device_sum_ms": 0.990723,
+        "device_span_ms": 1.10376,
+        "host_wall_ms": 1.641979,
+        "enqueue_mean_ms": 0.00566,
+        "enqueue_max_ms": 0.025782,
+        "queued_to_submit_mean_ms": 0.037712,
+        "submit_to_start_mean_ms": 0.443211
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.28485608100891113
+    },
+    {
+      "repeat": 0,
+      "shape": "64x1024",
+      "variant": "inputs8",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 49.708594,
+          "candidate_ms": 52.39026
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 932,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.048438
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.048438,
+          "first_finish_ms": 5.586563,
+          "first_device_ms": 0.076416
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 1024,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 16384,
+          "resident_weight_bytes": 16384,
+          "resident_scale_bytes": 1024,
+          "device_mean_ms": 0.07246,
+          "device_median_ms": 0.072266,
+          "device_p95_ms": 0.075439,
+          "device_sum_ms": 9.274902,
+          "device_span_ms": 9.457275,
+          "host_wall_ms": 9.763646,
+          "enqueue_mean_ms": 0.022249,
+          "enqueue_max_ms": 0.053594,
+          "queued_to_submit_mean_ms": 0.113113,
+          "submit_to_start_mean_ms": 3.369823
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 1024,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 16384,
+        "resident_weight_bytes": 16384,
+        "resident_scale_bytes": 1024,
+        "device_mean_ms": 0.07246,
+        "device_median_ms": 0.072266,
+        "device_p95_ms": 0.075439,
+        "device_sum_ms": 9.274902,
+        "device_span_ms": 9.457275,
+        "host_wall_ms": 9.763646,
+        "enqueue_mean_ms": 0.022249,
+        "enqueue_max_ms": 0.053594,
+        "queued_to_submit_mean_ms": 0.113113,
+        "submit_to_start_mean_ms": 3.369823
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.2628159523010254
+    },
+    {
+      "repeat": 0,
+      "shape": "64x1024",
+      "variant": "word2_inputs",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 45.251927,
+          "candidate_ms": 87.582083
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 1684,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.036302
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.036302,
+          "first_finish_ms": 5.625417,
+          "first_device_ms": 0.215088
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 1024,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 16384,
+          "resident_weight_bytes": 16384,
+          "resident_scale_bytes": 1024,
+          "device_mean_ms": 0.211002,
+          "device_median_ms": 0.212158,
+          "device_p95_ms": 0.212891,
+          "device_sum_ms": 27.008301,
+          "device_span_ms": 27.283447,
+          "host_wall_ms": 27.797396,
+          "enqueue_mean_ms": 0.010887,
+          "enqueue_max_ms": 0.063021,
+          "queued_to_submit_mean_ms": 0.058975,
+          "submit_to_start_mean_ms": 12.867041
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 1024,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 16384,
+        "resident_weight_bytes": 16384,
+        "resident_scale_bytes": 1024,
+        "device_mean_ms": 0.211002,
+        "device_median_ms": 0.212158,
+        "device_p95_ms": 0.212891,
+        "device_sum_ms": 27.008301,
+        "device_span_ms": 27.283447,
+        "host_wall_ms": 27.797396,
+        "enqueue_mean_ms": 0.010887,
+        "enqueue_max_ms": 0.063021,
+        "queued_to_submit_mean_ms": 0.058975,
+        "submit_to_start_mean_ms": 12.867041
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.9, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.8, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.8, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.5, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=27.4, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.3725719451904297
+    }
+  ]
+}

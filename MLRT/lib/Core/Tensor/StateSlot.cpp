@@ -19,6 +19,13 @@ using namespace M;
 using namespace M::MLRT;
 using namespace M::AsyncRT;
 
+// Presence is independent of addressability. An opaque allocation and an
+// owned zero-byte buffer are both valid cached values.
+static bool hasCachedBuffer(TensorBufferRef &buffer) {
+  return buffer.isOpaque() || buffer.getMemStorageHandleRef() ||
+         buffer.getBuffer();
+}
+
 TensorBufferRef
 TensorStateSlot::getOrCreateBuffer(CompactCPUDevicePtr cpuDevice, size_t size,
                                    std::optional<size_t> alignment) {
@@ -28,7 +35,7 @@ TensorStateSlot::getOrCreateBuffer(CompactCPUDevicePtr cpuDevice, size_t size,
 }
 
 ErrorOr<TensorBufferRef> TensorStateSlot::getBuffer() {
-  if (!bufferCache.getBuffer() && !bufferCache.getMemStorageHandleRef())
+  if (!hasCachedBuffer(bufferCache))
     return Error("no buffer has been cached");
   // Return a borrowed reference to the cached buffer. Since it's in the
   // cache, and the compiler follows the 'one shot' rules for reallocating
@@ -37,13 +44,13 @@ ErrorOr<TensorBufferRef> TensorStateSlot::getBuffer() {
 }
 
 ErrorOr<TensorBufferRef &> TensorStateSlot::getBufferRef() {
-  if (!bufferCache.getBuffer() && !bufferCache.getMemStorageHandleRef())
+  if (!hasCachedBuffer(bufferCache))
     return Error("no buffer has been cached");
   return bufferCache;
 }
 
 ErrorOrSuccess TensorStateSlot::setBuffer(TensorBufferRef bufferRef) {
-  if (bufferCache.getBuffer())
+  if (hasCachedBuffer(bufferCache))
     return Error("buffer has already been cached");
   bufferCache = std::move(bufferRef);
   return success();

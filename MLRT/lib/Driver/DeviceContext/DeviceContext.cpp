@@ -299,7 +299,8 @@ MODULAR_CXX_EXPORT ErrorOr<DeviceRef> Device::create(StringRef api, int id) {
   // Check if virtual device mode is enabled. If so, create a VirtualDevice
   // instead of a real hardware device.
   if (AsyncRT::isVirtualDeviceMode() &&
-      (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI)) {
+      (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI ||
+       api == openclAPI)) {
     // In virtual device mode, create a lightweight compilation device
     // that can generate code without requiring physical GPU hardware.
 

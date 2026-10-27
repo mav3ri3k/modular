@@ -492,8 +492,11 @@ stageResultsToHost(CPUDevice &cpuDevice, const ModelDeviceState &deviceState,
 
     TensorSpec spec = tensor->getSpec();
     // The result value keeps the buffer alive across the copy.
-    M::Driver::DeviceBufferRef deviceView = GraphCompiler::Driver::borrowBuffer(
-        device, const_cast<void *>(tensor->getBuffer()), spec.getSizeInBytes());
+    auto deviceViewOr =
+        GraphCompiler::Driver::borrowBuffer(device, tensor->getBufferRef());
+    if (deviceViewOr.isError())
+      return deviceViewOr.takeError();
+    M::Driver::DeviceBufferRef deviceView = deviceViewOr.takeValue();
 
     ErrorOr<M::Driver::DeviceBufferRef> hostOr =
         GraphCompiler::Driver::allocateDeviceBuffer(deviceState.hostDevice,

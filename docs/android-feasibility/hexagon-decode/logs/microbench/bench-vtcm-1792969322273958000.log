@@ -1,0 +1,2 @@
+Mojo Hexagon Bonsai projection 6144x2048: ms=1.575,1.746,1.546 max_abs_error=2.3733749
+FAIL: Projection does not match CPU reference

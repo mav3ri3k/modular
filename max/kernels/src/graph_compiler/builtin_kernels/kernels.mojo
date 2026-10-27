@@ -1158,8 +1158,12 @@ struct Fold:
         comptime assert (
             kernel_size.dtype.is_integral() and output_size.dtype.is_integral()
         ), "kernel_size and output_size must have integral type"
-        var output_size_tuple = Index(output_size._ptr[0], output_size._ptr[1])
-        var kernel_size_tuple = Index(kernel_size._ptr[0], kernel_size._ptr[1])
+        var output_size_tuple = Index(
+            output_size.unsafe_ptr()[0], output_size.unsafe_ptr()[1]
+        )
+        var kernel_size_tuple = Index(
+            kernel_size.unsafe_ptr()[0], kernel_size.unsafe_ptr()[1]
+        )
         var input_tensor = input.to_tile_tensor[.int64]()
         var output_tensor = output.to_tile_tensor[.int64]()
 
@@ -2217,7 +2221,7 @@ struct Struct_moe_create_indices_with_scales_offset:
             expert_usage_stats.to_tile_tensor[.int64](),
             topk_ids.to_tile_tensor[.int64](),
             context,
-            scales_offset_p=scales_offset._ptr.as_unsafe_any_origin(),
+            scales_offset_p=scales_offset.unsafe_ptr().as_unsafe_any_origin(),
         )
 
 
@@ -2253,13 +2257,13 @@ struct Struct_moe_create_indices_with_slots:
             restore_token_order.to_tile_tensor[.int64](),
             expert_ids.to_tile_tensor[.int64](),
             expert_usage_stats.to_tile_tensor[.int64](),
-            scales_offset._ptr.as_unsafe_any_origin(),
-            slot_token._ptr.as_unsafe_any_origin(),
-            slot_weight._ptr.as_unsafe_any_origin(),
-            scale_slot._ptr.as_unsafe_any_origin(),
+            scales_offset.unsafe_ptr().as_unsafe_any_origin(),
+            slot_token.unsafe_ptr().as_unsafe_any_origin(),
+            slot_weight.unsafe_ptr().as_unsafe_any_origin(),
+            scale_slot.unsafe_ptr().as_unsafe_any_origin(),
             scale_slot.dim_size(0),
             topk_ids.to_tile_tensor[.int64](),
-            slot_weights._ptr.as_unsafe_any_origin(),
+            slot_weights.unsafe_ptr().as_unsafe_any_origin(),
             expert_offset,
             local_experts,
             context,
@@ -3359,7 +3363,8 @@ struct BundledAllReduceSum:
                 Signal, MutAnyOrigin
             ]: (
                 signal_buffers[i]
-                ._ptr.unsafe_bitcast[Signal]()
+                .unsafe_ptr()
+                .unsafe_bitcast[Signal]()
                 .as_unsafe_any_origin()
             )
         )
@@ -3573,7 +3578,8 @@ struct BundledAllReduceAddRMSNormQuantFP8:
                 Signal, MutAnyOrigin
             ]: (
                 signal_buffers[i]
-                ._ptr.unsafe_bitcast[Signal]()
+                .unsafe_ptr()
+                .unsafe_bitcast[Signal]()
                 .as_unsafe_any_origin()
             )
         )
@@ -3732,19 +3738,15 @@ struct TPoolPatchMerger:
         var in_tt = input.to_tile_tensor[.int64]()
         var grid_tt = grid_thws.to_tile_tensor[.int64]()
 
-        nn_tpool_patch_merger[dtype](
-            TileTensor(
-                out_tt._storage.unsafe_origin_cast[MutAnyOrigin](),
-                out_tt.layout,
-            ),
-            TileTensor(
-                in_tt._storage.as_imm().unsafe_origin_cast[ImmutAnyOrigin](),
-                in_tt.layout,
-            ),
-            TileTensor(
-                grid_tt._storage.as_imm().unsafe_origin_cast[ImmutAnyOrigin](),
-                grid_tt.layout,
-            ),
+        nn_tpool_patch_merger[
+            dtype,
+            OutputEngine=type_of(out_tt).Engine,
+            XEngine=type_of(in_tt).Engine,
+            BoundsEngine=type_of(grid_tt).Engine,
+        ](
+            out_tt.as_unsafe_any_origin(),
+            in_tt.as_imm().as_unsafe_any_origin(),
+            grid_tt.as_imm().as_unsafe_any_origin(),
             Int(kH),
             Int(kW),
             Int(max_h),

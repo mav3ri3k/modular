@@ -1,0 +1,43 @@
+Cooling before bonsai-hill-max-final 15 seconds
+THERMAL bonsai-hill-max-final 0
+{'variant': 'bonsai-hill-max-final', 'warmup': True, 'validation': False, 'tok_s': 52.57, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-0.log'}
+Cooling before tune3-clean8delta8-max 15 seconds
+THERMAL tune3-clean8delta8-max 0
+{'variant': 'tune3-clean8delta8-max', 'warmup': True, 'validation': False, 'tok_s': 64.54, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-1.log'}
+Cooling before tune3-clean16delta8-max 15 seconds
+THERMAL tune3-clean16delta8-max 0
+{'variant': 'tune3-clean16delta8-max', 'warmup': True, 'validation': False, 'tok_s': 64.03, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-2.log'}
+Cooling before bonsai-hill-max-final 15 seconds
+THERMAL bonsai-hill-max-final 0
+{'variant': 'bonsai-hill-max-final', 'warmup': False, 'validation': False, 'tok_s': 56.85, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-3.log'}
+Cooling before tune3-clean8delta8-max 15 seconds
+THERMAL tune3-clean8delta8-max 0
+{'variant': 'tune3-clean8delta8-max', 'warmup': False, 'validation': False, 'tok_s': 64.35, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-4.log'}
+Cooling before tune3-clean16delta8-max 15 seconds
+THERMAL tune3-clean16delta8-max 0
+{'variant': 'tune3-clean16delta8-max', 'warmup': False, 'validation': False, 'tok_s': 63.44, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-5.log'}
+Cooling before tune3-clean16delta8-max 15 seconds
+THERMAL tune3-clean16delta8-max 0
+{'variant': 'tune3-clean16delta8-max', 'warmup': False, 'validation': False, 'tok_s': 63.62, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-6.log'}
+Cooling before tune3-clean8delta8-max 15 seconds
+THERMAL tune3-clean8delta8-max 0
+{'variant': 'tune3-clean8delta8-max', 'warmup': False, 'validation': False, 'tok_s': 63.08, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-7.log'}
+Cooling before bonsai-hill-max-final 15 seconds
+THERMAL bonsai-hill-max-final 0
+{'variant': 'bonsai-hill-max-final', 'warmup': False, 'validation': False, 'tok_s': 56.67, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-8.log'}
+Cooling before bonsai-hill-max-final 15 seconds
+THERMAL bonsai-hill-max-final 0
+{'variant': 'bonsai-hill-max-final', 'warmup': False, 'validation': False, 'tok_s': 56.84, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-bonsai-hill-max-final-9.log'}
+Cooling before tune3-clean8delta8-max 15 seconds
+THERMAL tune3-clean8delta8-max 0
+{'variant': 'tune3-clean8delta8-max', 'warmup': False, 'validation': False, 'tok_s': 64.4, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-10.log'}
+Cooling before tune3-clean16delta8-max 15 seconds
+THERMAL tune3-clean16delta8-max 0
+{'variant': 'tune3-clean16delta8-max', 'warmup': False, 'validation': False, 'tok_s': 63.78, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-11.log'}
+MEDIANS {'bonsai-hill-max-final': 56.84, 'tune3-clean8delta8-max': 64.35, 'tune3-clean16delta8-max': 63.62}
+Cooling before tune3-clean8delta8-max 15 seconds
+THERMAL tune3-clean8delta8-max 0
+{'variant': 'tune3-clean8delta8-max', 'warmup': True, 'validation': True, 'tok_s': 43.1, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean8delta8-max-12.log'}
+Cooling before tune3-clean16delta8-max 15 seconds
+THERMAL tune3-clean16delta8-max 0
+{'variant': 'tune3-clean16delta8-max', 'warmup': True, 'validation': True, 'tok_s': 49.54, 'log': '/Users/REDACTED/Library/Caches/modular-android-integration/tune3-max-1792964711634065000-tune3-clean16delta8-max-13.log'}

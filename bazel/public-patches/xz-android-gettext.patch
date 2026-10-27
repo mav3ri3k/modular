@@ -1,0 +1,12 @@
+--- a/config.lzma-android.h
++++ b/config.lzma-android.h
+@@ -9,7 +9,8 @@
+ 
+ /* Define to 1 if translation of program messages to the user's native
+    language is requested. */
+-#define ENABLE_NLS 1
++/* Android Bionic does not provide gettext/libintl. */
++/* #undef ENABLE_NLS */
+ 
+ /* Define to 1 if bswap_16 is available. */
+ #define HAVE_BSWAP_16 1

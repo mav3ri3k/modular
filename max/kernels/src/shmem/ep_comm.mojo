@@ -1040,6 +1040,8 @@ struct BF16TokenFormat[
     _hid_dim: Int,
     _top_k: Int,
     _alignment: Int = 0,
+    *,
+    TokensEngine: TensorEngine = DefaultEngine[element_width=1],
 ](TokenFormat, TrivialRegisterPassable):
     """Token format that transmits the full hidden state in BFloat16.
 
@@ -1054,6 +1056,7 @@ struct BF16TokenFormat[
         _top_k: Number of experts each token is routed to.
         _alignment: Override for the byte alignment of the wire buffer; 0
             selects `get_device_alignment()`.
+        TokensEngine: Storage engine backing the output token tensor.
     """
 
     comptime hid_dim = Self._hid_dim
@@ -1064,7 +1067,7 @@ struct BF16TokenFormat[
     comptime dispatch_smem_size = 0
 
     comptime TensorType = TileTensor[
-        .bfloat16, Self.output_layout, MutUntrackedOrigin
+        .bfloat16, Self.output_layout, MutUntrackedOrigin, Engine=Self.TokensEngine
     ]
     var output_tokens: Self.TensorType
 
@@ -1095,21 +1098,13 @@ struct BF16TokenFormat[
         )
 
     @inline(.always)
-    def __init__[
-        OutputEngine: TensorEngine, //
-    ](
+    def __init__(
         out self,
         output_tokens: TileTensor[
-            .bfloat16, Self.output_layout, Engine=OutputEngine, ...
+            .bfloat16, Self.output_layout, Engine=Self.TokensEngine, ...
         ],
     ):
-        # The field is raw-pointer addressed, so the owning handle stops here.
-        self.output_tokens = {
-            MutPointer[BFloat16, MutUntrackedOrigin](
-                unsafe_from_address=Int(output_tokens.ptr)
-            ),
-            output_tokens.layout,
-        }
+        self.output_tokens = rebind[Self.TensorType](output_tokens.as_unsafe_any_origin())
 
     @inline(.always)
     @staticmethod
@@ -1175,6 +1170,9 @@ struct BlockwiseFP8TokenFormat[
     _hid_dim: Int,
     _top_k: Int,
     _alignment: Int = 0,
+    *,
+    TokensEngine: TensorEngine = DefaultEngine[element_width=1],
+    ScalesEngine: TensorEngine = DefaultEngine[element_width=1],
 ](TokenFormat, TrivialRegisterPassable):
     """Token format that quantizes the hidden state to FP8 with block-wise scales.
 
@@ -1192,6 +1190,8 @@ struct BlockwiseFP8TokenFormat[
         _top_k: Number of experts each token is routed to.
         _alignment: Override for the byte alignment of the wire buffer; 0
             selects `get_device_alignment()`.
+        TokensEngine: Storage engine backing the output token tensor.
+        ScalesEngine: Storage engine backing the output scale tensor.
     """
 
     comptime hid_dim = Self._hid_dim
@@ -1203,10 +1203,16 @@ struct BlockwiseFP8TokenFormat[
     comptime dispatch_smem_size = 0
 
     comptime TensorType = TileTensor[
-        Self.fp8_dtype, Self.output_layout, MutUntrackedOrigin
+        Self.fp8_dtype,
+        Self.output_layout,
+        MutUntrackedOrigin,
+        Engine=Self.TokensEngine,
     ]
     comptime ScalesTensorType = TileTensor[
-        Self.scales_dtype, Self.scales_layout, MutUntrackedOrigin
+        Self.scales_dtype,
+        Self.scales_layout,
+        MutUntrackedOrigin,
+        Engine=Self.ScalesEngine,
     ]
     var output_tokens: Self.TensorType
     var output_scales: Self.ScalesTensorType
@@ -1247,24 +1253,18 @@ struct BlockwiseFP8TokenFormat[
     def __init__(
         out self,
         output_tokens: TileTensor[
-            Self.fp8_dtype, Self.output_layout, Engine=DefaultEngine[], ...
+            Self.fp8_dtype, Self.output_layout, Engine=Self.TokensEngine, ...
         ],
         output_scales: TileTensor[
-            Self.scales_dtype, Self.scales_layout, Engine=DefaultEngine[], ...
+            Self.scales_dtype, Self.scales_layout, Engine=Self.ScalesEngine, ...
         ],
     ):
-        self.output_tokens = {
-            MutPointer[Scalar[Self.fp8_dtype], MutUntrackedOrigin](
-                unsafe_from_address=Int(output_tokens.ptr)
-            ),
-            output_tokens.layout,
-        }
-        self.output_scales = {
-            MutPointer[Scalar[Self.scales_dtype], MutUntrackedOrigin](
-                unsafe_from_address=Int(output_scales.ptr)
-            ),
-            output_scales.layout,
-        }
+        self.output_tokens = rebind[Self.TensorType](
+            output_tokens.as_unsafe_any_origin()
+        )
+        self.output_scales = rebind[Self.ScalesTensorType](
+            output_scales.as_unsafe_any_origin()
+        )
 
     @inline(.always)
     @staticmethod
@@ -1454,6 +1454,9 @@ struct NVBlockScaledTokenFormat[
     sf_kxg: Int = 0,
     sf_rows_per_expert: Int = 0,
     nvfp4_dyn_global_scales: Bool = False,
+    *,
+    TokensEngine: TensorEngine = DefaultEngine[element_width=1],
+    ScalesOffsetEngine: TensorEngine = DefaultEngine[element_width=1],
 ](ImplicitlyCopyable, TokenFormat):
     """Token format for NVIDIA block-scaled FP4/FP8 quantization.
 
@@ -1507,6 +1510,8 @@ struct NVBlockScaledTokenFormat[
             scale's BF16 inverse travels behind the per-block scales in the
             message, and the receiver stores it in `output_rowwise_scales`.
             A token then dequantizes as `fp4 * block_scale * rowwise_scale`.
+        TokensEngine: Storage engine backing the output token tensor.
+        ScalesOffsetEngine: Storage engine backing the scale offset tensor.
     """
 
     comptime hid_dim = Self._hid_dim
@@ -1526,10 +1531,16 @@ struct NVBlockScaledTokenFormat[
     comptime dispatch_wait_tile_shape = (128, 2)
 
     comptime TensorType = TileTensor[
-        Self.quant_dtype, Self.output_layout, MutUntrackedOrigin
+        Self.quant_dtype,
+        Self.output_layout,
+        MutUntrackedOrigin,
+        Engine=Self.TokensEngine,
     ]
     comptime ScalesOffsetTensorType = TileTensor[
-        .uint32, Self.scales_offset_layout, MutUntrackedOrigin
+        .uint32,
+        Self.scales_offset_layout,
+        MutUntrackedOrigin,
+        Engine=Self.ScalesOffsetEngine,
     ]
     # One scale per received row, so the layout is always 1D with unit
     # stride and needs no struct parameter of its own.
@@ -1622,13 +1633,14 @@ struct NVBlockScaledTokenFormat[
     def __init__(
         out self,
         output_tokens: TileTensor[
-            Self.quant_dtype, Self.output_layout, Engine=DefaultEngine[], ...
+            Self.quant_dtype, Self.output_layout, Engine=Self.TokensEngine, ...
         ],
-        output_scales: TileTensor[
-            Self.scales_dtype, Engine=DefaultEngine[], ...
-        ],
+        output_scales: TileTensor[Self.scales_dtype, Engine=_, ...],
         output_scales_offset: TileTensor[
-            .uint32, Self.scales_offset_layout, Engine=DefaultEngine[], ...
+            .uint32,
+            Self.scales_offset_layout,
+            Engine=Self.ScalesOffsetEngine,
+            ...,
         ],
         ctx: DeviceContext,
         output_rowwise_scales: Optional[Pointer[BFloat16, MutAnyOrigin]] = None,
@@ -1645,18 +1657,12 @@ struct NVBlockScaledTokenFormat[
                 per row of `output_tokens`. Required with
                 `nvfp4_dyn_global_scales` and ignored otherwise.
         """
-        self.output_tokens = {
-            MutPointer[Scalar[Self.quant_dtype], MutUntrackedOrigin](
-                unsafe_from_address=Int(output_tokens.ptr)
-            ),
-            output_tokens.layout,
-        }
-        self.output_scales_offset = {
-            MutPointer[UInt32, MutUntrackedOrigin](
-                unsafe_from_address=Int(output_scales_offset.ptr)
-            ),
-            output_scales_offset.layout,
-        }
+        self.output_tokens = rebind[Self.TensorType](
+            output_tokens.as_unsafe_any_origin()
+        )
+        self.output_scales_offset = rebind[Self.ScalesOffsetTensorType](
+            output_scales_offset.as_unsafe_any_origin()
+        )
         comptime if Self.nvfp4_dyn_global_scales:
             if not output_rowwise_scales:
                 abort(
@@ -2299,7 +2305,7 @@ struct NVBlockScaledTokenFormat[
         var mbar_base = smem_base.unsafe_offset(
             Self._mbar_smem_offset
         ).unsafe_bitcast[SharedMemBarrier]()
-        var output_tokens_base = self.output_tokens._storage.unsafe_bitcast[
+        var output_tokens_base = self.output_tokens.unsafe_ptr().unsafe_bitcast[
             UInt8
         ]()
         var phase = UInt32(0)
@@ -2371,6 +2377,8 @@ struct MXTokenFormat[
     _alignment: Int = 0,
     *,
     mx_format: MXFormat = MXFormat.from_dtype[quant_dtype](),
+    TokensEngine: TensorEngine = DefaultEngine[element_width=1],
+    ScalesEngine: TensorEngine = DefaultEngine[element_width=1],
 ](TokenFormat, TrivialRegisterPassable):
     """Token format for MX (microscaling) FP4 quantization.
 
@@ -2396,6 +2404,8 @@ struct MXTokenFormat[
             `uint8` spelling is ambiguous -- MXFP4 and MXFP6 both travel as
             packed `uint8` with `float8_e8m0fnu` scales -- so it resolves to FP4
             and an MXFP6 caller stuck on `uint8` must name the format here.
+        TokensEngine: Storage engine backing the output token tensor.
+        ScalesEngine: Storage engine backing the output scale tensor.
     """
 
     comptime hid_dim = Self._hid_dim
@@ -2409,10 +2419,16 @@ struct MXTokenFormat[
     comptime dispatch_smem_size = 0
 
     comptime TensorType = TileTensor[
-        Self.quant_dtype, Self.output_layout, MutUntrackedOrigin
+        Self.quant_dtype,
+        Self.output_layout,
+        MutUntrackedOrigin,
+        Engine=Self.TokensEngine,
     ]
     comptime ScalesTensorType = TileTensor[
-        Self.scales_dtype, Self.scales_layout, MutUntrackedOrigin
+        Self.scales_dtype,
+        Self.scales_layout,
+        MutUntrackedOrigin,
+        Engine=Self.ScalesEngine,
     ]
     var output_tokens: Self.TensorType
     var output_scales: Self.ScalesTensorType
@@ -2453,25 +2469,19 @@ struct MXTokenFormat[
     def __init__(
         out self,
         output_tokens: TileTensor[
-            Self.quant_dtype, Self.output_layout, Engine=DefaultEngine[], ...
+            Self.quant_dtype, Self.output_layout, Engine=Self.TokensEngine, ...
         ],
         output_scales: TileTensor[
-            Self.scales_dtype, Self.scales_layout, Engine=DefaultEngine[], ...
+            Self.scales_dtype, Self.scales_layout, Engine=Self.ScalesEngine, ...
         ],
         max_padded_M: Int,
     ):
-        self.output_tokens = {
-            MutPointer[Scalar[Self.quant_dtype], MutUntrackedOrigin](
-                unsafe_from_address=Int(output_tokens.ptr)
-            ),
-            output_tokens.layout,
-        }
-        self.output_scales = {
-            MutPointer[Scalar[Self.scales_dtype], MutUntrackedOrigin](
-                unsafe_from_address=Int(output_scales.ptr)
-            ),
-            output_scales.layout,
-        }
+        self.output_tokens = rebind[Self.TensorType](
+            output_tokens.as_unsafe_any_origin()
+        )
+        self.output_scales = rebind[Self.ScalesTensorType](
+            output_scales.as_unsafe_any_origin()
+        )
         self.max_padded_M = Int64(max_padded_M)
 
     @inline(.always)
@@ -2719,7 +2729,7 @@ struct MXTokenFormat[
             var dst_off = Shuffler[1].scale_4d_slot_byte_off[K_SCALES=K_SCALES](
                 expert_slot, local_row, i, Int(self.max_padded_M)
             )
-            self.output_scales._storage[dst_off] = bitcast[
+            self.output_scales.unsafe_ptr()[dst_off] = bitcast[
                 Self.scales_dtype, 1
             ](byte)
 

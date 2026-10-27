@@ -198,6 +198,10 @@ ArrayAttr KGEN::attachTargetPassthroughAttrs(OpBuilder &b,
   SmallVector<Attribute> attrs;
   if (passthrough)
     llvm::append_range(attrs, passthrough);
+  // OpenCL uses AArch64 only for its scalar data layout. Its architecture and
+  // feature names describe the source emitter, not LLVM AArch64 instructions.
+  if (target.getTriple().getOSName() == "opencl")
+    return b.getArrayAttr(attrs);
   // Attach the target info attributes.
   attrs.push_back(b.getArrayAttr(
       {b.getStringAttr("target-cpu"), b.getStringAttr(target.getArch())}));

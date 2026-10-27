@@ -145,7 +145,12 @@ struct RMSNormFusedQuantizeDynamicScaledFP8:
         # [1, rows]. View it as rank-1 and index it by row number.
         var in_shape = input.shape()
         var rows = in_shape.flattened_length() // in_shape[rank - 1]
-        var scale_t = TileTensor(
+        var scale_t = TileTensor[
+            scales.dtype,
+            type_of(row_major(rows)),
+            MutUntrackedOrigin,
+            Engine=type_of(scales.to_tile_tensor[.int64]()).Engine,
+        ](
             scales.to_tile_tensor[.int64]()._storage,
             row_major(rows),
         )
@@ -880,7 +885,9 @@ struct QMatmulGPURepackGPTQ_b4_g128_desc_act:
         comptime assert is_gpu[target](), "only valid on GPUs"
 
         var permutation = perm_idx.to_tile_tensor()
-        gpu_qint4_repack_GPTQ[128, target](
+        gpu_qint4_repack_GPTQ[
+            128, target, PermEngine=type_of(permutation).Engine
+        ](
             b.to_tile_tensor(),
             b_packed.to_tile_tensor(),
             permutation.reshape(row_major(Int(permutation.dim[0]())))

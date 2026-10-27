@@ -1,0 +1,983 @@
+{
+  "build": {
+    "kernels": {
+      "control": {
+        "sha256": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+        "bytes": 37336,
+        "mojo_build_seconds": 0.6111800670623779
+      },
+      "reduce": {
+        "sha256": "71c4a7fcca35b93be99a3cbca2ce2285b61820df7537bc6d888bfb1e046a9931",
+        "bytes": 1858,
+        "mojo_build_seconds": 2.346343994140625
+      },
+      "t8_g8_w64_u1": {
+        "sha256": "3930cf33d5aa59e6cdd996c3f71cd39fcac7e06fc3003eddcf54cc2e0d7fe040",
+        "bytes": 37107,
+        "mojo_build_seconds": 2.453901767730713
+      },
+      "t4_g4_w64_u1": {
+        "sha256": "49977ac09480725d8701cc13afce81d504d4d7c532ef8d88cf18e4effeba98b9",
+        "bytes": 26208,
+        "mojo_build_seconds": 2.4314277172088623
+      },
+      "t16_g16_w128_u1": {
+        "sha256": "6860d9b6f1f485ee2981e58bd1606082da59172c7a6445bcc2df70df747b2be4",
+        "bytes": 62131,
+        "mojo_build_seconds": 2.4398858547210693
+      },
+      "t8_g4_w256_u2": {
+        "sha256": "b7729815fb8344ed929235413884d885d77ddf7a57022f31e2afba57d91ce1c6",
+        "bytes": 47210,
+        "mojo_build_seconds": 2.4388296604156494
+      }
+    },
+    "host_sha256": "cfbfc47b72703258f9ceaac7a055e005791b4d37517fa726a0599677769daa4c"
+  },
+  "run_artifacts": {
+    "control": "e90640b3f51074a258db695ae0cf14a7e77005f2f5bb72e4c6c6e504b50fcef1",
+    "t8_g8_w64_u1": "3930cf33d5aa59e6cdd996c3f71cd39fcac7e06fc3003eddcf54cc2e0d7fe040",
+    "t4_g4_w64_u1": "49977ac09480725d8701cc13afce81d504d4d7c532ef8d88cf18e4effeba98b9",
+    "t16_g16_w128_u1": "6860d9b6f1f485ee2981e58bd1606082da59172c7a6445bcc2df70df747b2be4",
+    "t8_g4_w256_u2": "b7729815fb8344ed929235413884d885d77ddf7a57022f31e2afba57d91ce1c6"
+  },
+  "config": {
+    "names": [
+      "control",
+      "t8_g8_w64_u1",
+      "t4_g4_w64_u1",
+      "t16_g16_w128_u1",
+      "t8_g4_w256_u2"
+    ],
+    "repeats": 1,
+    "shapes": [
+      "64x2048",
+      "512x6144"
+    ],
+    "ring_mib": 0,
+    "random_inputs": false,
+    "pipeline": true
+  },
+  "records": [
+    {
+      "repeat": 0,
+      "shape": "64x2048",
+      "variant": "control",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 47.415729,
+          "candidate_ms": 43.465209
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 320,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.047552
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 128,
+          "first_enqueue_ms": 0.047552,
+          "first_finish_ms": 0.880886,
+          "first_device_ms": 0.01123
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 2048,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 32768,
+          "resident_weight_bytes": 32768,
+          "resident_scale_bytes": 2048,
+          "device_mean_ms": 0.010525,
+          "device_median_ms": 0.010254,
+          "device_p95_ms": 0.011963,
+          "device_sum_ms": 1.347168,
+          "device_span_ms": 1.574463,
+          "host_wall_ms": 2.29099,
+          "enqueue_mean_ms": 0.012637,
+          "enqueue_max_ms": 0.055573,
+          "queued_to_submit_mean_ms": 0.039728,
+          "submit_to_start_mean_ms": 0.297495
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.008688,
+          "reduction_mean_ms": 0.001837,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 2048,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 32768,
+        "resident_weight_bytes": 32768,
+        "resident_scale_bytes": 2048,
+        "device_mean_ms": 0.010525,
+        "device_median_ms": 0.010254,
+        "device_p95_ms": 0.011963,
+        "device_sum_ms": 1.347168,
+        "device_span_ms": 1.574463,
+        "host_wall_ms": 2.29099,
+        "enqueue_mean_ms": 0.012637,
+        "enqueue_max_ms": 0.055573,
+        "queued_to_submit_mean_ms": 0.039728,
+        "submit_to_start_mean_ms": 0.297495
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.2509949207305908
+    },
+    {
+      "repeat": 0,
+      "shape": "64x2048",
+      "variant": "t8_g8_w64_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 62.4025,
+          "candidate_ms": 37.194948
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 304,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.042239
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 128,
+          "first_enqueue_ms": 0.042239,
+          "first_finish_ms": 5.498125,
+          "first_device_ms": 0.010986
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 2048,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 32768,
+          "resident_weight_bytes": 32768,
+          "resident_scale_bytes": 2048,
+          "device_mean_ms": 0.01034,
+          "device_median_ms": 0.01001,
+          "device_p95_ms": 0.011475,
+          "device_sum_ms": 1.323486,
+          "device_span_ms": 1.612305,
+          "host_wall_ms": 2.717083,
+          "enqueue_mean_ms": 0.014002,
+          "enqueue_max_ms": 0.027344,
+          "queued_to_submit_mean_ms": 0.049301,
+          "submit_to_start_mean_ms": 0.116966
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.008541,
+          "reduction_mean_ms": 0.001799,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 2048,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 32768,
+        "resident_weight_bytes": 32768,
+        "resident_scale_bytes": 2048,
+        "device_mean_ms": 0.01034,
+        "device_median_ms": 0.01001,
+        "device_p95_ms": 0.011475,
+        "device_sum_ms": 1.323486,
+        "device_span_ms": 1.612305,
+        "host_wall_ms": 2.717083,
+        "enqueue_mean_ms": 0.014002,
+        "enqueue_max_ms": 0.027344,
+        "queued_to_submit_mean_ms": 0.049301,
+        "submit_to_start_mean_ms": 0.116966
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.2858850955963135
+    },
+    {
+      "repeat": 0,
+      "shape": "64x2048",
+      "variant": "t4_g4_w64_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 63.903906,
+          "candidate_ms": 28.297396
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 224,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.0275
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 256,
+          "first_enqueue_ms": 0.0275,
+          "first_finish_ms": 0.854166,
+          "first_device_ms": 0.007812
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 2048,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 32768,
+          "resident_weight_bytes": 32768,
+          "resident_scale_bytes": 2048,
+          "device_mean_ms": 0.007751,
+          "device_median_ms": 0.007568,
+          "device_p95_ms": 0.009033,
+          "device_sum_ms": 0.992188,
+          "device_span_ms": 1.449951,
+          "host_wall_ms": 2.166042,
+          "enqueue_mean_ms": 0.012892,
+          "enqueue_max_ms": 0.049114,
+          "queued_to_submit_mean_ms": 0.041731,
+          "submit_to_start_mean_ms": 0.115274
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.005655,
+          "reduction_mean_ms": 0.002096,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 2048,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 32768,
+        "resident_weight_bytes": 32768,
+        "resident_scale_bytes": 2048,
+        "device_mean_ms": 0.007751,
+        "device_median_ms": 0.007568,
+        "device_p95_ms": 0.009033,
+        "device_sum_ms": 0.992188,
+        "device_span_ms": 1.449951,
+        "host_wall_ms": 2.166042,
+        "enqueue_mean_ms": 0.012892,
+        "enqueue_max_ms": 0.049114,
+        "queued_to_submit_mean_ms": 0.041731,
+        "submit_to_start_mean_ms": 0.115274
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.251845121383667
+    },
+    {
+      "repeat": 0,
+      "shape": "64x2048",
+      "variant": "t16_g16_w128_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 46.965886,
+          "candidate_ms": 114.043281
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 2044,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.050625
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 64,
+          "first_enqueue_ms": 0.050625,
+          "first_finish_ms": 1.440208,
+          "first_device_ms": 0.615723
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 2048,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 32768,
+          "resident_weight_bytes": 32768,
+          "resident_scale_bytes": 2048,
+          "device_mean_ms": 0.610771,
+          "device_median_ms": 0.612305,
+          "device_p95_ms": 0.614014,
+          "device_sum_ms": 78.178711,
+          "device_span_ms": 78.695312,
+          "host_wall_ms": 79.51375,
+          "enqueue_mean_ms": 0.037387,
+          "enqueue_max_ms": 0.216198,
+          "queued_to_submit_mean_ms": 0.104713,
+          "submit_to_start_mean_ms": 37.105873
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.608801,
+          "reduction_mean_ms": 0.00197,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 2048,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 32768,
+        "resident_weight_bytes": 32768,
+        "resident_scale_bytes": 2048,
+        "device_mean_ms": 0.610771,
+        "device_median_ms": 0.612305,
+        "device_p95_ms": 0.614014,
+        "device_sum_ms": 78.178711,
+        "device_span_ms": 78.695312,
+        "host_wall_ms": 79.51375,
+        "enqueue_mean_ms": 0.037387,
+        "enqueue_max_ms": 0.216198,
+        "queued_to_submit_mean_ms": 0.104713,
+        "submit_to_start_mean_ms": 37.105873
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=30.2, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=30.0, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.1, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.5558531284332275
+    },
+    {
+      "repeat": 0,
+      "shape": "64x2048",
+      "variant": "t8_g4_w256_u2",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 55.899947,
+          "candidate_ms": 51.085156
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 368,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.040469
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 256,
+          "first_enqueue_ms": 0.040469,
+          "first_finish_ms": 5.590781,
+          "first_device_ms": 0.009766
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 64,
+          "reduction": 2048,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 32768,
+          "resident_weight_bytes": 32768,
+          "resident_scale_bytes": 2048,
+          "device_mean_ms": 0.009844,
+          "device_median_ms": 0.009521,
+          "device_p95_ms": 0.010742,
+          "device_sum_ms": 1.26001,
+          "device_span_ms": 1.968994,
+          "host_wall_ms": 3.156823,
+          "enqueue_mean_ms": 0.016831,
+          "enqueue_max_ms": 0.037917,
+          "queued_to_submit_mean_ms": 0.05195,
+          "submit_to_start_mean_ms": 0.077669
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.007757,
+          "reduction_mean_ms": 0.002087,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 64,
+        "reduction": 2048,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 32768,
+        "resident_weight_bytes": 32768,
+        "resident_scale_bytes": 2048,
+        "device_mean_ms": 0.009844,
+        "device_median_ms": 0.009521,
+        "device_p95_ms": 0.010742,
+        "device_sum_ms": 1.26001,
+        "device_span_ms": 1.968994,
+        "host_wall_ms": 3.156823,
+        "enqueue_mean_ms": 0.016831,
+        "enqueue_max_ms": 0.037917,
+        "queued_to_submit_mean_ms": 0.05195,
+        "submit_to_start_mean_ms": 0.077669
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.2916698455810547
+    },
+    {
+      "repeat": 0,
+      "shape": "512x6144",
+      "variant": "control",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 47.934583,
+          "candidate_ms": 38.574271
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 320,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.080625
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 3072,
+          "first_enqueue_ms": 0.080625,
+          "first_finish_ms": 5.785417,
+          "first_device_ms": 0.02124
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 512,
+          "reduction": 6144,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 786432,
+          "resident_weight_bytes": 786432,
+          "resident_scale_bytes": 49152,
+          "device_mean_ms": 0.015169,
+          "device_median_ms": 0.014648,
+          "device_p95_ms": 0.017578,
+          "device_sum_ms": 1.94165,
+          "device_span_ms": 2.166504,
+          "host_wall_ms": 2.758959,
+          "enqueue_mean_ms": 0.015744,
+          "enqueue_max_ms": 0.063698,
+          "queued_to_submit_mean_ms": 0.052153,
+          "submit_to_start_mean_ms": 0.170656
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.012785,
+          "reduction_mean_ms": 0.002384,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 512,
+        "reduction": 6144,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 786432,
+        "resident_weight_bytes": 786432,
+        "resident_scale_bytes": 49152,
+        "device_mean_ms": 0.015169,
+        "device_median_ms": 0.014648,
+        "device_p95_ms": 0.017578,
+        "device_sum_ms": 1.94165,
+        "device_span_ms": 2.166504,
+        "host_wall_ms": 2.758959,
+        "enqueue_mean_ms": 0.015744,
+        "enqueue_max_ms": 0.063698,
+        "queued_to_submit_mean_ms": 0.052153,
+        "submit_to_start_mean_ms": 0.170656
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.2657051086425781
+    },
+    {
+      "repeat": 0,
+      "shape": "512x6144",
+      "variant": "t8_g8_w64_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 60.345469,
+          "candidate_ms": 37.271406
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 304,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.094739
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 3072,
+          "first_enqueue_ms": 0.094739,
+          "first_finish_ms": 6.311146,
+          "first_device_ms": 0.019287
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 512,
+          "reduction": 6144,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 786432,
+          "resident_weight_bytes": 786432,
+          "resident_scale_bytes": 49152,
+          "device_mean_ms": 0.015047,
+          "device_median_ms": 0.014404,
+          "device_p95_ms": 0.017334,
+          "device_sum_ms": 1.926025,
+          "device_span_ms": 2.151855,
+          "host_wall_ms": 3.249948,
+          "enqueue_mean_ms": 0.013576,
+          "enqueue_max_ms": 0.06901,
+          "queued_to_submit_mean_ms": 0.046116,
+          "submit_to_start_mean_ms": 0.545675
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.012659,
+          "reduction_mean_ms": 0.002388,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 512,
+        "reduction": 6144,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 786432,
+        "resident_weight_bytes": 786432,
+        "resident_scale_bytes": 49152,
+        "device_mean_ms": 0.015047,
+        "device_median_ms": 0.014404,
+        "device_p95_ms": 0.017334,
+        "device_sum_ms": 1.926025,
+        "device_span_ms": 2.151855,
+        "host_wall_ms": 3.249948,
+        "enqueue_mean_ms": 0.013576,
+        "enqueue_max_ms": 0.06901,
+        "queued_to_submit_mean_ms": 0.046116,
+        "submit_to_start_mean_ms": 0.545675
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.30331921577453613
+    },
+    {
+      "repeat": 0,
+      "shape": "512x6144",
+      "variant": "t4_g4_w64_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 55.355052,
+          "candidate_ms": 28.377969
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 224,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.086458
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 6144,
+          "first_enqueue_ms": 0.086458,
+          "first_finish_ms": 6.114583,
+          "first_device_ms": 0.018066
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 512,
+          "reduction": 6144,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 786432,
+          "resident_weight_bytes": 786432,
+          "resident_scale_bytes": 49152,
+          "device_mean_ms": 0.015236,
+          "device_median_ms": 0.01416,
+          "device_p95_ms": 0.019287,
+          "device_sum_ms": 1.950195,
+          "device_span_ms": 2.182373,
+          "host_wall_ms": 3.13026,
+          "enqueue_mean_ms": 0.016464,
+          "enqueue_max_ms": 0.105677,
+          "queued_to_submit_mean_ms": 0.05969,
+          "submit_to_start_mean_ms": 0.326319
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.012085,
+          "reduction_mean_ms": 0.003151,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 512,
+        "reduction": 6144,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 786432,
+        "resident_weight_bytes": 786432,
+        "resident_scale_bytes": 49152,
+        "device_mean_ms": 0.015236,
+        "device_median_ms": 0.01416,
+        "device_p95_ms": 0.019287,
+        "device_sum_ms": 1.950195,
+        "device_span_ms": 2.182373,
+        "host_wall_ms": 3.13026,
+        "enqueue_mean_ms": 0.016464,
+        "enqueue_max_ms": 0.105677,
+        "queued_to_submit_mean_ms": 0.05969,
+        "submit_to_start_mean_ms": 0.326319
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "seconds": 0.3065810203552246
+    },
+    {
+      "repeat": 0,
+      "shape": "512x6144",
+      "variant": "t16_g16_w128_u1",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 47.609479,
+          "candidate_ms": 105.128333
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 2044,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.120208
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 1536,
+          "first_enqueue_ms": 0.120208,
+          "first_finish_ms": 7.955105,
+          "first_device_ms": 7.020264
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 512,
+          "reduction": 6144,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 786432,
+          "resident_weight_bytes": 786432,
+          "resident_scale_bytes": 49152,
+          "device_mean_ms": 6.780752,
+          "device_median_ms": 6.644043,
+          "device_p95_ms": 7.735107,
+          "device_sum_ms": 867.936279,
+          "device_span_ms": 868.843018,
+          "host_wall_ms": 869.460416,
+          "enqueue_mean_ms": 0.031188,
+          "enqueue_max_ms": 0.145104,
+          "queued_to_submit_mean_ms": 0.088385,
+          "submit_to_start_mean_ms": 428.390779
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 6.778236,
+          "reduction_mean_ms": 0.002516,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 512,
+        "reduction": 6144,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 786432,
+        "resident_weight_bytes": 786432,
+        "resident_scale_bytes": 49152,
+        "device_mean_ms": 6.780752,
+        "device_median_ms": 6.644043,
+        "device_p95_ms": 7.735107,
+        "device_sum_ms": 867.936279,
+        "device_span_ms": 868.843018,
+        "host_wall_ms": 869.460416,
+        "enqueue_mean_ms": 0.031188,
+        "enqueue_max_ms": 0.145104,
+        "queued_to_submit_mean_ms": 0.088385,
+        "submit_to_start_mean_ms": 428.390779
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Awake\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=1",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Dozing\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=3",
+      "seconds": 2.9223310947418213
+    },
+    {
+      "repeat": 0,
+      "shape": "512x6144",
+      "variant": "t8_g4_w256_u2",
+      "stages": [
+        {
+          "stage": "reference_build_begin"
+        },
+        {
+          "stage": "candidate_build_begin"
+        },
+        {
+          "stage": "built",
+          "reference_ms": 96.347031,
+          "candidate_ms": 115.801042
+        },
+        {
+          "stage": "resources",
+          "private_bytes": 368,
+          "local_bytes": 0,
+          "max_workgroup": 1024
+        },
+        {
+          "stage": "first_enqueue_begin"
+        },
+        {
+          "stage": "first_enqueue_end",
+          "ms": 0.053437
+        },
+        {
+          "stage": "validated",
+          "banks": 1,
+          "outputs": 6144,
+          "first_enqueue_ms": 0.053437,
+          "first_finish_ms": 6.31052,
+          "first_device_ms": 0.024902
+        },
+        {
+          "stage": "result",
+          "layout": "group_major",
+          "mode": "full",
+          "width": 512,
+          "reduction": 6144,
+          "banks": 1,
+          "iterations": 128,
+          "weight_bytes": 786432,
+          "resident_weight_bytes": 786432,
+          "resident_scale_bytes": 49152,
+          "device_mean_ms": 0.015619,
+          "device_median_ms": 0.014648,
+          "device_p95_ms": 0.019287,
+          "device_sum_ms": 1.999268,
+          "device_span_ms": 2.272705,
+          "host_wall_ms": 2.925156,
+          "enqueue_mean_ms": 0.01871,
+          "enqueue_max_ms": 0.035573,
+          "queued_to_submit_mean_ms": 0.057793,
+          "submit_to_start_mean_ms": 0.116133
+        },
+        {
+          "stage": "components",
+          "projection_mean_ms": 0.012432,
+          "reduction_mean_ms": 0.003187,
+          "pipeline": true
+        }
+      ],
+      "result": {
+        "stage": "result",
+        "layout": "group_major",
+        "mode": "full",
+        "width": 512,
+        "reduction": 6144,
+        "banks": 1,
+        "iterations": 128,
+        "weight_bytes": 786432,
+        "resident_weight_bytes": 786432,
+        "resident_scale_bytes": 49152,
+        "device_mean_ms": 0.015619,
+        "device_median_ms": 0.014648,
+        "device_p95_ms": 0.019287,
+        "device_sum_ms": 1.999268,
+        "device_span_ms": 2.272705,
+        "host_wall_ms": 2.925156,
+        "enqueue_mean_ms": 0.01871,
+        "enqueue_max_ms": 0.035573,
+        "queued_to_submit_mean_ms": 0.057793,
+        "submit_to_start_mean_ms": 0.116133
+      },
+      "before": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Dozing\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=3",
+      "after": "Thermal Status: 0\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=51.5, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=50.2, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=43.3, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=36.1, mType=4, mName=USB, mStatus=0}\n\tTemperature{mValue=37.9, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=31.7, mType=0, mName=AP, mStatus=0}\n\tTemperature{mValue=29.4, mType=2, mName=BAT, mStatus=0}\n\tTemperature{mValue=31.1, mType=5, mName=PA, mStatus=0}\n\tTemperature{mValue=31.0, mType=3, mName=SKIN, mStatus=0}\n\tTemperature{mValue=0.0, mType=2, mName=SUBBAT, mStatus=0}\n\tTemperature{mValue=28.3, mType=4, mName=USB, mStatus=0}\n  mWakefulness=Dozing\n  mIsPowered=true\n  mIsPowered=true\nmWakefulness=3",
+      "seconds": 0.42024803161621094
+    }
+  ]
+}

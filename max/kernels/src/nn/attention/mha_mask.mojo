@@ -22,6 +22,7 @@ from std.utils import StaticTuple
 from std.math import align_down, iota, ceildiv
 from std.sys import is_nvidia_gpu, llvm_intrinsic
 from std.memory import bitcast
+from layout.tensor_engine import TensorEngine
 from layout import (
     Coord,
     ImmTileTensor,
@@ -3162,6 +3163,9 @@ def ChunkedCausalMask[
 
 struct RelativeLogitsMask[
     V: MHAMask,
+    BiasEngine: TensorEngine,
+    CacheLengthsEngine: TensorEngine,
+    RowOffsetsEngine: TensorEngine,
     //,
     visibility: V,
     dtype_: DType,
@@ -3201,16 +3205,24 @@ struct RelativeLogitsMask[
     comptime mask_safe_out_of_bounds: Bool = True
     comptime check_mask_during_decoding: Bool = True
 
-    var bias: ImmTileTensor[Self.dtype_, Self.BiasLayout, Self.origin_]
+    var bias: ImmTileTensor[
+        Self.dtype_, Self.BiasLayout, Self.origin_, Engine=Self.BiasEngine
+    ]
     """`(total_q_tokens, heads, extent)`, row `r` matching `q`'s ragged-flat row."""
 
     var cache_lengths: ImmTileTensor[
-        .uint32, Self.CacheLengthsLayout, Self.cache_lengths_origin
+        .uint32,
+        Self.CacheLengthsLayout,
+        Self.cache_lengths_origin,
+        Engine=Self.CacheLengthsEngine,
     ]
     """Cached tokens before this call's new tokens."""
 
     var input_row_offsets: ImmTileTensor[
-        .uint32, Self.RowOffsetsLayout, Self.row_offsets_origin
+        .uint32,
+        Self.RowOffsetsLayout,
+        Self.row_offsets_origin,
+        Engine=Self.RowOffsetsEngine,
     ]
     """Ragged row offset into `bias`/`q` for this call's new tokens, `(batch + 1,)`."""
 
@@ -3231,12 +3243,20 @@ struct RelativeLogitsMask[
 
     def __init__(
         out self,
-        bias: ImmTileTensor[Self.dtype_, Self.BiasLayout, Self.origin_],
+        bias: ImmTileTensor[
+            Self.dtype_, Self.BiasLayout, Self.origin_, Engine=Self.BiasEngine
+        ],
         cache_lengths: ImmTileTensor[
-            .uint32, Self.CacheLengthsLayout, Self.cache_lengths_origin
+            .uint32,
+            Self.CacheLengthsLayout,
+            Self.cache_lengths_origin,
+            Engine=Self.CacheLengthsEngine,
         ],
         input_row_offsets: ImmTileTensor[
-            .uint32, Self.RowOffsetsLayout, Self.row_offsets_origin
+            .uint32,
+            Self.RowOffsetsLayout,
+            Self.row_offsets_origin,
+            Engine=Self.RowOffsetsEngine,
         ],
     ):
         comptime assert (

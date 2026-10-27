@@ -31,10 +31,32 @@ _FILECHECK_TESTS = [
 # Fusion tests need additional dependencies, and GPU tests need accelerator
 # constraints. Keep those requirements out of the shared glob below.
 _EXPLICIT_DEP_TESTS = [
+    "test_graph_storage_engine.mojo",
+    "graph_storage_engine_fixture.mojo",
+    "graph_storage_paged_cache_fixture.mojo",
+    "test_managed_tensor_slice.mojo",
     "test_tile_codegen_elementwise_fusion.mojo",
     "test_foreach_fusion_tile_gpu.mojo",
     "test_managed_tensor_slice_device_encoding.mojo",
 ]
+
+mojo_test(
+    name = "test_managed_tensor_slice.mojo.test",
+    srcs = ["test_managed_tensor_slice.mojo"],
+    copts = IGNORED_POINTER_DEPRECATIONS_COPTS + [
+        "--debug-level",
+        "full",
+    ],
+    data = ["//Target:CPUPlugin.so"],
+    env = {"MODULAR_DRIVER_PLUGINS": "CPU@$(rootpath //Target:CPUPlugin.so)"},
+    deps = [
+        "//max:extensibility",
+        "//max:internal_utils",
+        "//max:linalg",
+        "@mojo//:std",
+        "@mojo//:test_utils",
+    ],
+)
 
 mojo_test(
     name = "test_managed_tensor_slice_device_encoding.mojo.test",
@@ -116,5 +138,14 @@ mojo_test(
     for src in glob(
         ["*.mojo"],
         exclude = _FILECHECK_TESTS + _EXPLICIT_DEP_TESTS,
+        allow_empty = True,
     )
 ]
+
+mojo_test(
+    name = "test_graph_storage_engine.mojo.test",
+    srcs = ["test_graph_storage_engine.mojo"],
+    tags = ["gpu"],
+    target_compatible_with = ["//:has_gpu"],
+    deps = ["//max:extensibility", "//max:layout", "//max:max_mojo", "@mojo//:std"],
+)

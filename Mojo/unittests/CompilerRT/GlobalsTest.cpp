@@ -11,6 +11,7 @@
 // limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#include "AsyncRT/Runtime/HostSystem.h"
 #include "Support/LLVMForwardDecls.h"
 #include "Support/SymbolExport.h"
 #include "llvm/ADT/StringRef.h"
@@ -30,6 +31,23 @@ COMPILERRT_EXPORT void *KGEN_CompilerRT_GetGlobalOrNull(llvm::StringRef name);
 COMPILERRT_EXPORT void KGEN_CompilerRT_InsertGlobal(llvm::StringRef name,
                                                     void *value);
 COMPILERRT_EXPORT void KGEN_CompilerRT_DestroyGlobals();
+
+// The CompilerRT C ABI represents a retained runtime reference as one pointer.
+struct RuntimeRef {
+  void *ptr;
+};
+COMPILERRT_EXPORT RuntimeRef KGEN_CompilerRT_AsyncRT_GetOrCreateCPUDevice();
+COMPILERRT_EXPORT void KGEN_CompilerRT_AsyncRT_ReleaseCPUDevice(RuntimeRef);
+
+TEST(CompilerRTRuntimeTest, ReusesEmbeddingWorkerConfiguration) {
+  auto options =
+      AsyncRT::CPUDeviceOptions().withNumThreads(2).withMainWillNotDonate();
+  auto embedding =
+      AsyncRT::getOrCreateCPUDevice(AsyncRT::CPUDeviceSource::Test, options);
+  auto stdlib = KGEN_CompilerRT_AsyncRT_GetOrCreateCPUDevice();
+  EXPECT_EQ(stdlib.ptr, embedding.getPointer());
+  KGEN_CompilerRT_AsyncRT_ReleaseCPUDevice(stdlib);
+}
 
 namespace {
 

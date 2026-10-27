@@ -25,8 +25,9 @@ struct HostTraits final : TargetTraits {
   bool matches(const llvm::Triple &triple) const override {
     // Covers the CPU targets the shipped build carries an LLVM backend for
     // (see BACKENDS in bazel/public-patches/llvm_project.bzl)
-    return triple.isX86() || triple.isAArch64() || triple.isARM() ||
-           triple.isRISCV();
+    return triple.getOSName() != "opencl" &&
+           (triple.isX86() || triple.isAArch64() || triple.isARM() ||
+            triple.isRISCV());
   }
   llvm::StringRef getAsmExtension() const override { return ".s"; }
   llvm::StringRef getLLVMExtension() const override { return ".ll"; }

@@ -19,7 +19,11 @@ from std.sys import align_of, simd_width_of, is_gpu, size_of
 from std.os import abort
 
 from std.builtin.builtin_slice import ContiguousSlice
-from std.builtin.device_passable import DevicePassable, DeviceTypeEncoder
+from std.builtin.device_passable import (
+    DevicePassable,
+    DeviceTypeEncoder,
+    DevicePointerLike,
+)
 from std.builtin.int import index as _index
 from std.builtin.rebind import downcast
 from std.collections._conditional import _ComptimeConditional
@@ -925,6 +929,29 @@ struct TileTensor[
         """
         return Self.Engine.unsafe_ptr(self._storage)
 
+    @inline(.always)
+    def is_storage_aligned[alignment: Int](self) -> Bool:
+        """Checks byte alignment when a numeric storage address is available.
+
+        Returns False when opaque storage cannot prove the requested alignment.
+        This permits host launch planning without unwrapping device handles.
+
+        Parameters:
+            alignment: Required byte alignment, a positive power of two.
+        """
+        comptime assert alignment > 0 and (alignment & (alignment - 1)) == 0
+        comptime if alignment == 1:
+            return True
+        comptime Storage = type_of(self._storage)
+        comptime if conforms_to(Storage, DevicePointerLike):
+            comptime PointerStorage = downcast[
+                Storage, DevicePointerLike & TrivialRegisterPassable
+            ]
+            var storage = rebind[PointerStorage](self._storage)
+            if not storage._has_raw_address():
+                return False
+        return Int(self.unsafe_ptr()) % alignment == 0
+
     @inline(.nodebug)
     def _unsafe_storage_cast[
         to_mut: Bool = Self.mut,
@@ -1604,13 +1631,16 @@ struct TileTensor[
             coords: A flattened list of the offset coordinates.
 
         Returns:
-            A pointer offset at the given flattened coordinates.
+            A pointer resolved through the engine at the given coordinates.
+            Opaque handles must be encoded for device execution before pointer
+            resolution; this does not unwrap opaque storage on the host.
         """
-        comptime assert (
-            Self.Engine == DefaultEngine[element_width=1]
-        ), "TileTensor.ptr_at_offset requires DefaultEngine"
-        return rebind[type_of(result)](self._storage).unsafe_offset(
-            self.layout[linear_idx_type=Self.linear_idx_type](coords)
+        var offset = self.layout[linear_idx_type=Self.linear_idx_type](coords)
+        comptime OffsetEngine = Self.Engine.OffsetResultType[
+            TypeList.of[type_of(offset)]()
+        ]
+        return rebind[type_of(result)](
+            OffsetEngine.unsafe_ptr(self._offset_storage(offset))
         )
 
     @inline(.always)
@@ -1692,7 +1722,18 @@ struct TileTensor[
         """
         # `other` may carry a different (e.g. offset-derived) engine;
         # the storage-level copy takes it as a distinct `OtherEngine` operand.
-        type_of(other).Engine.copy_to(
+        type_of(other).Engine.copy_to[
+            SelfLayoutType=other.LayoutType,
+            self_mut=other.mut,
+            self_origin=other.origin,
+            self_address_space=other.address_space,
+            OtherLayoutType=Self.LayoutType,
+            other_origin=Self.origin.unsafe_mut_cast[True](),
+            other_address_space=Self.address_space,
+            src_dtype=other.dtype,
+            dst_dtype=Self.dtype,
+            OtherEngine=Self.Engine,
+        ](
             (other._storage, other.layout),
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
         )
@@ -3383,11 +3424,10 @@ struct TileTensor[
     def to_device_buffer(self, ctx: DeviceContext) -> DeviceBuffer[Self.dtype]:
         """Convert the tensor to a `DeviceBuffer`.
 
-        Works for tensors backed by either `DefaultEngine` or
-        `DevicePointerEngine`. In both cases the base pointer is recovered
-        through the engine (`self.ptr`), so the resulting non-owning
-        `DeviceBuffer` covers exactly this tensor's elements, honoring any
-        offset baked into the storage handle.
+        Returns a non-owning buffer, preserving the allocation, byte offset
+        and extent when the engine uses a `DevicePointerLike` handle. Engines
+        backed by raw pointers resolve their pointer directly. The allocation
+        owner must outlive the returned buffer and all queued uses.
 
         Args:
             ctx: The device context to use.
@@ -3396,21 +3436,20 @@ struct TileTensor[
             A `DeviceBuffer` containing the tensor's data.
         """
         comptime assert (
-            Self.Engine == DefaultEngine[element_width=1]
-            or Self.Engine == DevicePointerEngine[element_width=1]
-        ), (
-            "TileTensor.to_device_buffer requires DefaultEngine or"
-            " DevicePointerEngine"
-        )
-        comptime assert (
             Self.address_space == Self.address_space.GENERIC
         ), "DeviceBuffer is only used on GENERIC address space"
-        return DeviceBuffer[Self.dtype](
-            ctx,
-            self.ptr,
-            self.num_elements(),
-            owning=False,
-        )
+        comptime if conforms_to(type_of(self._storage), DevicePointerLike):
+            comptime Handle = downcast[
+                type_of(self._storage),
+                DevicePointerLike & TrivialRegisterPassable,
+            ]
+            return DeviceBuffer[Self.dtype]._borrow_pointer_like(
+                ctx, rebind[Handle](self._storage), self.num_elements()
+            )
+        else:
+            return DeviceBuffer[Self.dtype](
+                ctx, self.ptr, self.num_elements(), owning=False
+            )
 
     @inline(.always)
     def __iadd__(
@@ -3427,7 +3466,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.iadd(
+        Self.Engine.iadd[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3448,7 +3497,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.imul(
+        Self.Engine.imul[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3468,7 +3527,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.isub(
+        Self.Engine.isub[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3489,7 +3558,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.ifloordiv(
+        Self.Engine.ifloordiv[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3510,7 +3589,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.itruediv(
+        Self.Engine.itruediv[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3531,7 +3620,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.imin(
+        Self.Engine.imin[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )
@@ -3552,7 +3651,17 @@ struct TileTensor[
         comptime assert (
             self.element_size == rhs.element_size
         ), "in-place binary ops require operands with the same element size"
-        Self.Engine.imax(
+        Self.Engine.imax[
+            SelfLayoutType=Self.LayoutType,
+            self_origin=Self.origin.unsafe_mut_cast[True](),
+            self_address_space=Self.address_space,
+            OtherLayoutType=rhs.LayoutType,
+            other_mut=rhs.mut,
+            other_origin=rhs.origin,
+            other_address_space=rhs.address_space,
+            dtype=Self.dtype,
+            OtherEngine=rhs.Engine,
+        ](
             (self._unsafe_storage_cast[to_mut=True](), self.layout),
             (rhs._storage, rhs.layout),
         )

@@ -49,6 +49,7 @@ from std.memory import (
     ThinAllocation,
     unsafe_memcpy,
     Pointer,
+    OptionalPointer,
 )
 
 
@@ -180,13 +181,13 @@ def _alloc_cstr(msg: String) -> Pointer[c_char, MutUntrackedOrigin]:
 @export
 def MojoHAL_DeviceContext_createBuffer(
     out_buf: _OutPtr[_DeviceBufferBoxPtr],
-    out_ptr: _OutPtr[_RawMemoryPtr],
+    out_ptr: _OutPtr[OptionalPointer[Byte, MutUntrackedOrigin]],
     ctx: _DeviceContextBoxPtr,
     byte_size: UInt64,
 ) abi("C") -> _CString[]:
     try:
         var buf = DeviceBuffer[.uint8](ctx[], Int(byte_size))
-        out_ptr[] = buf.unsafe_ptr()
+        out_ptr[] = None if buf._opaque_allocation_view() else buf.unsafe_ptr()
         var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
         boxed.unsafe_ptr().unsafe_write(buf^)
         out_buf[] = boxed^.unsafe_leak()
@@ -203,11 +204,126 @@ def MojoHAL_DeviceContext_createBufferOwning(
     byte_size: UInt64,
     owning: Bool,
 ) abi("C") -> _CString[]:
+    if ctx[].api() == "opencl":
+        return _err_cstr(
+            "OpenCL buffers require an allocation view, not a raw address"
+        )
     var buf = DeviceBuffer[.uint8](ctx[], ptr, Int(byte_size), owning=owning)
     var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
     boxed.unsafe_ptr().unsafe_write(buf^)
     out_buf[] = boxed^.unsafe_leak()
     return None
+
+
+@export
+def MojoHAL_DeviceContext_borrowOpaqueMemoryView(
+    out_buf: _OutPtr[_DeviceBufferBoxPtr],
+    ctx: _DeviceContextBoxPtr,
+    allocation: UInt64,
+    offset: UInt64,
+    size: UInt64,
+) abi("C") -> _CString[]:
+    if ctx[].api() != "opencl":
+        return _err_cstr("device does not use opaque allocation views")
+    var buf = DeviceBuffer[.uint8]._borrow_allocation_view(
+        ctx[], (allocation, offset, size)
+    )
+    var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
+    boxed.unsafe_ptr().unsafe_write(buf^)
+    out_buf[] = boxed^.unsafe_leak()
+    return None
+
+
+@export
+def MojoHAL_DeviceBuffer_clone(
+    result: _OutPtr[_DeviceBufferBoxPtr],
+    source: _DeviceBufferBoxPtr,
+) abi("C"):
+    var copy = source[]
+    var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
+    boxed.unsafe_ptr().unsafe_write(copy^)
+    result[] = boxed^.unsafe_leak()
+
+
+@export
+def MojoHAL_DeviceBuffer_isOpaque(buf: _DeviceBufferBoxPtr) abi("C") -> Bool:
+    return Bool(buf[]._opaque_allocation_view())
+
+
+@export
+def MojoHAL_DeviceBuffer_getOpaqueView(
+    allocation: _OutPtr[UInt64],
+    offset: _OutPtr[UInt64],
+    size: _OutPtr[UInt64],
+    buf: _DeviceBufferBoxPtr,
+) abi("C") -> _CString[]:
+    if not MojoHAL_DeviceBuffer_isOpaque(buf):
+        return _err_cstr("buffer does not have opaque storage")
+    ref storage = buf[]._inner[]._buffer
+    allocation[] = UInt64(Int(storage._handle))
+    offset[] = storage._byte_offset
+    size[] = storage.byte_size
+    return None
+
+
+@export
+def MojoHAL_DeviceBuffer_copyFromHost(
+    dst: _DeviceBufferBoxPtr,
+    src: _RawMemoryPtr,
+    size: UInt64,
+) abi("C") -> _CString[]:
+    try:
+        var view = dst[].create_sub_buffer[.uint8](0, Int(size))
+        dst[].context().enqueue_copy(view, src)
+        return None
+    except e:
+        return _err_cstr(String(e))
+
+
+@export
+def MojoHAL_DeviceBuffer_copyToHost(
+    dst: _RawMemoryPtr,
+    src: _DeviceBufferBoxPtr,
+    offset: UInt64,
+    size: UInt64,
+) abi("C") -> _CString[]:
+    try:
+        var view = src[].create_sub_buffer[.uint8](Int(offset), Int(size))
+        src[].context().enqueue_copy(dst, view)
+        return None
+    except e:
+        return _err_cstr(String(e))
+
+
+@export
+def MojoHAL_DeviceBuffer_copy(
+    dst: _DeviceBufferBoxPtr,
+    src: _DeviceBufferBoxPtr,
+    offset: UInt64,
+    size: UInt64,
+) abi("C") -> _CString[]:
+    try:
+        var source = src[].create_sub_buffer[.uint8](Int(offset), Int(size))
+        var destination = dst[].create_sub_buffer[.uint8](0, Int(size))
+        dst[].context().enqueue_copy(destination, source)
+        return None
+    except e:
+        return _err_cstr(String(e))
+
+
+@export
+def MojoHAL_DeviceBuffer_fill(
+    dst: _DeviceBufferBoxPtr,
+    value: UInt64,
+    width: UInt64,
+) abi("C") -> _CString[]:
+    try:
+        dst[].context()._stream[].fill(
+            dst[]._inner[]._buffer.view(), value, width
+        )
+        return None
+    except e:
+        return _err_cstr(String(e))
 
 
 @export
@@ -541,22 +657,18 @@ def MojoHAL_DeviceBuffer_createSubBuffer(
     byte_offset: UInt64,
     byte_size: UInt64,
 ) abi("C") -> _CString[]:
-    # The returned box is a non-owning view into the parent allocation; the
-    # C++ DeviceBuffer holds a reference to its parent to keep it alive.
-    ref parent_buf = parent[]
-    var parent_size = UInt64(len(parent_buf))
-    if byte_size > parent_size or parent_size - byte_size < byte_offset:
-        return _err_cstr("offset, len and elem_size are out of range")
-    var view = DeviceBuffer[.uint8](
-        parent_buf.context(),
-        parent_buf.unsafe_ptr().unsafe_offset(Int(byte_offset)),
-        Int(byte_size),
-        owning=False,
-    )
-    var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
-    boxed.unsafe_ptr().unsafe_write(view^)
-    out_buf[] = boxed^.unsafe_leak()
-    return None
+    try:
+        # Preserve allocation identity and accumulated offsets. The standard
+        # buffer view also keeps the parent's storage alive.
+        var view = parent[].create_sub_buffer[.uint8](
+            Int(byte_offset), Int(byte_size)
+        )
+        var boxed = alloc(Layout[DeviceBuffer[.uint8]].single())
+        boxed.unsafe_ptr().unsafe_write(view^)
+        out_buf[] = boxed^.unsafe_leak()
+        return None
+    except e:
+        return _err_cstr(String(e))
 
 
 @export

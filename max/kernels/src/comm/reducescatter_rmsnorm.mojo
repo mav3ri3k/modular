@@ -50,6 +50,7 @@ from max.gpu.primitives.grid_controls import (
     pdl_launch_attributes,
     wait_on_dependent_grids,
 )
+from layout.tensor_engine import TensorEngine
 from layout import Coord, Idx, TensorLayout, TileTensor, row_major
 from layout.tile_tensor import _ComptimeConditionalTileTensor
 from std.utils import StaticTuple
@@ -94,6 +95,9 @@ def _reducescatter_rmsnorm_kernel[
     residual_origin: Origin,
     ResidualLayoutType: TensorLayout,
     in_dtype: DType,
+    GammaEngine: TensorEngine,
+    NormedOutEngine: TensorEngine,
+    SumOutEngine: TensorEngine,
     //,
     ngpus: Int,
     simd_width: Int,
@@ -103,9 +107,17 @@ def _reducescatter_rmsnorm_kernel[
     pdl_level: PDLLevel = PDLLevel(),
 ](
     src_ptrs: Array[ImmPointer[Scalar[in_dtype], ImmutAnyOrigin], ngpus],
-    gamma: TileTensor[in_dtype, GammaLayoutType, origin],
-    normed_out: TileTensor[mut=True, in_dtype, NormedLayoutType, normed_origin],
-    sum_out: TileTensor[mut=True, in_dtype, SumLayoutType, sum_origin],
+    gamma: TileTensor[in_dtype, GammaLayoutType, origin, Engine=GammaEngine],
+    normed_out: TileTensor[
+        mut=True,
+        in_dtype,
+        NormedLayoutType,
+        normed_origin,
+        Engine=NormedOutEngine,
+    ],
+    sum_out: TileTensor[
+        mut=True, in_dtype, SumLayoutType, sum_origin, Engine=SumOutEngine
+    ],
     residual: _ComptimeConditionalTileTensor[
         in_dtype,
         ResidualLayoutType,
@@ -330,6 +342,9 @@ def _reducescatter_rmsnorm_launch[
         has_residual=has_residual,
         domain_id=domain_id,
         pdl_level=pdl_level,
+        GammaEngine=type_of(gamma).Engine,
+        NormedOutEngine=type_of(normed_out).Engine,
+        SumOutEngine=type_of(sum_out).Engine,
     ]
     ctx.enqueue_function[kernel](
         src_ptrs,
@@ -391,12 +406,16 @@ def reducescatter_rmsnorm[
     ngpus: Int,
     in_layout: TensorLayout,
     in_origin: Origin,
+    InputBuffersEngine: TensorEngine,
     //,
     has_residual: Bool = False,
     group_size: Int = ngpus,
     pdl_level: PDLLevel = PDLLevel(),
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],
@@ -523,7 +542,8 @@ def reducescatter_rmsnorm[
     comptime PtrType = ImmPointer[Scalar[in_dtype], ImmutAnyOrigin]
     var src_ptrs = Array[_, group_size](
         fill_with=lambda (i: Int) -> PtrType: input_buffers[group_start + i]
-        ._storage.as_imm()
+        .unsafe_ptr()
+        .as_imm()
         .as_unsafe_any_origin()
     )
 
@@ -638,13 +658,17 @@ def _dispatch_rs_norm[
     ngpus: Int,
     in_layout: TensorLayout,
     in_origin: Origin,
+    InputBuffersEngine: TensorEngine,
     //,
     TwoLaunchFuncType: def() raises -> None,
     has_residual: Bool = False,
     group_size: Int = ngpus,
     pdl_level: PDLLevel = PDLLevel(),
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],

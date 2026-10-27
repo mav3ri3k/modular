@@ -99,6 +99,12 @@ trait MaxPluginHooks:
     targets have no warps of their own uses `_accelerator_warp_size()`.
     """
 
+    comptime max_threads_per_block_metadata: StaticString = ""
+    """Target metadata key for a maximum workgroup-size compiler hint.
+
+    An empty key rejects use of MAX_THREADS_PER_BLOCK_METADATA on this target.
+    """
+
     comptime barrier_fn: OptionalReg[_BarrierPluginHookFnType] = None
     """Lowers `barrier()`, which synchronizes the threads of a block and
     makes their shared-memory writes visible to each other.

@@ -1171,9 +1171,7 @@ def scatter_nd_generator[
             # Nothing to update.
             return
 
-        var updates_flat = TileTensor(
-            updates.ptr, row_major(updates.num_elements())
-        )
+        var updates_flat = updates.reshape(row_major(updates.num_elements()))
 
         var data_shape = coord_to_index_list(data.layout.shape_coord())
         var indices_shape = coord_to_index_list(indices.layout.shape_coord())
@@ -1272,7 +1270,7 @@ def scatter_nd_generator[
                 for i in range(count_copy):
                     atomic_update(
                         output_flat.ptr.unsafe_offset(output_offset + i),
-                        updates_flat.load((updates_offset + i,)),
+                        updates_flat.load[width=1]((updates_offset + i,)),
                     )
 
             else:
@@ -1404,8 +1402,8 @@ def scatter_nd_generator[
 
             var vector_safe = (
                 slice_elems % pack == 0
-                and Int(output.ptr) % vector_alignment == 0
-                and Int(updates.ptr) % vector_alignment == 0
+                and output.is_storage_aligned[vector_alignment]()
+                and updates.is_storage_aligned[vector_alignment]()
             )
             for dim in range(last_shape_of_indices):
                 vector_safe = vector_safe and (

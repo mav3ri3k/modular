@@ -203,6 +203,46 @@ MGP_RT_CreateBufferRefAsyncValue(AsyncValue *storage, void *data, size_t size) {
   return value.releasePointer();
 }
 
+// Opaque buffers retain allocation identity and offsets separately from data.
+COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncValue *
+MGP_RT_CreateOpaqueBufferRefAsyncValue(AsyncValue *storage, uint64_t allocation,
+                                       uint64_t offset, uint64_t size) {
+  CPUDevice &cpuDevice = *CPUDevice::getCurrentCPUDeviceOrNull();
+  auto buffer = TensorBufferRef::createOpaque({allocation, offset, size},
+                                              AnyAsyncValueRef::take(storage));
+  return AnyAsyncValueRef::createReady<TensorBufferRef>(cpuDevice,
+                                                        std::move(buffer))
+      .releasePointer();
+}
+
+COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT bool
+MGP_RT_GetOpaqueViewFromBuffer(AsyncValue *value, uint64_t *allocation,
+                               uint64_t *offset, uint64_t *size) {
+  auto &buffer = value->get<TensorBufferRef>();
+  if (!buffer.isOpaque())
+    return false;
+  const auto &view = buffer.getOpaqueView();
+  *allocation = view.allocation;
+  *offset = view.byteOffset;
+  *size = view.byteSize;
+  return true;
+}
+
+COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncValue *
+MGP_RT_GetCachedOpaqueBuffer(size_t slot, StateContext *ctx,
+                             uint64_t *allocation, uint64_t *offset,
+                             uint64_t *size) {
+  auto &state = ctx->getStateSlotPayload<TensorStateSlot>(slot);
+  auto buffer = state.getBufferRef();
+  if (buffer.isError() || !buffer->isOpaque())
+    return nullptr;
+  const auto &view = buffer->getOpaqueView();
+  *allocation = view.allocation;
+  *offset = view.byteOffset;
+  *size = view.byteSize;
+  return buffer->getMemStorageHandle().releasePointer();
+}
+
 /// The Tensor counterpart of MGP_RT_CreateBufferRefAsyncValue.
 COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncValue *
 MGP_RT_CreateTensorRefAsyncValue(AsyncValue *storage, void *data, size_t size,
@@ -215,6 +255,38 @@ MGP_RT_CreateTensorRefAsyncValue(AsyncValue *storage, void *data, size_t size,
   AnyAsyncValueRef value = AnyAsyncValueRef::createReady<Tensor>(
       cpuDevice, std::move(buf), std::move(spec));
   return value.releasePointer();
+}
+
+/// Packs a tensor without turning opaque allocation identity into an address.
+COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncValue *
+MGP_RT_CreateOpaqueTensorRefAsyncValue(AsyncValue *storage, uint64_t allocation,
+                                       uint64_t offset, uint64_t size,
+                                       size_t rank, size_t *dims, int8_t type) {
+  auto &cpu = *CPUDevice::getCurrentCPUDeviceOrNull();
+  auto buffer = TensorBufferRef::createOpaque({allocation, offset, size},
+                                              AnyAsyncValueRef::take(storage));
+  TensorSpec spec(ArrayRef<size_t>(dims, rank), DType(type));
+  return AnyAsyncValueRef::createReady<Tensor>(cpu, std::move(buffer),
+                                               std::move(spec))
+      .releasePointer();
+}
+
+COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT bool
+MGP_RT_GetOpaqueViewFromTensor(AsyncValue *value, size_t *dims,
+                               uint64_t *allocation, uint64_t *offset,
+                               uint64_t *size) {
+  auto &tensor = value->get<Tensor>();
+  auto &buffer = tensor.getBufferRef();
+  if (!buffer.isOpaque())
+    return false;
+  const auto &view = buffer.getOpaqueView();
+  *allocation = view.allocation;
+  *offset = view.byteOffset;
+  *size = view.byteSize;
+  const auto &spec = tensor.getSpec();
+  for (size_t i = 0; i < spec.getRank(); ++i)
+    dims[i] = spec[i];
+  return true;
 }
 
 COMPILERRT_EXPORT COMPILERRT_VISIBILITY_EXPORT AsyncValue *

@@ -15,6 +15,7 @@
 
 #include "AsyncRT/Runtime/AsyncValue.h"
 #include "AsyncRT/Runtime/CPUDevice.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 
 using namespace M;
@@ -68,6 +69,23 @@ TensorBufferRef TensorBufferRef::createOwned(CompactCPUDevicePtr cpuDevice,
                                  makeMaybeAlign(alignment));
 }
 
+TensorBufferRef TensorBufferRef::createOpaque(OpaqueDeviceView view,
+                                              AnyAsyncValueRef storageHandle) {
+  if (!view.allocation || !storageHandle ||
+      view.byteOffset > UINT64_MAX - view.byteSize)
+    llvm::report_fatal_error(
+        "opaque buffer requires a valid owned allocation view");
+  auto result =
+      TensorBufferRef::create(nullptr, view.byteSize, std::move(storageHandle));
+  result.opaqueView = view;
+  return result;
+}
+
+void TensorBufferRef::reportOpaqueAddressAccess() {
+  llvm::report_fatal_error(
+      "opaque tensor buffers have no raw address; use their allocation view");
+}
+
 // Create an owned reference from a taken void* pointer -- This taken
 // pointer will not be freed by anyone else except by the buffer-ref now.
 TensorBufferRef TensorBufferRef::take(CompactCPUDevicePtr cpuDevice,
@@ -80,11 +98,14 @@ TensorBufferRef TensorBufferRef::take(CompactCPUDevicePtr cpuDevice,
 }
 
 TensorBufferRef TensorBufferRef::borrow() const {
+  if (opaqueView)
+    return createOpaque(*opaqueView, storageRef.copy());
   return TensorBufferRef::create(
       data, size, storageRef ? storageRef.copy() : AnyAsyncValueRef{});
 }
 
 void TensorBufferRef::reset() {
+  opaqueView.reset();
   data = nullptr;
   size = 0;
   // Though the underlying buffer has not been freed, stop the profiling
@@ -94,8 +115,12 @@ void TensorBufferRef::reset() {
 
 void TensorBufferRef::printDebug(raw_ostream &os) const {
   os << "TensorBufferRef(";
-  os << llvm::format_hex(reinterpret_cast<intptr_t>(getBuffer()),
-                         2 + 2 * sizeof(intptr_t));
+  if (opaqueView)
+    os << "opaque allocation=" << opaqueView->allocation
+       << " offset=" << opaqueView->byteOffset;
+  else
+    os << llvm::format_hex(reinterpret_cast<intptr_t>(getBuffer()),
+                           2 + 2 * sizeof(intptr_t));
   os << ", ";
   os << getSize();
   if (storageRef) {
@@ -109,6 +134,7 @@ void TensorBufferRef::swap(TensorBufferRef &rhs) {
   std::swap(data, rhs.data);
   std::swap(size, rhs.size);
   std::swap(storageRef, rhs.storageRef);
+  std::swap(opaqueView, rhs.opaqueView);
   std::swap(profilerEntry, rhs.profilerEntry);
 }
 

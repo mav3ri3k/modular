@@ -151,6 +151,11 @@ public:
   /// false: targets with no kernel concept have no exported kernels.
   virtual bool isExportedKernel(mlir::Operation *func) const { return false; }
 
+  /// Whether abi("C") uses the host architecture's register coercions.
+  /// Source-based device targets preserve typed arguments until their own ABI
+  /// lowering instead of inheriting the host data-model target's calling ABI.
+  virtual bool usesHostCABI() const { return true; }
+
   /// Returns the LLVM argument-attribute name this target uses to pass a
   /// borrowed pointer argument to a kernel by value. Only queried for targets
   /// whose `isExportedKernel` returns true, so the default is empty.

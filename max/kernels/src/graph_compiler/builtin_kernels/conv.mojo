@@ -256,7 +256,7 @@ struct PadConstant:
         constant: Scalar[dtype=dtype],
         ctx: DeviceContext,
     ) raises:
-        var paddings_ptr = padding._ptr
+        var paddings_ptr = padding.unsafe_ptr()
 
         comptime if is_cpu[target]():
             pad_constant(
@@ -267,9 +267,9 @@ struct PadConstant:
             )
         elif is_gpu[target]():
             pad_constant_gpu(
-                output._ptr,
+                output.unsafe_ptr(),
                 output.shape(),
-                input._ptr,
+                input.unsafe_ptr(),
                 input.shape(),
                 paddings_ptr,
                 constant,
@@ -318,7 +318,7 @@ struct PadRepeat:
         padding: InputTensor[rank=1, ...],
         ctx: DeviceContext,
     ) raises:
-        var paddings_ptr = padding._ptr
+        var paddings_ptr = padding.unsafe_ptr()
 
         comptime if is_cpu[target]():
             pad_repeat(
@@ -328,9 +328,9 @@ struct PadRepeat:
             )
         elif is_gpu[target]():
             pad_repeat_gpu(
-                output._ptr,
+                output.unsafe_ptr(),
                 output.shape(),
-                input._ptr,
+                input.unsafe_ptr(),
                 input.shape(),
                 paddings_ptr,
                 ctx,
@@ -368,7 +368,7 @@ struct PadReflect:
         padding: InputTensor[rank=1, ...],
         ctx: DeviceContext,
     ) raises:
-        var paddings_ptr = padding._ptr
+        var paddings_ptr = padding.unsafe_ptr()
 
         comptime if is_cpu[target]():
             pad_reflect(
@@ -378,9 +378,9 @@ struct PadReflect:
             )
         elif is_gpu[target]():
             pad_reflect_gpu(
-                output._ptr,
+                output.unsafe_ptr(),
                 output.shape(),
-                input._ptr,
+                input.unsafe_ptr(),
                 input.shape(),
                 paddings_ptr,
                 ctx,
@@ -407,7 +407,7 @@ def _index_list[size: Int](values: InputTensor) -> IndexList[size]:
     var result = IndexList[size](0)
 
     comptime for i in range(size):
-        result[i] = Int(values._ptr[i])
+        result[i] = Int(values.unsafe_ptr()[i])
     return result
 
 
@@ -475,14 +475,26 @@ struct ConvCPU:
 
         comptime match input.rank:
             case 3:
-                pad_w_tuple = Index(paddings._ptr[0], paddings._ptr[1])
+                pad_w_tuple = Index(
+                    paddings.unsafe_ptr()[0], paddings.unsafe_ptr()[1]
+                )
             case 4:
-                pad_h_tuple = Index(paddings._ptr[0], paddings._ptr[1])
-                pad_w_tuple = Index(paddings._ptr[2], paddings._ptr[3])
+                pad_h_tuple = Index(
+                    paddings.unsafe_ptr()[0], paddings.unsafe_ptr()[1]
+                )
+                pad_w_tuple = Index(
+                    paddings.unsafe_ptr()[2], paddings.unsafe_ptr()[3]
+                )
             case 5:
-                pad_d_tuple = Index(paddings._ptr[0], paddings._ptr[1])
-                pad_h_tuple = Index(paddings._ptr[2], paddings._ptr[3])
-                pad_w_tuple = Index(paddings._ptr[4], paddings._ptr[5])
+                pad_d_tuple = Index(
+                    paddings.unsafe_ptr()[0], paddings.unsafe_ptr()[1]
+                )
+                pad_h_tuple = Index(
+                    paddings.unsafe_ptr()[2], paddings.unsafe_ptr()[3]
+                )
+                pad_w_tuple = Index(
+                    paddings.unsafe_ptr()[4], paddings.unsafe_ptr()[5]
+                )
 
         comptime input_shape_val = Int(
             input._static_shape_tuple[input.rank - 1]

@@ -14,7 +14,7 @@
 from std.builtin.device_passable import DevicePassable, DeviceTypeEncoder
 from std.collections import OptionalReg
 from std.testing import assert_equal, assert_false, assert_true, TestSuite
-from std.utils import StaticTuple
+from std.utils import IndexList, StaticTuple
 from std.utils.coord import ComptimeInt, Coord, Idx
 
 from max.gpu.host._legacy.device_context import DefaultDeviceTypeEncoder
@@ -141,6 +141,27 @@ def test_encode_fields_recurses_into_nested_composite() raises:
     assert_equal(buf[].box.scaled.raw, 6)
     assert_equal(buf[].box.tag, 10)
     assert_equal(buf[].tag2, 200)
+
+
+@fieldwise_init
+struct IndexCapture(TrivialRegisterPassable):
+    var count: Int
+    var offset: UInt
+    var scaled: ScaledInt
+    var shape: IndexList[2]
+
+
+def test_encode_index_capture_with_nested_array() raises:
+    var value = IndexCapture(7, UInt(11), ScaledInt(5), IndexList[2](3, 4))
+    var allocation = alloc[IndexCapture]({length = 1}).into_managed()
+    var encoder = DefaultDeviceTypeEncoder()
+    encoder.encode_fields(value, allocation.unsafe_ptr().unsafe_bitcast[NoneType]())
+    ref actual = allocation.unsafe_ptr()[]
+    assert_equal(actual.count, 7)
+    assert_equal(actual.offset, UInt(11))
+    assert_equal(actual.scaled.raw, 10)
+    assert_equal(actual.shape[0], 3)
+    assert_equal(actual.shape[1], 4)
 
 
 def test_encode_fields_bit_copies_plain_fields() raises:
@@ -321,9 +342,8 @@ def test_encode_fields_bit_copies_bool_field() raises:
     var allocation = alloc[ScaledIntBoolBox]({length = 1}).into_managed()
     var buf = allocation.unsafe_ptr()
     var encoder = DefaultDeviceTypeEncoder()
-    # Without the `Bool` guard in `_contains_device_passable_field`,
-    # elaborating this call is a compile error (`struct_field_types requires a
-    # struct type`) from walking `Bool`'s `!kgen.scalar<bool>` storage.
+    # Primitive `!kgen.scalar<bool>` storage is not a reflectable struct.
+    # The recursive encoder must treat it as a leaf.
     encoder.encode_fields(box, buf.unsafe_bitcast[NoneType]())
     # `scaled` is `DevicePassable`, so `ScaledInt._to_device_type` doubles `raw`.
     assert_equal(buf[].scaled.raw, 18)

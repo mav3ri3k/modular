@@ -1,4 +1,4 @@
-load("//bazel:api.bzl", "modular_cc_library", "modular_cc_test")
+load("//bazel:api.bzl", "modular_cc_library", "modular_cc_test", "mojo_shared_library")
 
 # gazelle:default_visibility //visibility:private
 
@@ -595,6 +595,86 @@ modular_cc_test(
     ],
 )
 
+mojo_shared_library(
+    name = "opaque_graph_buffer",
+    srcs = ["opaque_graph_buffer.mojo"],
+    shared_lib_name = "libOpaqueGraphBuffer.so",
+    target_compatible_with = select({
+        "//:hal_device_context_enabled": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = ["//max:builtin_primitives", "//max:max_mojo", "@mojo//:std",
+            "//GraphCompiler:MGPRT", "//MLRT:Driver/DeviceContext"],
+)
+
+modular_cc_test(
+    name = "OpaqueGraphBufferTest",
+    size = "small",
+    srcs = ["OpaqueGraphBufferTest.cpp"],
+    target_compatible_with = select({
+        "//:hal_device_context_enabled": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    data = ["//Target:CPUPlugin.so", "//MLRT/test/Driver/HAL:MockPlugin.so"],
+    env = {
+        "MODULAR_DRIVER_PLUGINS": "CPU@$(rootpath //Target:CPUPlugin.so);OpenCL@$(rootpath //MLRT/test/Driver/HAL:MockPlugin.so)",
+        "MODULAR_MOCK_HAL_API": "OpenCL",
+    },
+    deps = [
+        ":TestUtils", ":opaque_graph_buffer", "//GraphCompiler:MGPRT",
+        "//MLRT:Core/Tensor", "//MLRT:Driver/DeviceContext",
+        "//AsyncRT:Runtime", "//AsyncRT:RuntimeGlobals", "//Support:TypeID",
+    ],
+)
+
+mojo_shared_library(
+    name = "opaque_graph_tensor",
+    srcs = ["opaque_graph_tensor.mojo"],
+    shared_lib_name = "libOpaqueGraphTensor.so",
+    target_compatible_with = select({
+        "//:hal_device_context_enabled": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = ["//max:builtin_primitives", "//max:max_mojo", "@mojo//:std",
+            "//GraphCompiler:MGPRT", "//MLRT:Driver/DeviceContext"],
+)
+
+modular_cc_test(
+    name = "OpaqueGraphTensorTest",
+    size = "small",
+    srcs = ["OpaqueGraphTensorTest.cpp"],
+    target_compatible_with = select({
+        "//:hal_device_context_enabled": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    data = ["//Target:CPUPlugin.so", "//MLRT/test/Driver/HAL:MockPlugin.so"],
+    env = {
+        "MODULAR_DRIVER_PLUGINS": "CPU@$(rootpath //Target:CPUPlugin.so);OpenCL@$(rootpath //MLRT/test/Driver/HAL:MockPlugin.so)",
+        "MODULAR_MOCK_HAL_API": "OpenCL",
+    },
+    deps = [
+        ":TestUtils", ":opaque_graph_tensor", "//GraphCompiler:MGPRT",
+        "//MLRT:Core/Tensor", "//MLRT:Driver/DeviceContext",
+        "//AsyncRT:Runtime", "//AsyncRT:RuntimeGlobals", "//Support:TypeID",
+    ],
+)
+
+modular_cc_test(
+    name = "OpaqueTensorBufferRefTest",
+    size = "small",
+    srcs = ["OpaqueTensorBufferRefTest.cpp"],
+    data = ["//Target:CPUPlugin.so"],
+    env = {"MODULAR_DRIVER_PLUGINS": "CPU@$(rootpath //Target:CPUPlugin.so)"},
+    deps = [
+        ":TestUtils",
+        "//MLRT:Core/Tensor",
+        "//MLRT:Driver/DeviceContext",
+        "//AsyncRT:Runtime",
+        "//AsyncRT:RuntimeGlobals",
+        "//Support:TypeID",
+    ],
+)
+
 modular_cc_test(
     name = "AsyncValueFromDeviceBufferTest",
     size = "small",
@@ -650,6 +730,46 @@ modular_cc_test(
 # VirtualDeviceContext in the default config and the HAL shim's guards under
 # --config=hal-device-context. Needs no GPU and no driver plugin -- the virtual
 # branch fires before any plugin is opened.
+modular_cc_test(
+    name = "OpenCLVirtualDeviceTest",
+    size = "small",
+    srcs = ["OpenCLVirtualDeviceTest.cpp"],
+    deps = [
+        ":TestUtils",
+        "//AsyncRT:RuntimeGlobals",
+        "//MLRT:Driver/DeviceContextAPI",
+        "//MLRT:Driver/DeviceContextImpl",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+modular_cc_test(
+    name = "OpenCLCompilationDeviceTest",
+    size = "small",
+    srcs = ["OpenCLCompilationDeviceTest.cpp"],
+    target_compatible_with = select({
+        "//:hal_device_context_enabled": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    deps = [
+        ":TestUtils",
+        "//MLRT:Driver/CompilationDeviceImpl",
+        "//MLRT:Driver/CompilerDeviceArch",
+        "//MLRT:Driver/DeviceContextAPI",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+modular_cc_test(
+    name = "HALDeviceArchTest",
+    size = "small",
+    srcs = ["HALDeviceArchTest.cpp"],
+    deps = [
+        "//MLRT:Driver/HALDeviceArch",
+        "//SDK:HAL",
+    ],
+)
+
 modular_cc_test(
     name = "HALVirtualDeviceTest",
     size = "small",

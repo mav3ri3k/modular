@@ -112,6 +112,62 @@ def slice_dim_as_view[
 
 
 @inline(.always)
+def slice_view_layout[
+    rank: Int
+](
+    shape: IndexList[rank],
+    strides: IndexList[rank],
+    starts: TileTensor[mut=False, ...],
+    ends: TileTensor[mut=False, ...],
+    steps: TileTensor[mut=False, ...],
+) -> Tuple[
+    Int,
+    Layout[
+        shape_types=DynamicCoord[.int64, rank].element_types,
+        stride_types=DynamicCoord[.int64, rank].element_types,
+    ],
+]:
+    """Normalizes slice indices and returns its offset and strided layout.
+
+    This computes metadata without dereferencing the source tensor storage.
+    The index tensors must be accessible where this function executes.
+    """
+    var new_shape = IndexList[rank]()
+    var new_stride = IndexList[rank]()
+
+    # The data does not change however we will be addressing a different
+    # offset of the data; accumulate that offset and apply it once at the
+    # end.
+    var total_offset = Int(0)
+
+    comptime for i in range(rank):
+        var start = Int(starts[i])
+        var stop = Int(ends[i])
+        var step = Int(steps[i])
+        var dim_i = shape[i]
+        var stride_i = strides[i]
+
+        # Normalize the start/stop indices
+        start = _normalize_and_clamp_dim(start, step, dim_i)
+        stop = _normalize_and_clamp_dim(stop, step, dim_i)
+
+        total_offset += start * stride_i
+
+        # Stride == number of elements to the next index in this dimension.
+        # So to step we can just increase the stride.
+        new_stride[i] = stride_i * step
+
+        # If the steps are positive we traverse from start, if negative from
+        # stop.
+        new_shape[i] = len(range(start, stop, step))
+
+    return (
+        total_offset,
+        Layout(Coord(new_shape), Coord(rebind[type_of(new_shape)](new_stride))),
+    )
+
+
+@inline(.always)
 def slice_as_view[
     dtype: DType,
     start_type: DType,
@@ -150,42 +206,20 @@ def slice_as_view[
     comptime assert ends.flat_rank == 1
     comptime assert steps.flat_rank == 1
 
-    var new_shape = IndexList[tensor.rank]()
-    var new_stride = IndexList[tensor.rank]()
-
-    # The data does not change however we will be addressing a different
-    # offset of the data; accumulate that offset and apply it once at the
-    # end.
-    var total_offset = Scalar[tensor.linear_idx_type](0)
-
-    comptime for i in range(tensor.rank):
-        var start = Int(starts[i])
-        var stop = Int(ends[i])
-        var step = Int(steps[i])
-        var dim_i = Int(tensor.dim(i))
-        var stride_i = Int(tensor.dynamic_stride(i))
-
-        # Normalize the start/stop indices
-        start = _normalize_and_clamp_dim(start, step, dim_i)
-        stop = _normalize_and_clamp_dim(stop, step, dim_i)
-
-        total_offset += Scalar[tensor.linear_idx_type](start * stride_i)
-
-        # Stride == number of elements to the next index in this dimension.
-        # So to step we can just increase the stride.
-        new_stride[i] = stride_i * step
-
-        # If the steps are positive we traverse from start, if negative from
-        # stop.
-        new_shape[i] = len(range(start, stop, step))
-
-    var new_data = tensor._offset_storage(total_offset)
-    return {
-        new_data,
-        Layout(
-            Coord(new_shape),
-            Coord(rebind[type_of(new_shape)](new_stride)),
+    var offset, layout = slice_view_layout(
+        rebind[IndexList[tensor.rank]](
+            coord_to_index_list(tensor.layout.shape_coord())
         ),
+        rebind[IndexList[tensor.rank]](
+            coord_to_index_list(tensor.layout.stride_coord())
+        ),
+        starts,
+        ends,
+        steps,
+    )
+    return {
+        tensor._offset_storage(Scalar[tensor.linear_idx_type](offset)),
+        layout,
     }
 
 

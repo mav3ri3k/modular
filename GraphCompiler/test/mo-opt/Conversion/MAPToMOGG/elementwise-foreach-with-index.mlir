@@ -2,13 +2,13 @@
 
 // CHECK-LABEL: mo.graph @add_with_index
 // CHECK: mogg.routine (%{{.*}} : !mo.tensor<[8], si32>) -> !mo.tensor<[8], si32>
-// CHECK-NEXT: inputs ([[IP:%[^ :,]+]])
-// CHECK-NEXT: outputs ([[OP:%[^ :,]+]])
+// CHECK-NEXT: inputs ([[IP:%[^ :,]+]]: !mogg.storage)
+// CHECK-NEXT: outputs ([[OP:%[^ :,]+]]: !mogg.storage)
 // CHECK-NEXT: context ([[CTX:%[^ :,]+]]) attributes {device = #M.device_ref<"cpu", 0>, fusionInfo = {{.*}}} {
 // CHECK-NEXT:   [[ISH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8]> : !mosh.ape>
-// CHECK-NEXT:   [[IT:%[^ ]+]] = mogg.tensor.create([[IP]], [[ISH]]) <device = "cpu", elementType = si32, io = Input, mut = false, shapeAttr = #mosh<ape[8]> : !mosh.ape> : !mogg.tensor
+// CHECK-NEXT:   [[IT:%[^ ]+]] = mogg.tensor.create([[IP]] : !mogg.storage, [[ISH]]) <device = "cpu", elementType = si32, io = Input, mut = false, shapeAttr = #mosh<ape[8]> : !mosh.ape> : !mogg.tensor
 // CHECK-NEXT:   [[OSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8]> : !mosh.ape>
-// CHECK-NEXT:   [[OT:%[^ ]+]] = mogg.tensor.create([[OP]], [[OSH]]) <device = "cpu", elementType = si32, io = Output, mut = true, shapeAttr = #mosh<ape[8]> : !mosh.ape> : !mogg.tensor
+// CHECK-NEXT:   [[OT:%[^ ]+]] = mogg.tensor.create([[OP]] : !mogg.storage, [[OSH]]) <device = "cpu", elementType = si32, io = Output, mut = true, shapeAttr = #mosh<ape[8]> : !mosh.ape> : !mogg.tensor
 // CHECK-NEXT:   [[LSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8]> : !mosh.ape>
 // CHECK-NEXT:   mogg.call.foreach @builtin_primitives.primitives._foreach shape([[LSH]]) context([[CTX]]) ([[IDX:%[^ :,]+]] : !map.index<1>) capturing {[[IN:%[^ :,]+]] = [[IT]] : !mogg.tensor, [[OUT:%[^ :,]+]] = [[OT]] : !mogg.tensor} device = "cpu" {
 // CHECK-NEXT:     [[V:%[^ ]+]] = mogg.tensor.load [[IN]][[[IDX]]] : !mogg.tensor, !map.index<1> -> !mogg.simd<si32>

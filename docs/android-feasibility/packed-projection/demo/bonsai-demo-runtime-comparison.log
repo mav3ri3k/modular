@@ -1,0 +1,28 @@
+/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-reference-96/weights.bin: 1 file pushed, 0 skipped. 56.3 MB/s (596111352 bytes in 10.095s)
+/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-reference-96/prompt.txt: 1 file pushed, 0 skipped. 0.7 MB/s (118 bytes in 0.000s)
+2 files pushed, 0 skipped. 55.6 MB/s (596111470 bytes in 10.216s)
+/private/tmp/bonsai-demo-original-runtime/runner: 1 file pushed, 0 skipped. 1042.7 MB/s (1507128 bytes in 0.001s)
+/private/tmp/bonsai-demo-original-runtime/runtime/libKGENCompilerRTShared.so: 1 file pushed, 0 skipped. 64.1 MB/s (3863816 bytes in 0.058s)
+/private/tmp/bonsai-demo-original-runtime/runtime/libAsyncRTRuntimeGlobals.so: 1 file pushed, 0 skipped. 48.6 MB/s (3292896 bytes in 0.065s)
+/private/tmp/bonsai-demo-original-runtime/runtime/libMSupportGlobals.so: 1 file pushed, 0 skipped. 56.8 MB/s (1055568 bytes in 0.018s)
+/private/tmp/bonsai-demo-original-runtime/hal/CPUPlugin.so: 1 file pushed, 0 skipped. 50.5 MB/s (3359888 bytes in 0.063s)
+/private/tmp/bonsai-demo-original-runtime/hal/OpenCLPlugin.so: 1 file pushed, 0 skipped. 172.9 MB/s (416952 bytes in 0.002s)
+/private/tmp/bonsai-demo-original-runtime/runtime/libc++_shared.so: 1 file pushed, 0 skipped. 100.1 MB/s (9290184 bytes in 0.089s)
+7 files pushed, 0 skipped. 67.9 MB/s (22786432 bytes in 0.320s)
+/private/tmp/bonsai-projection-demo/runner: 1 file pushed, 0 skipped. 860.9 MB/s (1507128 bytes in 0.002s)
+/private/tmp/bonsai-projection-demo/runtime/libKGENCompilerRTShared.so: 1 file pushed, 0 skipped. 58.8 MB/s (3863808 bytes in 0.063s)
+/private/tmp/bonsai-projection-demo/runtime/libAsyncRTRuntimeGlobals.so: 1 file pushed, 0 skipped. 81.2 MB/s (3292896 bytes in 0.039s)
+/private/tmp/bonsai-projection-demo/runtime/libMSupportGlobals.so: 1 file pushed, 0 skipped. 25.4 MB/s (1055568 bytes in 0.040s)
+/private/tmp/bonsai-projection-demo/hal/CPUPlugin.so: 1 file pushed, 0 skipped. 50.3 MB/s (3359888 bytes in 0.064s)
+/private/tmp/bonsai-projection-demo/hal/OpenCLPlugin.so: 1 file pushed, 0 skipped. 369.6 MB/s (568256 bytes in 0.001s)
+/private/tmp/bonsai-projection-demo/runtime/libc++_shared.so: 1 file pushed, 0 skipped. 115.4 MB/s (9290184 bytes in 0.077s)
+7 files pushed, 0 skipped. 67.7 MB/s (22937728 bytes in 0.323s)
+{"variant": "original_runtime", "warmup": true, "forwards": 95, "seconds": 1.394, "tokens_per_second": 68.16, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/000-original_runtime.log"}
+{"variant": "rebuilt_runtime", "warmup": true, "forwards": 95, "seconds": 1.392, "tokens_per_second": 68.27, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/001-rebuilt_runtime.log"}
+{"variant": "original_runtime", "warmup": false, "forwards": 95, "seconds": 1.403, "tokens_per_second": 67.69, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/002-original_runtime.log"}
+{"variant": "rebuilt_runtime", "warmup": false, "forwards": 95, "seconds": 1.369, "tokens_per_second": 69.42, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/003-rebuilt_runtime.log"}
+{"variant": "rebuilt_runtime", "warmup": false, "forwards": 95, "seconds": 1.403, "tokens_per_second": 67.71, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/004-rebuilt_runtime.log"}
+{"variant": "original_runtime", "warmup": false, "forwards": 95, "seconds": 1.399, "tokens_per_second": 67.89, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/005-original_runtime.log"}
+{"variant": "original_runtime", "warmup": false, "forwards": 95, "seconds": 1.408, "tokens_per_second": 67.45, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/006-original_runtime.log"}
+{"variant": "rebuilt_runtime", "warmup": false, "forwards": 95, "seconds": 1.395, "tokens_per_second": 68.12, "max_abs_error": null, "relative_l2": null, "thermal_status": 0, "log": "/tmp/bonsai-demo-runtime-comparison/007-rebuilt_runtime.log"}
+Medians: {"original_runtime": 67.69, "rebuilt_runtime": 68.12}

@@ -457,6 +457,13 @@ trait PluginHooks:
         """
         pass
 
+    comptime _debug_assert_needs_message: Bool = True
+    """Whether assertion failures require formatting their message arguments.
+
+    A hook that reports failures without message text may disable formatting.
+    The assertion condition and abort behavior are unchanged.
+    """
+
     comptime _handles_debug_assert: Bool = False
     """If `True`, `_debug_assert_msg` dispatches to `debug_assert_emit_fn`
     and comptime-elides its `_printf` fallback. A target without a usable

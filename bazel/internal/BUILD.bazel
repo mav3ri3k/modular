@@ -6,6 +6,7 @@ load("@rules_rust//extensions/pyo3:defs.bzl", "rust_pyo3_toolchain")
 load("//bazel:api.bzl", "modular_cc_binary", "modular_cc_library", "modular_py_binary", "modular_py_library", "modular_py_test", "requirement")
 load("//bazel:config.bzl", "TOP_LEVEL_TAG")
 load("//max/python/max:all_deps.bzl", "ALL_MAX_PYTHON_DEPS")
+load(":cc_transition.bzl", "asan_to_production_config_select", "production_mojo_compiler")
 load(":gpu_toolchain_alias.bzl", "gpu_toolchain_alias")
 load(":jemalloc.bzl", "jemalloc_with_lg_page")
 load(":mojo_toolchain.bzl", "mojo_toolchain")
@@ -164,6 +165,10 @@ mojo_copts_toolchain(
             "-target-triple=aarch64-unknown-linux-gnu",
             "--target-cpu=neoverse-n1",
         ],
+        "//:android_aarch64": [
+            "--target-triple=aarch64-linux-android33",
+            "--target-cpu=generic",
+        ],
         "@platforms//os:macos": [
             "--target-cpu=apple-m1",
         ],
@@ -300,6 +305,7 @@ alias(
         "@platforms//os:macos": "@gperftools-macos//:tcmalloc",
         # NOTE: This library doesn't override new/free globally, which the default library does
         "@platforms//os:linux": "@tcmalloc//tcmalloc:tcmalloc_internal_methods_only_numa_aware",
+        "@platforms//os:android": "@tcmalloc//tcmalloc:tcmalloc_internal_methods_only",
     }),
 )
 
@@ -310,6 +316,7 @@ alias(
     name = "tcmalloc_want_numa_aware",
     actual = select({
         "@platforms//os:macos": ":empty_lib",
+        "@platforms//os:android": ":empty_lib",
         "@platforms//os:linux": "@tcmalloc//tcmalloc:want_numa_aware",
     }),
 )
@@ -338,4 +345,12 @@ toolchain(
     tags = [TOP_LEVEL_TAG],  # Used in MODULE.bazel
     toolchain = ":pyo3_toolchain_target",
     toolchain_type = "@rules_rust//extensions/pyo3:rust_toolchain_type",
+)
+
+# Consumers first select the build machine with CFG_WORKAROUND. Only then may
+# the ASAN override change compiler instrumentation; target libraries retain
+# the requested platform and instrumentation.
+production_mojo_compiler(
+    name = "production_mojo_compiler",
+    new_config = asan_to_production_config_select,
 )

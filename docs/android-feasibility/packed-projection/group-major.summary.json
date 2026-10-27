@@ -1,0 +1,182 @@
+[
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.058457,
+    "samples_ms": [
+      0.058457,
+      0.058743,
+      0.058448
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.056543,
+    "samples_ms": [
+      0.056523,
+      0.056763,
+      0.056543
+    ]
+  },
+  {
+    "shape": "6144x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.056392,
+    "samples_ms": [
+      0.056392,
+      0.056485,
+      0.056349
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.02352,
+    "samples_ms": [
+      0.02352,
+      0.02346,
+      0.023708
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.023669,
+    "samples_ms": [
+      0.02357,
+      0.023669,
+      0.02379
+    ]
+  },
+  {
+    "shape": "2048x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.023529,
+    "samples_ms": [
+      0.023585,
+      0.023501,
+      0.023529
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.058659,
+    "samples_ms": [
+      0.058734,
+      0.058659,
+      0.058593
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.057775,
+    "samples_ms": [
+      0.057887,
+      0.057737,
+      0.057775
+    ]
+  },
+  {
+    "shape": "2048x6144",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.056582,
+    "samples_ms": [
+      0.056897,
+      0.056504,
+      0.056582
+    ]
+  },
+  {
+    "shape": "4096x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.040484,
+    "samples_ms": [
+      0.040453,
+      0.040484,
+      0.04054
+    ]
+  },
+  {
+    "shape": "4096x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.039932,
+    "samples_ms": [
+      0.039983,
+      0.039867,
+      0.039932
+    ]
+  },
+  {
+    "shape": "4096x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.039943,
+    "samples_ms": [
+      0.039943,
+      0.040163,
+      0.03976
+    ]
+  },
+  {
+    "shape": "512x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "baseline",
+    "median_mean_ms": 0.011544,
+    "samples_ms": [
+      0.011541,
+      0.011544,
+      0.011545
+    ]
+  },
+  {
+    "shape": "512x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "word_group",
+    "median_mean_ms": 0.010738,
+    "samples_ms": [
+      0.010738,
+      0.01074,
+      0.010722
+    ]
+  },
+  {
+    "shape": "512x2048",
+    "regime": "ring",
+    "mode": "full",
+    "layout": "group_major",
+    "median_mean_ms": 0.010885,
+    "samples_ms": [
+      0.010885,
+      0.010793,
+      0.010889
+    ]
+  }
+]

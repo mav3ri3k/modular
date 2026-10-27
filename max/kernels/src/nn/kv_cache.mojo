@@ -66,6 +66,7 @@ from std.utils.numerics import get_accum_type
 from std.utils import IndexList
 from extensibility import InputTensor
 from extensibility import (
+    GraphStorageEngine,
     _MutableInputTensor as MutableInputTensor,
 )
 
@@ -2969,7 +2970,7 @@ def print_kv_cache_paged_generic_gpu[
     dev_ctx.enqueue_copy(
         blocks_ptr, _device_view(dev_ctx, kv_collection.blocks)
     )
-    var blocks_host = type_of(kv_collection.blocks).OriginCastType[_](
+    var blocks_host = TileTensor(
         ptr=blocks_ptr,
         layout=kv_collection.blocks.layout,
     )
@@ -2985,11 +2986,8 @@ def print_kv_cache_paged_generic_gpu[
         cache_lengths_ptr,
         _device_view(dev_ctx, kv_collection.cache_lengths),
     )
-    var cache_lengths_host = type_of(
-        kv_collection.cache_lengths
-    ).OriginCastType[mut=False, _](
-        ptr=cache_lengths_ptr,
-        layout=kv_collection.cache_lengths.layout,
+    var cache_lengths_host = TileTensor(
+        cache_lengths_ptr.as_imm(), kv_collection.cache_lengths.layout
     )
 
     var n_lookup_table = kv_collection.lookup_table.num_elements()
@@ -3003,11 +3001,8 @@ def print_kv_cache_paged_generic_gpu[
         lookup_table_ptr,
         _device_view(dev_ctx, kv_collection.lookup_table),
     )
-    var lookup_table_host = type_of(kv_collection.lookup_table).OriginCastType[
-        mut=False, _
-    ](
-        ptr=lookup_table_ptr,
-        layout=kv_collection.lookup_table.layout,
+    var lookup_table_host = TileTensor(
+        lookup_table_ptr.as_imm(), kv_collection.lookup_table.layout
     )
 
     # The host copies are `TileTensor`s (from `OriginCastType`), so this picks
@@ -3103,6 +3098,8 @@ def generic_get_paged_cache[
         ImmutAnyOrigin,
         ImmutAnyOrigin,
         MutUntrackedOrigin,
+        blocks_engine=GraphStorageEngine[element_width=1],
+        metadata_engine=GraphStorageEngine[element_width=1],
     ],
 ):
     comptime assert dtype != DType.uint8, (
@@ -3188,6 +3185,9 @@ def generic_get_paged_cache_with_scales[
             Int(blocks.static_spec.shape_tuple[5]),
             Int(scales.static_spec.shape_tuple[5]),
         ),
+        blocks_engine=GraphStorageEngine[element_width=1],
+        metadata_engine=GraphStorageEngine[element_width=1],
+        scales_engine=GraphStorageEngine[element_width=1],
     ],
 ):
     """Builds a scaled paged KV cache collection from graph operands.
@@ -3252,12 +3252,22 @@ def generic_get_paged_cache[
     kv_params: KVCacheStaticParams,
     page_size: Int,
 ](
-    blocks: TileTensor[mut=True, dtype, _, _, linear_idx_type=_],
-    page_stride: TileTensor[mut=False, .int64, _, _, linear_idx_type=_],
-    cache_lengths: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    lookup_table: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    max_prompt_length: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    max_cache_length: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
+    blocks: TileTensor[mut=True, dtype, _, _, Engine=_, linear_idx_type=_],
+    page_stride: TileTensor[
+        mut=False, .int64, _, _, Engine=_, linear_idx_type=_
+    ],
+    cache_lengths: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    lookup_table: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    max_prompt_length: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    max_cache_length: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
     out result: PagedKVCacheCollection[
         dtype,
         kv_params,
@@ -3268,17 +3278,23 @@ def generic_get_paged_cache[
         # No scales on this (non-quantized) path: matches the constructor's
         # default `scales=None`, whose untracked origin is MutUntrackedOrigin.
         MutUntrackedOrigin,
+        blocks_engine=blocks.Engine,
+        metadata_engine=cache_lengths.Engine,
+        lookup_engine=lookup_table.Engine,
     ],
 ):
+    comptime assert max_prompt_length.Engine.element_size == 1
+    comptime assert max_cache_length.Engine.element_size == 1
+    comptime assert page_stride.Engine.element_size == 1
     # Thread the input tensors' origins into the collection so the borrow
     # checker keeps the backing buffers alive across the collection's use.
     return {
         blocks = blocks,
         cache_lengths = cache_lengths,
         lookup_table = lookup_table,
-        max_seq_length = max_prompt_length[0],
-        max_cache_length = max_cache_length[0],
-        page_stride = Int(page_stride[0]),
+        max_seq_length = rebind[UInt32](max_prompt_length[0]),
+        max_cache_length = rebind[UInt32](max_cache_length[0]),
+        page_stride = Int(rebind[Int64](page_stride[0])),
     }
 
 
@@ -3289,16 +3305,35 @@ def generic_get_paged_cache_with_scales[
     page_size: Int,
     quantization_granularity: Int,
 ](
-    blocks: TileTensor[mut=True, dtype, _, _, linear_idx_type=_],
-    page_stride: TileTensor[mut=False, .int64, _, _, linear_idx_type=_],
-    cache_lengths: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    lookup_table: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    max_prompt_length: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    max_cache_length: TileTensor[mut=False, .uint32, _, _, linear_idx_type=_],
-    scales: TileTensor[mut=True, scale_dtype, _, _, linear_idx_type=_],
-    scales_page_stride: TileTensor[mut=False, .int64, _, _, linear_idx_type=_],
+    blocks: TileTensor[mut=True, dtype, _, _, Engine=_, linear_idx_type=_],
+    page_stride: TileTensor[
+        mut=False, .int64, _, _, Engine=_, linear_idx_type=_
+    ],
+    cache_lengths: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    lookup_table: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    max_prompt_length: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    max_cache_length: TileTensor[
+        mut=False, .uint32, _, _, Engine=_, linear_idx_type=_
+    ],
+    scales: TileTensor[
+        mut=True, scale_dtype, _, _, Engine=_, linear_idx_type=_
+    ],
+    scales_page_stride: TileTensor[
+        mut=False, .int64, _, _, Engine=_, linear_idx_type=_
+    ],
     scales_lookup_table: TileTensor[
-        mut=False, .uint32, _, lookup_table.origin, linear_idx_type=_
+        mut=False,
+        .uint32,
+        _,
+        lookup_table.origin,
+        Engine=lookup_table.Engine,
+        linear_idx_type=_,
     ],
     out result: PagedKVCacheCollection[
         dtype,
@@ -3310,6 +3345,10 @@ def generic_get_paged_cache_with_scales[
         scales.origin,
         scale_dtype_=scale_dtype,
         quantization_granularity_=quantization_granularity,
+        blocks_engine=blocks.Engine,
+        metadata_engine=cache_lengths.Engine,
+        lookup_engine=lookup_table.Engine,
+        scales_engine=scales.Engine,
     ],
 ):
     """Create a PagedKVCacheCollection with scales for MLA attention.
@@ -3330,16 +3369,19 @@ def generic_get_paged_cache_with_scales[
             block-id space, and a distinct table when the scales are paged
             independently so a request's scale pages carry their own ids.
     """
+    comptime assert max_prompt_length.Engine.element_size == 1
+    comptime assert max_cache_length.Engine.element_size == 1
+    comptime assert page_stride.Engine.element_size == 1
     # Thread the input tensors' origins into the collection so the borrow
     # checker keeps the backing buffers alive across the collection's use.
     return {
         blocks = blocks,
         cache_lengths = cache_lengths,
         lookup_table = lookup_table,
-        max_seq_length = max_prompt_length[0],
-        max_cache_length = max_cache_length[0],
+        max_seq_length = rebind[UInt32](max_prompt_length[0]),
+        max_cache_length = rebind[UInt32](max_cache_length[0]),
         scales = scales,
         scales_lookup_table = scales_lookup_table,
-        page_stride = Int(page_stride[0]),
+        page_stride = Int(rebind[Int64](page_stride[0])),
         scales_page_stride = Int(scales_page_stride[0]),
     }

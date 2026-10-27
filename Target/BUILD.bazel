@@ -1,8 +1,83 @@
+load("@rules_python//python:defs.bzl", "py_binary")
 load("//bazel:api.bzl", "modular_cc_binary", "modular_cc_library", "modular_cc_test")
 
 # gazelle:default_visibility //MLRT:__subpackages__
 
 package(default_visibility = ["//MLRT:__subpackages__"])
+
+modular_cc_library(
+    name = "OpenCLBundle",
+    hdrs = ["include/Target/OpenCLBundle.h"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "OpenCLUnsupportedGenerator",
+    srcs = ["lib/OpenCL/generate_unsupported.py"],
+    main = "lib/OpenCL/generate_unsupported.py",
+)
+
+genrule(
+    name = "OpenCLUnsupported",
+    srcs = [
+        "lib/OpenCL/OpenCLPlugin.cpp",
+        "//SDK:HALHeaders",
+    ],
+    outs = ["OpenCLUnsupported.cpp"],
+    cmd = "$(location :OpenCLUnsupportedGenerator) SDK/include $(location lib/OpenCL/OpenCLPlugin.cpp) $@",
+    tools = [":OpenCLUnsupportedGenerator"],
+)
+
+modular_cc_binary(
+    name = "OpenCLPlugin.so",
+    srcs = [
+        "lib/OpenCL/OpenCLPlugin.cpp",
+        ":OpenCLUnsupported",
+    ],
+    linkopts = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": ["-ldl"],
+    }),
+    linkshared = True,
+    linkstatic = False,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":OpenCLBundle",
+        "//SDK:HAL",
+        "@opencl_headers//:headers",
+    ],
+)
+
+modular_cc_binary(
+    name = "OpenCLPluginSmoke",
+    srcs = ["test/OpenCLPluginSmoke.cpp"],
+    linkopts = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": ["-ldl"],
+    }),
+    deps = ["//SDK:HAL"],
+)
+
+modular_cc_binary(
+    name = "OpenCLBufferViews",
+    srcs = ["test/OpenCLBufferViews.cpp"],
+    linkopts = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": ["-ldl"],
+    }),
+    deps = [":OpenCLBundle", "//SDK:HAL"],
+)
+
+modular_cc_binary(
+    name = "OpenCLAssertions",
+    srcs = ["test/OpenCLAssertions.cpp"],
+    linkopts = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": ["-ldl"],
+    }),
+    deps = [":OpenCLBundle", "//SDK:HAL"],
+)
 
 # Host-side plugin loader: dlopen/dlsym wrapper that loads HAL plugin .so
 # files at runtime and exposes them via the M::Driver::Plugin C++ API.

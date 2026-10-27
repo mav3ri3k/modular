@@ -27,6 +27,7 @@ namespace M::MOGG {
 // Buffer identity (pointer + layout) at the region->stub boundary. The stub
 // body builds the dense/fused wrappers from it and the contract metadata.
 static constexpr llvm::StringLiteral kTensorBufferCaptureDefs = R"mojo(
+from extensibility.managed_tensor_slice import _TensorDataPointer
 from layout import TensorLayout
 
 
@@ -36,13 +37,13 @@ struct _MoggTensorBufferCapture[
 ](Copyable, Movable):
     comptime dtype = Self._dtype
     comptime LayoutType = Self._LayoutType
-    var handle: Pointer[Scalar[Self.dtype], MutUntrackedOrigin]
+    var handle: _TensorDataPointer[Self.dtype]
     var _layout: Self._LayoutType
 
     @inline(.always)
     def __init__(
         out self,
-        ptr: Pointer[Scalar[Self.dtype], MutUntrackedOrigin],
+        ptr: _TensorDataPointer[Self.dtype],
         layout: Self.LayoutType,
     ):
         self.handle = ptr
@@ -330,6 +331,7 @@ struct _MoggOutputStoreFusionTensor[
 // _LegacyComputable & TileTensorable]`. The buffer is a bare `Pointer` so it
 // translates to a device address.
 static constexpr llvm::StringLiteral kTransformFusionDefs = R"mojo(
+from extensibility.managed_tensor_slice import GraphStorageEngine, _TensorDataPointer
 from layout import Coord, TensorLayout, TileTensor
 from extensibility import Fused, Output, TileTensorable, UnsafeFusedView, _LegacyComputable, _LegacyComputeOutput
 from std.builtin.device_passable import DevicePassable, DeviceTypeEncoder
@@ -384,7 +386,7 @@ struct _MoggTransformFusionTensor[
     comptime __shape_types = Self.LayoutType.__shape_types
     var transform_fusion: Self._TransformFusion
     var _layout: Self.LayoutType
-    var handle: Pointer[Scalar[Self.dtype], UntrackedOrigin[mut = Self.mut]]
+    var handle: _TensorDataPointer[Self.dtype]
 
     comptime device_type: AnyType = _MoggTransformFusionTensor[
         Self._dtype,
@@ -403,7 +405,7 @@ struct _MoggTransformFusionTensor[
         out self,
         transform_fusion: Self._TransformFusion,
         layout: Self.LayoutType,
-        ptr: Pointer[Scalar[Self.dtype], UntrackedOrigin[mut = Self.mut]],
+        ptr: _TensorDataPointer[Self.dtype],
     ):
         self.transform_fusion = transform_fusion
         self._layout = layout
@@ -462,17 +464,14 @@ struct _MoggTransformFusionTensor[
         dtype = Self.dtype,
         LayoutType = Self.LayoutType,
         origin = UntrackedOrigin[mut = Self.mut],
+        Engine = GraphStorageEngine[element_width=1],
     ]:
         comptime assert Self._access_enabled, (
             "fused transform output projection is only valid on an access-enabled"
             " tensor (the projected device value); the device-passable host proxy"
             " cannot be projected to a tile directly"
         )
-        return TileTensor[
-            dtype = Self.dtype,
-            LayoutType = Self.LayoutType,
-            origin = UntrackedOrigin[mut = Self.mut],
-        ](ptr=self.handle, layout=self._layout)
+        return {self.handle, self._layout}
 
     @inline(.always)
     def compute[

@@ -104,6 +104,11 @@ def max_aliases():
             actual = override
         else:
             actual = "//max/{{target}}".format(target = target)
+            if name == "max_mojo":
+                actual = select({{
+                    "//:hal_device_context_enabled": "//max/driver/src/max_license:max",
+                    "//conditions:default": actual,
+                }})
         native.alias(
             name = "{{name}}".format(name = name),
             actual = actual,

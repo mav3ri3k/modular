@@ -1,0 +1,25 @@
+{
+  "prism_commit": "c96baf4abe24d11a50f326e40b6223b687449d63",
+  "gguf_revisions": {
+    "4b": "8d6557168168f91ea6697a4a49ed2ef622b53adb",
+    "9b": "5b2abb02362efbed46bbe204014b02837778b2c2"
+  },
+  "mlx_revisions": {
+    "4b": "dff2caaa23fa8706164c44c10f1b58feb405f76a",
+    "9b": "f4e28a59531731c41b6dfac88cf271bd58f0a287"
+  },
+  "sha256": {
+    "4b_gguf": "56711263ec9a9ffeaa74a3a0e58dece8127cf9268404746c721113ca76994d60",
+    "9b_gguf": "3561df7ac7d26a71ffa991ac2db740b10841c3a350aa2676ccd3ff5d428b4e8b",
+    "4b_checkpoint": "432f48d0edcb8da2e6a4e0c96078588362397e2603e7fdea99957babfe968259",
+    "9b_checkpoint": "b8ebd13459dcd53504432a4a0a797287c3a4c00d80835466dbb499f05b7512bb",
+    "4b_model_object": "61a5965bf35dabab7964b31d9fe2869b30e6b7a83308bd6b1dc21f0d3e3f103b",
+    "9b_model_object": "6392d3ac00d1abfa97b02fdff35a8701a3362321b2c53ffce3f81c86eed6fc5a",
+    "plugin": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+    "4b_bench": "800756938c2834efa71c54a638047c858b5548daf11b4ed7dfb8b965abd14cd3",
+    "9b_bench": "028d760b4bf082623452356fd986009f70618dc36abc0ab1ece2119e4d104740",
+    "reference_bench": "1fe6f7ba2f942809cb44362919c6752076d2d51d230fdd45ba1f0e5fcc8feca1",
+    "4b_weights": "1c33e9b3521f14025c3c6dc47a40900a23665efaa381ad1a62461777c75e86de",
+    "9b_weights": "f989b6bd549be758310855ed2f710dc44251159a9645c97aa5b757f933ba1c8d"
+  }
+}

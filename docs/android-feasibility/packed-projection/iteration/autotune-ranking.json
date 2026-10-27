@@ -1,0 +1,150 @@
+[
+  {
+    "variant": "t4_g8_w128_u2",
+    "weighted_major_shape_ms": 6.321894
+  },
+  {
+    "variant": "t4_g8_w128_u1",
+    "weighted_major_shape_ms": 6.32202
+  },
+  {
+    "variant": "t4_g8_w64_u1",
+    "weighted_major_shape_ms": 6.333018
+  },
+  {
+    "variant": "t4_g8_w256_u1",
+    "weighted_major_shape_ms": 6.343068
+  },
+  {
+    "variant": "t4_g8_w64_u2",
+    "weighted_major_shape_ms": 6.361218000000001
+  },
+  {
+    "variant": "t4_g8_w256_u2",
+    "weighted_major_shape_ms": 6.365711999999999
+  },
+  {
+    "variant": "t8_g8_w64_u2",
+    "weighted_major_shape_ms": 6.40296
+  },
+  {
+    "variant": "control",
+    "weighted_major_shape_ms": 6.41205
+  },
+  {
+    "variant": "t4_g16_w64_u1",
+    "weighted_major_shape_ms": 6.413058
+  },
+  {
+    "variant": "t8_g8_w64_u1",
+    "weighted_major_shape_ms": 6.4210139999999996
+  },
+  {
+    "variant": "t4_g16_w128_u2",
+    "weighted_major_shape_ms": 6.45093
+  },
+  {
+    "variant": "t4_g16_w64_u2",
+    "weighted_major_shape_ms": 6.4547159999999995
+  },
+  {
+    "variant": "t4_g16_w128_u1",
+    "weighted_major_shape_ms": 6.467910000000001
+  },
+  {
+    "variant": "t4_g16_w256_u1",
+    "weighted_major_shape_ms": 6.475674
+  },
+  {
+    "variant": "t8_g8_w128_u1",
+    "weighted_major_shape_ms": 6.4938780000000005
+  },
+  {
+    "variant": "t4_g16_w256_u2",
+    "weighted_major_shape_ms": 6.4963560000000005
+  },
+  {
+    "variant": "t8_g16_w64_u1",
+    "weighted_major_shape_ms": 6.525354
+  },
+  {
+    "variant": "t8_g8_w256_u1",
+    "weighted_major_shape_ms": 6.540618
+  },
+  {
+    "variant": "t8_g16_w64_u2",
+    "weighted_major_shape_ms": 6.585576
+  },
+  {
+    "variant": "t8_g8_w128_u2",
+    "weighted_major_shape_ms": 6.592842
+  },
+  {
+    "variant": "t8_g16_w128_u1",
+    "weighted_major_shape_ms": 6.605154000000001
+  },
+  {
+    "variant": "t8_g4_w128_u1",
+    "weighted_major_shape_ms": 6.613416
+  },
+  {
+    "variant": "t8_g4_w64_u1",
+    "weighted_major_shape_ms": 6.6272519999999995
+  },
+  {
+    "variant": "t8_g8_w256_u2",
+    "weighted_major_shape_ms": 6.653874
+  },
+  {
+    "variant": "t8_g4_w64_u2",
+    "weighted_major_shape_ms": 6.658434
+  },
+  {
+    "variant": "t8_g16_w256_u1",
+    "weighted_major_shape_ms": 6.675732
+  },
+  {
+    "variant": "t4_g4_w64_u1",
+    "weighted_major_shape_ms": 6.7218659999999995
+  },
+  {
+    "variant": "t8_g4_w256_u1",
+    "weighted_major_shape_ms": 6.783972
+  },
+  {
+    "variant": "t4_g4_w64_u2",
+    "weighted_major_shape_ms": 6.803628
+  },
+  {
+    "variant": "t8_g16_w128_u2",
+    "weighted_major_shape_ms": 6.844638000000001
+  },
+  {
+    "variant": "t4_g4_w256_u1",
+    "weighted_major_shape_ms": 6.858893999999999
+  },
+  {
+    "variant": "t8_g16_w256_u2",
+    "weighted_major_shape_ms": 6.894444
+  },
+  {
+    "variant": "t4_g4_w128_u1",
+    "weighted_major_shape_ms": 6.902844
+  },
+  {
+    "variant": "t4_g4_w256_u2",
+    "weighted_major_shape_ms": 6.923466000000001
+  },
+  {
+    "variant": "t8_g4_w128_u2",
+    "weighted_major_shape_ms": 6.951234
+  },
+  {
+    "variant": "t4_g4_w128_u2",
+    "weighted_major_shape_ms": 6.993876
+  },
+  {
+    "variant": "t8_g4_w256_u2",
+    "weighted_major_shape_ms": 7.025544
+  }
+]

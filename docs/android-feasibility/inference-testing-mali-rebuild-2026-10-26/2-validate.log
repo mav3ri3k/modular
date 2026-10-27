@@ -1,0 +1,14 @@
+Device allocations: 507.91 MiB; context capacity: 128
+GPU: Mali-G615 MC6 r1p3
+Prefill: 24 tokens, 3.105 s, 7.73 tok/s
+TOKEN 0 73804
+TOKEN 1 248046
+TOKEN 2 198
+TOKEN 3 248068
+TOKEN 4 198
+TOKEN 5 90700
+TOKEN 6 8340
+TOKEN 7 25
+Decode: 7 forwards, 0.953 s, 7.34 tok/s (includes token selection readback, full-logit readback and validation)
+Logits: max_abs_error=0.0194926 relative_l2=0.000849557
+PASS: all generated tokens and logits match reference

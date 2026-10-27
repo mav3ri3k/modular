@@ -140,9 +140,9 @@
 // pointer-backed default, so the arg's engine stays a per-target choice.
 // EMIT-DAG: Engine = Self.Engine,
 //
-// The stub receives raw pointers and reconstructs each float32 tensor from
-// them (replacing the former region-boundary buffer-capture structs).
-// EMIT-DAG: arg__{{[0-9]+}}: OpaquePointer[MutAnyOrigin]
+// The stub receives borrowed byte views and reconstructs each float32 tensor
+// while preserving opaque allocation metadata.
+// EMIT-DAG: arg__{{[0-9]+}}: managed_tensor_slice._TensorDataPointer[DType.int8]
 // EMIT-DAG: mogg_tensor_init[DType.float32
 //
 // EMIT-DAG: layout.Coord(layout.Idx[2], Scalar[DType.int](

@@ -214,10 +214,15 @@ struct LogRecord {
   constexpr static size_t maxArgs = 8;
   constexpr static size_t maxKVPairs = maxArgs / 2;
   using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
-  // Mojo FFI mirrors Timestamp as Int64. If this fires, the platform's
-  // system_clock uses a different rep type and the Mojo bindings need
-  // revisiting.
-  static_assert(std::is_same_v<Timestamp::clock::duration::rep, int64_t>);
+  // Mojo FFI mirrors Timestamp as Int64. libc++ may use long long where
+  // int64_t is long; require the actual signed representation and ABI layout,
+  // rather than identical C++ typedef spelling.
+  using TimestampRep = Timestamp::clock::duration::rep;
+  static_assert(std::is_integral_v<TimestampRep> &&
+                std::is_signed_v<TimestampRep>);
+  static_assert(sizeof(TimestampRep) == sizeof(int64_t));
+  static_assert(sizeof(Timestamp) == sizeof(int64_t));
+  static_assert(alignof(Timestamp) == alignof(int64_t));
   // Four key-value pairs, since a pair occupies two arg slots.
   Timestamp timestamp;
   std::string_view fmtString;

@@ -1,0 +1,14 @@
+[
+  {
+    "label": "gpu-bonsai-reference-long-validate",
+    "tok_s": 65.26,
+    "errors": "Logits: max_abs_error=0.0201702 relative_l2=0.000395346",
+    "log": "logs/long-validation/gpu-bonsai-reference-long-validate.log"
+  },
+  {
+    "label": "hvx-bonsai-reference-long-validate",
+    "tok_s": 64.16,
+    "errors": "Logits: max_abs_error=0.0201702 relative_l2=0.000402119",
+    "log": "logs/long-validation/hvx-bonsai-reference-long-validate.log"
+  }
+]

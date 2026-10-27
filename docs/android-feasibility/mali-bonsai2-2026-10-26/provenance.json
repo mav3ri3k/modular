@@ -1,0 +1,13 @@
+{
+  "prism_commit": "c96baf4abe24d11a50f326e40b6223b687449d63",
+  "mlx_revision": "1c6cbae21f8c38830ce337972b46fdae7b18eaaa",
+  "gguf_revision": "683f7be2629342a50987627b40881e54761a2430",
+  "sha256": {
+    "weights": "391c052908906ee2a45aaf7ebc6183a71e4cd16176959fbd4034c3c885e002eb",
+    "ptq_gguf": "36061ad406df8a4903a6db005be350c50fabfaf717f9ef0acf4b76adcd9929fa",
+    "model_object": "b42c69ee5346c6351936b7ad385f056a7bf3581489f42b4451ce8f549cc99f04",
+    "plugin": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+    "portable_bench": "465a7ab6ad43dfd1c9b945cdd83e62390f9b34307a5c7e4494ec6b78cfef46a8",
+    "prism_bench": "1fe6f7ba2f942809cb44362919c6752076d2d51d230fdd45ba1f0e5fcc8feca1"
+  }
+}

@@ -1,0 +1,13 @@
+--- a/tcmalloc/internal/config.h
++++ b/tcmalloc/internal/config.h
+@@ -123,6 +123,10 @@
+ // See comments in arch/powerpc/include/asm/processor.h
+ // and arch/powerpc/mm/mmap.c.
+ inline constexpr int kAddressBits = 49;
++#elif defined __aarch64__ && defined __ANDROID__
++// Android arm64 kernels may expose only 39 bits of userspace VA. Restrict
++// tagged reservations to that range, which is also usable on wider-VA kernels.
++inline constexpr int kAddressBits = 39;
+ #elif defined __aarch64__ && defined __linux__
+ // According to Documentation/arm64/memory.txt of kernel 3.16,
+ // AARCH64 kernel supports 48-bit virtual addresses for both user and kernel.

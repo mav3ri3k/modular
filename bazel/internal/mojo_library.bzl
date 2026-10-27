@@ -1,9 +1,9 @@
 """Wrapper around upstream mojo_library rule to add documentation generation."""
 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@cfg_workaround.bzl", "CFG_WORKAROUND")
 load("@rules_mojo//mojo:mojo_library.bzl", _upstream_mojo_library = "mojo_library")
 load("//bazel:config.bzl", "ALLOW_UNUSED_TAG")
-load(":cc_transition.bzl", "asan_to_production_config_select", "cc_transition")
 load(":mojo_doc.bzl", "mojo_doc")
 
 # A variant of the upstream mojo_library that, under `--config=asan`, runs the
@@ -21,13 +21,12 @@ _transitioned_mojo_library = rule(
     implementation = lambda ctx: ctx.super(),
     parent = _upstream_mojo_library,
     attrs = {
-        "new_config": attr.string(mandatory = True),
         # Must stay in sync with the toolchain's `mojo`; this is the same
-        # compiler, only reconfigured.
+        # compiler, first selected for the build machine, then reconfigured.
         "_mojo_override": attr.label(
-            default = Label("//Mojo/tools/mojo"),
+            default = Label("//bazel/internal:production_mojo_compiler"),
             executable = True,
-            cfg = cc_transition,
+            cfg = CFG_WORKAROUND,
         ),
     },
 )
@@ -94,7 +93,6 @@ def mojo_library(
         tags: Forwarded to all subtargets
     """
     library_rule = _transitioned_mojo_library if use_production_compiler_for_asan else _upstream_mojo_library
-    library_kwargs = {"new_config": asan_to_production_config_select} if use_production_compiler_for_asan else {}
     ignore_deprecated_copts = ["--ignore-deprecated=" + decl_name for decl_name in ignore_deprecated]
     library_rule(
         name = name,
@@ -109,7 +107,6 @@ def mojo_library(
         bitcode_libs = bitcode_libs,
         import_path = import_path,
         target_compatible_with = target_compatible_with,
-        **library_kwargs
     )
 
     if not testonly:

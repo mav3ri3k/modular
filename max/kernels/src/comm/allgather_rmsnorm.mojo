@@ -41,6 +41,7 @@ from max.gpu import (
 )
 from max.gpu.host import DeviceContext
 from max.gpu.primitives import block
+from layout.tensor_engine import TensorEngine
 from layout import Coord, TensorLayout, TileTensor
 from std.utils import StaticTuple
 from std.utils.numerics import get_accum_type
@@ -83,6 +84,9 @@ def _allgather_rmsnorm_kernel[
     sum_origin: MutOrigin,
     SumLayoutType: TensorLayout,
     in_dtype: DType,
+    GammaEngine: TensorEngine,
+    NormedOutEngine: TensorEngine,
+    SumOutEngine: TensorEngine,
     //,
     ngpus: Int,
     simd_width: Int,
@@ -95,9 +99,17 @@ def _allgather_rmsnorm_kernel[
 ](
     src_ptrs: Array[ImmPointer[Scalar[in_dtype], ImmutAnyOrigin], ngpus],
     in_lengths: StaticTuple[Int32, ngpus],
-    gamma: TileTensor[in_dtype, GammaLayoutType, origin],
-    normed_out: TileTensor[mut=True, in_dtype, NormedLayoutType, normed_origin],
-    sum_out: TileTensor[mut=True, in_dtype, SumLayoutType, sum_origin],
+    gamma: TileTensor[in_dtype, GammaLayoutType, origin, Engine=GammaEngine],
+    normed_out: TileTensor[
+        mut=True,
+        in_dtype,
+        NormedLayoutType,
+        normed_origin,
+        Engine=NormedOutEngine,
+    ],
+    sum_out: TileTensor[
+        mut=True, in_dtype, SumLayoutType, sum_origin, Engine=SumOutEngine
+    ],
     epsilon: Float32,
     weight_offset: Scalar[in_dtype],
     cols_dev: Int32,
@@ -265,6 +277,9 @@ def _allgather_rmsnorm_launch[
         has_quant_epilogue=has_quant_epilogue,
         QuantEpilogueType=QuantEpilogueType,
         domain_id=domain_id,
+        GammaEngine=type_of(gamma).Engine,
+        NormedOutEngine=type_of(normed_out).Engine,
+        SumOutEngine=type_of(sum_out).Engine,
     ]
     var in_lengths_dev = StaticTuple[Int32, ngpus](0)
     comptime for i in range(ngpus):
@@ -294,10 +309,14 @@ def allgather_rmsnorm[
     ngpus: Int,
     in_layout: TensorLayout,
     in_origin: Origin,
+    InputBuffersEngine: TensorEngine,
     //,
     group_size: Int = ngpus,
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],
@@ -363,11 +382,15 @@ def _allgather_rmsnorm_impl[
     QuantEpilogueType: ImplicitlyCopyable
     & RegisterPassable
     & def[width: Int](row: Int, col: Int, val: SIMD[in_dtype, width]) -> None,
+    InputBuffersEngine: TensorEngine,
     //,
     has_quant_epilogue: Bool,
     group_size: Int = ngpus,
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],
@@ -471,7 +494,8 @@ def _allgather_rmsnorm_impl[
     comptime PtrType = ImmPointer[Scalar[in_dtype], ImmutAnyOrigin]
     var src_ptrs = Array[_, group_size](
         fill_with=lambda (i: Int) -> PtrType: input_buffers[group_start + i]
-        ._storage.as_imm()
+        .unsafe_ptr()
+        .as_imm()
         .as_unsafe_any_origin()
     )
     var in_lengths = StaticTuple[Int, group_size](0)
@@ -585,10 +609,14 @@ def allgather_rmsnorm_quant[
     QuantEpilogueType: ImplicitlyCopyable
     & RegisterPassable
     & def[width: Int](row: Int, col: Int, val: SIMD[in_dtype, width]) -> None,
+    InputBuffersEngine: TensorEngine,
     //,
     group_size: Int = ngpus,
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],
@@ -651,10 +679,14 @@ def _dispatch_ag_norm[
     in_layout: TensorLayout,
     in_origin: Origin,
     TwoLaunchFnType: def() raises -> None,
+    InputBuffersEngine: TensorEngine,
     //,
     group_size: Int = ngpus,
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],
@@ -782,10 +814,14 @@ def _dispatch_ag_norm_quant[
     QuantEpilogueType: ImplicitlyCopyable
     & RegisterPassable
     & def[width: Int](row: Int, col: Int, val: SIMD[in_dtype, width]) -> None,
+    InputBuffersEngine: TensorEngine,
     //,
     group_size: Int = ngpus,
 ](
-    input_buffers: Array[TileTensor[in_dtype, in_layout, in_origin], ngpus],
+    input_buffers: Array[
+        TileTensor[in_dtype, in_layout, in_origin, Engine=InputBuffersEngine],
+        ngpus,
+    ],
     normed_out: TileTensor[mut=True, in_dtype, ...],
     sum_out: TileTensor[mut=True, in_dtype, ...],
     gamma: TileTensor[in_dtype, ...],

@@ -21,6 +21,7 @@ backing memory alive (for example, inside the `OwnedByteBuffer` and
 """
 
 from std.ffi import external_call
+from std.os import abort
 
 from max.gpu.host import DeviceBuffer
 
@@ -124,6 +125,14 @@ struct AnyAsyncValueRef(ImplicitlyCopyable, Movable):
             _AsyncValuePtr[mut=True],
         ](storage_buf^.take_handle())
         self._handle = handle
+
+    def borrow_opaque_device_buffer(self) -> DeviceBuffer[.int8]:
+        """Borrows a typed view retaining its opaque allocation and context."""
+        if not self._handle:
+            abort("opaque buffer storage is empty")
+        return DeviceBuffer[.int8]._from_opaque_storage(
+            self._handle.value().unsafe_bitcast[NoneType]()
+        )
 
     def __deinit__(deinit self):
         """Releases this reference to the underlying `AsyncValue`."""

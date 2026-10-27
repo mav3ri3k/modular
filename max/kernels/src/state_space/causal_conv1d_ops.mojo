@@ -388,7 +388,7 @@ struct CausalConv1DUpdate[activation: StaticString]:
 
         comptime if is_cpu[target]():
             unsafe_memcpy(
-                dest=CS._storage, src=CS_IN._storage, count=total_state_elements
+                dest=CS.ptr, src=CS_IN.ptr, count=total_state_elements
             )
             causal_conv1d_update_cpu[
                 X.dtype,

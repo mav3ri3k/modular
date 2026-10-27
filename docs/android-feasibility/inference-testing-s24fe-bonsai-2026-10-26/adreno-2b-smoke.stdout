@@ -1,0 +1,2 @@
+Model forward: HALError(code=-65537): failed to load bundle: OpenCL device lacks required extension: cl_khr_subgroup_shuffle
+Device allocations: 553.43 MiB; context capacity: 2048

@@ -123,8 +123,10 @@ modular_cc_library(
     deps = [
         ":GraphCompilerPublic.headers",
         ":Support",
+        "//AsyncRT:RuntimeGlobals",
         "//Support:Base",
         "//Support:Context",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -1356,7 +1358,7 @@ modular_cc_library(
     hdrs = glob(["include/GraphCompiler/Support/*.h"]),
     local_defines = select({
         "@platforms//os:macos": ["GENERICML_LINKER_CMD=\\\"clang\\ -Wl,-undefined,dynamic_lookup\\\""],
-        "@platforms//os:linux": ["GENERICML_LINKER_CMD=\\\"clang\\\""],
+        "//:elf": ["GENERICML_LINKER_CMD=\\\"clang\\\""],
     }),
     deps = [
         ":DeviceDriver.headers",

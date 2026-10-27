@@ -1,0 +1,5 @@
+Mojo Hexagon Bonsai projection 14336x2048: ms=0.829,0.567,0.555 max_abs_error=0
+PASS: real packed Bonsai weights executed on Hexagon
+HEXAGON_PROFILE hvx_ms=0.136 lookup_ms=0.039 total_vtcm=8388608 available_vtcm=8388608
+HEXAGON_PROFILE hvx_ms=0.108 lookup_ms=0.023 total_vtcm=8388608 available_vtcm=8388608
+HEXAGON_PROFILE hvx_ms=0.111 lookup_ms=0.023 total_vtcm=8388608 available_vtcm=8388608

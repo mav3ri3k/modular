@@ -26,6 +26,7 @@ from std.ffi import _find_dylib
 from std.ffi import _get_dylib_function as _ffi_get_dylib_function
 from std.ffi import OwnedDLHandle, _Global
 from std.collections.optional import Optional
+from layout.tensor_engine import TensorEngine
 from layout import TensorLayout, TileTensor, row_major
 from std.memory.unsafe_pointer import unsafe_cast
 from std.memory.alloc import Layout as AllocLayout
@@ -379,6 +380,8 @@ def allreduce[
     rank_sigs_origin: Origin[mut=True],
     out_layout: TensorLayout,
     out_origin: MutOrigin,
+    InputTensorsEngine: TensorEngine,
+    OutputTensorEngine: TensorEngine,
     //,
     ngpus: Int,
     pdl_level: PDLLevel = PDLLevel(),
@@ -386,9 +389,12 @@ def allreduce[
     use_multimem: Bool = False,
 ](
     input_tensors: Array[
-        TileTensor[dtype, in_layout, in_origin], 1 if use_multimem else ngpus
+        TileTensor[dtype, in_layout, in_origin, Engine=InputTensorsEngine],
+        1 if use_multimem else ngpus,
     ],
-    output_tensor: TileTensor[mut=True, dtype, out_layout, out_origin],
+    output_tensor: TileTensor[
+        mut=True, dtype, out_layout, out_origin, Engine=OutputTensorEngine
+    ],
     rank_sigs: Array[MutPointer[Signal, rank_sigs_origin], ngpus],
     ctx: DeviceContext,
     _max_num_blocks: Optional[Int] = None,
@@ -414,8 +420,8 @@ def allreduce[
 
     _check_ccl_ok(
         _ccl_allreduce(
-            input_tensor._storage.unsafe_bitcast[NoneType](),
-            output_tensor._storage.unsafe_bitcast[NoneType](),
+            input_tensor.unsafe_ptr().unsafe_bitcast[NoneType](),
+            output_tensor.unsafe_ptr().unsafe_bitcast[NoneType](),
             count,
             dtype_ccl,
             op,
@@ -432,6 +438,7 @@ def allreduce[
     rank_sigs_origin: Origin[mut=True],
     out_layout: TensorLayout,
     OutputLambdaType: CollectiveEpilogueFn,
+    InputTensorsEngine: TensorEngine,
     //,
     ngpus: Int,
     pdl_level: PDLLevel = PDLLevel(),
@@ -439,7 +446,8 @@ def allreduce[
     use_multimem: Bool = False,
 ](
     input_tensors: Array[
-        TileTensor[dtype, in_layout, in_origin], 1 if use_multimem else ngpus
+        TileTensor[dtype, in_layout, in_origin, Engine=InputTensorsEngine],
+        1 if use_multimem else ngpus,
     ],
     output_layout: out_layout,
     output_lambda: OutputLambdaType,
@@ -468,8 +476,8 @@ def allreduce[
 
     _check_ccl_ok(
         _ccl_allreduce(
-            input_tensors[device_rank]._storage.unsafe_bitcast[NoneType](),
-            reduced._storage.unsafe_bitcast[NoneType](),
+            input_tensors[device_rank].unsafe_ptr().unsafe_bitcast[NoneType](),
+            reduced.unsafe_ptr().unsafe_bitcast[NoneType](),
             count,
             _dtype_to_ccl[dtype](),
             ncclRedOp_t.ncclSum,
@@ -555,12 +563,19 @@ def allgather[
     in_origin: ImmOrigin,
     out_layout: TensorLayout,
     out_origin: MutOrigin,
+    InputsEngine: TensorEngine,
+    OutputsEngine: TensorEngine,
     //,
     ngpus: Int,
 ](
-    inputs: Array[TileTensor[dtype, in_layout, in_origin], ngpus],
+    inputs: Array[
+        TileTensor[dtype, in_layout, in_origin, Engine=InputsEngine], ngpus
+    ],
     outputs: Array[
-        TileTensor[mut=True, dtype, out_layout, out_origin], ngpus * ngpus
+        TileTensor[
+            mut=True, dtype, out_layout, out_origin, Engine=OutputsEngine
+        ],
+        ngpus * ngpus,
     ],
     list_of_ctx: List[DeviceContext],
 ) raises:
@@ -619,7 +634,7 @@ def allgather[
             with list_of_ctx[i].push_context():
                 _check_ccl_ok(
                     _ccl_allgather(
-                        inputs[i]._storage.unsafe_bitcast[NoneType](),
+                        inputs[i].unsafe_ptr().unsafe_bitcast[NoneType](),
                         recv_tmp[i].unsafe_ptr().unsafe_bitcast[NoneType](),
                         count,
                         dtype_nccl,
@@ -634,7 +649,7 @@ def allgather[
             var src_off = src * count
             var out_idx = dev * ngpus + src
             var dest_db = DeviceBuffer[dtype](
-                ctx, outputs[out_idx]._storage, count, owning=False
+                ctx, outputs[out_idx].unsafe_ptr(), count, owning=False
             )
             var src_db = DeviceBuffer[dtype](
                 ctx,
@@ -652,13 +667,19 @@ def broadcast[
     in_origin: Origin,
     out_layout: TensorLayout,
     out_origin: MutOrigin,
+    InputTensorEngine: TensorEngine,
+    OutputTensorEngine: TensorEngine,
     //,
     ngpus: Int,
     pdl_level: PDLLevel = PDLLevel(),
     use_multimem: Bool = False,
 ](
-    input_tensor: TileTensor[dtype, in_layout, in_origin],
-    output_tensor: TileTensor[mut=True, dtype, out_layout, out_origin],
+    input_tensor: TileTensor[
+        dtype, in_layout, in_origin, Engine=InputTensorEngine
+    ],
+    output_tensor: TileTensor[
+        mut=True, dtype, out_layout, out_origin, Engine=OutputTensorEngine
+    ],
     rank_sigs: Array[MutPointer[Signal, MutAnyOrigin], ngpus],
     ctx: DeviceContext,
     root: Int,
@@ -680,8 +701,8 @@ def broadcast[
 
     _check_ccl_ok(
         _ccl_broadcast(
-            input_tensor._storage.unsafe_bitcast[NoneType](),
-            output_tensor._storage.unsafe_bitcast[NoneType](),
+            input_tensor.unsafe_ptr().unsafe_bitcast[NoneType](),
+            output_tensor.unsafe_ptr().unsafe_bitcast[NoneType](),
             count,
             dtype_ccl,
             root,

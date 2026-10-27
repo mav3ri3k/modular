@@ -7,8 +7,8 @@
 
 // End-to-end Mojo emission for the MOGG-ABI `mogg.func`
 // (FuncOp::emitMojoMOGGABI plus the shape.create / tensor.create /
-// call.opaque / scalar.create / tuple.create emitters). The MOGG stub takes raw
-// `!mogg.pointer` / `!mogg.dim` / `!mogg.context` handles and reconstructs the
+// call.opaque / scalar.create / tuple.create emitters). The MOGG stub takes borrowed storage
+// `!mogg.storage` / `!mogg.dim` / `!mogg.context` handles and reconstructs the
 // codegen tensors internally before invoking the opaque kernel's execute
 // function.
 //
@@ -18,13 +18,13 @@
 // tolerates that. The emitted Mojo is read from the `ir-output-dir` dump rather
 // than `--mogg-dump-mojo`, which needs a fully lowered `mgp.model`.
 
-// Plain output: static shape -> compile-time `Idx[N]` Coord, a raw-pointer
+// Plain output: static shape -> compile-time `Idx[N]` Coord, a typed-storage
 // `mogg_tensor_init` per tensor, and a DPS execute call (output, input, ctx).
-// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], [[PC:.*]]: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], [[PC:.*]]: {{.*}}DeviceContext) raises:
 // CHECK:   var [[PSHAPE:.*]] = layout.Coord(layout.Idx[2], layout.Idx[2])
 // CHECK:   var [[PLAYOUT:.*]] = layout.row_major([[PSHAPE]])
-// CHECK:   var [[PIN:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, False, extensibility.IO.Input, {{[0-9]+}}]({{.*}}.unsafe_bitcast[NoneType](), [[PLAYOUT]])
-// CHECK:   var [[POUT:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, True, extensibility.IO.Output, {{[0-9]+}}]({{.*}}.unsafe_bitcast[NoneType](), {{.*}})
+// CHECK:   var [[PIN:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, False, extensibility.IO.Input, {{[0-9]+}}]({{.*}}, [[PLAYOUT]])
+// CHECK:   var [[POUT:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, True, extensibility.IO.Output, {{[0-9]+}}]({{.*}}, {{.*}})
 // CHECK:   {{.*}}.MapLowerOnePlainOutput.execute[target = "cpu"]([[POUT]], [[PIN]], [[PC]])
 
 mo.graph @plain(%a: !mo.tensor<[2, 2], f32>) -> !mo.tensor<[2, 2], f32> {
@@ -34,7 +34,7 @@ mo.graph @plain(%a: !mo.tensor<[2, 2], f32>) -> !mo.tensor<[2, 2], f32> {
 
 // Dynamic dim: the `!mogg.dim` handle arrives as a trailing `Int` argument and
 // feeds a runtime `Scalar[DType.int]` Coord component.
-// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], [[DIM:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], [[DIM:.*]]: Int, {{.*}}: {{.*}}DeviceContext) raises:
 // CHECK:   var {{.*}} = layout.Coord(Scalar[DType.int]([[DIM]]), layout.Idx[4])
 
 mo.graph @dyn(%a: !mo.tensor<[batch, 4], f32>) -> !mo.tensor<[batch, 4], f32> {
@@ -56,7 +56,7 @@ mo.graph @scalar(%a: !mo.tensor<[4], f32>, %s: !mo.tensor<[], f32>) -> !mo.tenso
 // Variadic operands: `tuple.create` packs the run of tensors into a
 // `VariadicTensors` (pointer + shape tuples plus a comptime static-spec list).
 // CHECK: def {{__[A-Za-z0-9_]+}}(
-// CHECK:   var {{.*}} = std.utils.StaticTuple[size = 2]({{.*}}._ptr, {{.*}}._ptr)
+// CHECK:   var {{.*}} = std.utils.StaticTuple[size = 2]({{.*}}.unsafe_ptr(), {{.*}}.unsafe_ptr())
 // CHECK:   var {{.*}} = std.utils.StaticTuple[size = 2]({{.*}}.shape(), {{.*}}.shape())
 // CHECK:   var [[VT:.*]] = extensibility.VariadicTensors[{{.*}}static_specs = {{.*}}]({{.*}}, {{.*}})
 // CHECK:   {{.*}}.MapLowerVariadic.execute[target = "cpu"]({{.*}}, [[VT]], {{.*}})

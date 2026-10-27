@@ -1,0 +1,58 @@
+[
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "variant": "prism",
+    "mean": 21.546531666666668,
+    "stddev": 0.8447,
+    "samples": [21.69672, 22.306085, 20.63679]
+  },
+  {
+    "model": "bonsai",
+    "test": "tg128",
+    "variant": "modular-portable",
+    "mean": 21.173685014333334,
+    "stddev": 0.5246,
+    "samples": [20.94684455, 21.773566354, 20.800644139]
+  },
+  {
+    "model": "bonsai4",
+    "test": "tg128",
+    "variant": "prism",
+    "mean": 9.538111,
+    "stddev": 0.0695,
+    "samples": [9.564831, 9.590334, 9.459168]
+  },
+  {
+    "model": "bonsai9",
+    "test": "tg128",
+    "variant": "prism",
+    "mean": 7.225929,
+    "stddev": 0.0406,
+    "samples": [7.268096, 7.186992, 7.222699]
+  },
+  {
+    "model": "bonsai",
+    "test": "pp512",
+    "variant": "prism",
+    "mean": 20.663374,
+    "stddev": 1.315,
+    "samples": [22.013833, 20.589343, 19.386946]
+  },
+  {
+    "model": "bonsai",
+    "test": "pp512",
+    "variant": "modular-portable",
+    "mean": 20.132620730666668,
+    "stddev": 0.1234,
+    "samples": [20.274895733, 20.05389432, 20.069072139]
+  },
+  {
+    "model": "bonsai4",
+    "test": "pp512",
+    "variant": "prism",
+    "mean": 8.217101666666667,
+    "stddev": 0.5523,
+    "samples": [8.836067, 8.04055, 7.774688]
+  }
+]

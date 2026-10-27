@@ -1,6 +1,6 @@
 // RUN: mo-opt %s --gc-pipeline-pre-jit="dump-mojo-text=true" -o /dev/null 2>&1 | FileCheck %s
 
-// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], {{.*}}: OpaquePointer[MutAnyOrigin], [[DIM0:.*]]: Int, [[DIM1:.*]]: Int, [[CTX:.*]]: {{.*}}DeviceContext) raises:
+// CHECK: def {{__[A-Za-z0-9_]+}}({{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], {{.*}}: managed_tensor_slice._TensorDataPointer[DType.int8], [[DIM0:.*]]: Int, [[DIM1:.*]]: Int, [[CTX:.*]]: {{.*}}DeviceContext) raises:
 // CHECK:   var [[SHAPE:.*]] = layout.Coord(Scalar[DType.int]([[DIM0]]), Scalar[DType.int]([[DIM1]]))
 // CHECK:   var {{.*}} = layout.row_major([[SHAPE]])
 // CHECK:   var [[MTS0:.*]] = {{.*}}mogg_tensor_init[DType.float32, 2, False, extensibility.IO.Input, {{[0-9]+}}]({{.*}}, {{.*}})
@@ -9,15 +9,15 @@
 // Each capture is decomposed into (ptr, shape, strides) plus its comptime
 // StaticTensorSpec, and accessed through the pointer-based simd load/store -- no
 // TileTensor is materialized.
-// CHECK:   var [[PTR0:.*]] = [[MTS0]].unsafe_ptr()
+// CHECK:   var [[PTR0:.*]] = [[MTS0]]._ptr
 // CHECK:   var [[SH0:.*]] = [[MTS0]].shape()
 // CHECK:   var [[ST0:.*]] = [[MTS0]].strides()
 // CHECK:   comptime [[SPEC0:.*]] = [[MTS0]].static_spec
-// CHECK:   var [[PTR1:.*]] = [[MTS1]].unsafe_ptr()
+// CHECK:   var [[PTR1:.*]] = [[MTS1]]._ptr
 // CHECK:   var [[SH1:.*]] = [[MTS1]].shape()
 // CHECK:   var [[ST1:.*]] = [[MTS1]].strides()
 // CHECK:   comptime [[SPEC1:.*]] = [[MTS1]].static_spec
-// CHECK:   var [[PTR2:.*]] = [[MTS2]].unsafe_ptr()
+// CHECK:   var [[PTR2:.*]] = [[MTS2]]._ptr
 // CHECK:   var [[SH2:.*]] = [[MTS2]].shape()
 // CHECK:   var [[ST2:.*]] = [[MTS2]].strides()
 // CHECK:   comptime [[SPEC2:.*]] = [[MTS2]].static_spec

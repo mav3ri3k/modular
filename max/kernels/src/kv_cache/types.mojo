@@ -394,12 +394,15 @@ def _compute_kv_cache_dynamic_shape_strides[
 
 @inline(.always)
 def _make_cache_tt[
+    mut: Bool,
+    //,
     dtype: DType,
     ResultLayout: TensorLayout,
     rank: Int,
     Engine: TensorEngine,
+    origin: Origin[mut=mut],
 ](
-    ptr: Pointer[Scalar[dtype], _],
+    ptr: Engine.StorageType[dtype, origin, AddressSpace.GENERIC],
     shape: DynamicCoord[.int64, rank],
     strides: DynamicCoord[.int64, rank],
 ) -> TileTensor[
@@ -408,7 +411,7 @@ def _make_cache_tt[
         shape_types=ResultLayout._shape_types,
         stride_types=ResultLayout._stride_types,
     ],
-    ptr.origin,
+    origin,
     Engine=Engine,
 ]:
     """Construct a TileTensor from a pointer and `Coord` shape/strides.
@@ -431,9 +434,7 @@ def _make_cache_tt[
             stride_c[i] = rebind[stride_c.element_types[i]](
                 rebind[Int64](strides[i])
             )
-    return TileTensor[dtype, ConcLayout, ptr.origin, Engine=Engine](
-        ptr=ptr, layout=ConcLayout(shape_c, stride_c)
-    )
+    return {ptr, ConcLayout(shape_c, stride_c)}
 
 
 @inline(.always)
@@ -455,6 +456,9 @@ def _as_cache_tt[
     dimensions and strides are fixed by the cache's parameters, so `tt` must
     already match them; that is checked with `debug_assert`.
     """
+    comptime assert (
+        Engine == tt.Engine
+    ), "cache layout conversion must preserve its storage engine"
     comptime rank = ResultLayout.rank
     comptime assert (
         tt.flat_rank == rank
@@ -478,8 +482,14 @@ def _as_cache_tt[
         shape[i] = rebind[shape.element_types[i]](dim)
         strides[i] = rebind[strides.element_types[i]](stride)
 
-    return _make_cache_tt[tt.dtype, ResultLayout, rank, Engine=Engine](
-        tt.ptr, shape, strides
+    return _make_cache_tt[
+        tt.dtype, ResultLayout, rank, Engine=Engine, origin=tt.origin
+    ](
+        rebind[Engine.StorageType[tt.dtype, tt.origin, AddressSpace.GENERIC]](
+            tt._storage
+        ),
+        shape,
+        strides,
     )
 
 
@@ -4273,6 +4283,10 @@ struct PagedKVCacheCollection[
     lookup_table_origin: ImmOrigin,
     scales_origin: MutOrigin,
     *,
+    blocks_engine: TensorEngine = DefaultEngine[element_width=1],
+    metadata_engine: TensorEngine = DefaultEngine[element_width=1],
+    lookup_engine: TensorEngine = metadata_engine,
+    scales_engine: TensorEngine = DefaultEngine[element_width=1],
     scale_dtype_: Optional[DType] = None,
     quantization_granularity_: Int = 1,
 ](KVCollectionT):
@@ -4308,13 +4322,13 @@ struct PagedKVCacheCollection[
         Self.kv_params,
         Self.page_size,
         Self.blocks_origin,
-        Self.blocks_tt_type.Engine,
+        Self.blocks_engine.OffsetResultType[TypeList.of[Int]()],
         Self.cache_lengths_origin,
-        DefaultEngine[element_width=1],
+        Self.metadata_engine,
         Self.lookup_table_origin,
-        DefaultEngine[element_width=1],
+        Self.lookup_engine,
         Self.scales_origin,
-        DefaultEngine[element_width=1],
+        Self.scales_engine.OffsetResultType[TypeList.of[Int]()],
         scale_dtype_=Self.scale_dtype_,
         quantization_granularity_=Self.quantization_granularity_,
     ]
@@ -4356,7 +4370,10 @@ struct PagedKVCacheCollection[
         ].element_types,
     ]
     comptime blocks_tt_type = TileTensor[
-        Self.dtype, Self.blocks_tt_layout, Self.blocks_origin
+        Self.dtype,
+        Self.blocks_tt_layout,
+        Self.blocks_origin,
+        Engine=Self.blocks_engine,
     ]
 
     # Match PagedKVCache.head_dim_granularity.
@@ -4399,7 +4416,10 @@ struct PagedKVCacheCollection[
         ].element_types,
     ]
     comptime scales_tt_type = TileTensor[
-        Self.scale_dtype, Self.scales_tt_layout, Self.scales_origin
+        Self.scale_dtype,
+        Self.scales_tt_layout,
+        Self.scales_origin,
+        Engine=Self.scales_engine,
     ]
 
     var scales: OptionalReg[Self.scales_tt_type]
@@ -4420,13 +4440,25 @@ struct PagedKVCacheCollection[
     def __init__(
         out self,
         blocks: TileTensor[
-            Self.dtype, _, Self.blocks_origin, linear_idx_type=_
+            Self.dtype,
+            _,
+            Self.blocks_origin,
+            Engine=Self.blocks_engine,
+            linear_idx_type=_,
         ],
         cache_lengths: TileTensor[
-            .uint32, _, Self.cache_lengths_origin, linear_idx_type=_
+            .uint32,
+            _,
+            Self.cache_lengths_origin,
+            Engine=Self.metadata_engine,
+            linear_idx_type=_,
         ],
         lookup_table: TileTensor[
-            .uint32, _, Self.lookup_table_origin, linear_idx_type=_
+            .uint32,
+            _,
+            Self.lookup_table_origin,
+            Engine=Self.lookup_engine,
+            linear_idx_type=_,
         ],
         max_seq_length: UInt32,
         max_cache_length: UInt32,
@@ -4482,21 +4514,41 @@ struct PagedKVCacheCollection[
     ](
         out self,
         blocks: TileTensor[
-            Self.dtype, _, Self.blocks_origin, linear_idx_type=_
+            Self.dtype,
+            _,
+            Self.blocks_origin,
+            Engine=Self.blocks_engine,
+            linear_idx_type=_,
         ],
         cache_lengths: TileTensor[
-            .uint32, _, Self.cache_lengths_origin, linear_idx_type=_
+            .uint32,
+            _,
+            Self.cache_lengths_origin,
+            Engine=Self.metadata_engine,
+            linear_idx_type=_,
         ],
         lookup_table: TileTensor[
-            .uint32, _, Self.lookup_table_origin, linear_idx_type=_
+            .uint32,
+            _,
+            Self.lookup_table_origin,
+            Engine=Self.lookup_engine,
+            linear_idx_type=_,
         ],
         max_seq_length: UInt32,
         max_cache_length: UInt32,
         scales: TileTensor[
-            scales_dtype, _, Self.scales_origin, linear_idx_type=_
+            scales_dtype,
+            _,
+            Self.scales_origin,
+            Engine=Self.scales_engine,
+            linear_idx_type=_,
         ],
         scales_lookup_table: TileTensor[
-            .uint32, _, Self.lookup_table_origin, linear_idx_type=_
+            .uint32,
+            _,
+            Self.lookup_table_origin,
+            Engine=Self.lookup_engine,
+            linear_idx_type=_,
         ],
         page_stride: Int = -1,
         scales_page_stride: Int = -1,
@@ -4572,8 +4624,15 @@ struct PagedKVCacheCollection[
                     Self.CacheType.scales_tt_layout,
                     4,
                     Engine=Self.CacheType.scales_engine,
+                    origin=Self.scales_origin,
                 ](
-                    scales.ptr.unsafe_offset(scale_offset),
+                    rebind[
+                        Self.CacheType.scales_engine.StorageType[
+                            Self.CacheType.scale_dtype,
+                            Self.scales_origin,
+                            AddressSpace.GENERIC,
+                        ]
+                    ](scales._offset_storage(scale_offset)),
                     self.kv_cache_scales_dynamic_shape,
                     self.kv_cache_scales_dynamic_strides,
                 )
@@ -4585,8 +4644,15 @@ struct PagedKVCacheCollection[
                 Self.CacheType.blocks_tt_layout,
                 4,
                 Engine=Self.CacheType.blocks_engine,
+                origin=Self.blocks_origin,
             ](
-                self.blocks.ptr.unsafe_offset(blocks_offset),
+                rebind[
+                    Self.CacheType.blocks_engine.StorageType[
+                        Self.CacheType.dtype,
+                        Self.blocks_origin,
+                        AddressSpace.GENERIC,
+                    ]
+                ](self.blocks._offset_storage(blocks_offset)),
                 self.kv_cache_dynamic_shape,
                 self.kv_cache_dynamic_strides,
             ),

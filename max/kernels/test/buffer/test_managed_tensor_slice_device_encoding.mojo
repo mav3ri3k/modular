@@ -14,7 +14,7 @@
 
 from extensibility import IOSpec, ManagedTensorSlice, StaticTensorSpec
 from extensibility.managed_tensor_slice import _IndexListToTileLayout
-from layout import Coord, TensorLayout, TileTensor
+from layout import Coord, TensorLayout
 from max.gpu import global_idx
 from max.gpu.host import DeviceContext
 from std.math import isnan, nan
@@ -24,12 +24,21 @@ from std.utils import IndexList
 
 
 def _copy_with_metadata[
-    InputLayout: TensorLayout, OutputLayout: TensorLayout
+    input_io: IOSpec,
+    input_spec: StaticTensorSpec[.float32, 2, ...],
+    output_spec: StaticTensorSpec[.float32, 2, ...],
 ](
-    source: TileTensor[.float32, InputLayout, MutUntrackedOrigin],
-    output: TileTensor[.float32, OutputLayout, MutUntrackedOrigin],
-    output_alias: TileTensor[.float32, OutputLayout, MutUntrackedOrigin],
+    source_view: ManagedTensorSlice[io_spec=input_io, static_spec=input_spec],
+    output_view: ManagedTensorSlice[
+        io_spec=IOSpec.Output, static_spec=output_spec
+    ],
+    output_alias_view: ManagedTensorSlice[
+        io_spec=IOSpec.Output, static_spec=output_spec
+    ],
 ):
+    var source = source_view.to_tile_tensor()
+    var output = output_view.to_tile_tensor()
+    var output_alias = output_alias_view.to_tile_tensor()
     var row = global_idx.y
     var col = global_idx.x
     var rows = Int(source.dim[0]())
@@ -72,14 +81,8 @@ def _run_case[
     comptime Output = ManagedTensorSlice[
         io_spec=IOSpec.Output, static_spec=output_spec
     ]
-    comptime assert (
-        Input.device_type
-        == TileTensor[.float32, Input.RuntimeLayout, MutUntrackedOrigin]
-    ), "ManagedTensorSlice must encode as TileTensor"
-    comptime assert (
-        Output.device_type
-        == TileTensor[.float32, Output.RuntimeLayout, MutUntrackedOrigin]
-    ), "ManagedTensorSlice must encode as TileTensor"
+    comptime assert Input.device_type == Input
+    comptime assert Output.device_type == Output
     var input_size = (
         (rows - 1) * input_strides[0] + (cols - 1) * input_strides[1] + 3
     )
@@ -115,22 +118,22 @@ def _run_case[
     ctx.enqueue_copy(input_device, input_host)
     output_device.enqueue_fill(nan[.float32]())
     var source = Input(
-        input_device.unsafe_ptr().unsafe_offset(1), (rows, cols), input_strides
+        input_device.device_ptr() + 1, (rows, cols), input_strides
     )
     var output = Output(
-        output_device.unsafe_ptr().unsafe_offset(1),
+        output_device.device_ptr() + 1,
         (rows, cols),
         output_strides,
     )
     var output_alias = Output(
-        output_device.unsafe_ptr().unsafe_offset(1),
+        output_device.device_ptr() + 1,
         (rows, cols),
         output_strides,
     )
 
     # Passing the slices themselves exercises DevicePassable, not projection.
     ctx.enqueue_function[
-        _copy_with_metadata[Input.RuntimeLayout, Output.RuntimeLayout]
+        _copy_with_metadata[IOSpec.Input, input_spec, output_spec]
     ](source, output, output_alias, grid_dim=1, block_dim=(16, 8))
     with output_device.map_to_host() as actual:
         for i in range(output_size):
@@ -152,16 +155,16 @@ def _run_case[
         io_spec=IOSpec.MutableInput, static_spec=input_spec
     ]
     var inplace_source = MutableInput(
-        input_device.unsafe_ptr().unsafe_offset(1), (rows, cols), input_strides
+        input_device.device_ptr() + 1, (rows, cols), input_strides
     )
     var inplace = InPlaceOutput(
-        input_device.unsafe_ptr().unsafe_offset(1), (rows, cols), input_strides
+        input_device.device_ptr() + 1, (rows, cols), input_strides
     )
     var inplace_alias = InPlaceOutput(
-        input_device.unsafe_ptr().unsafe_offset(1), (rows, cols), input_strides
+        input_device.device_ptr() + 1, (rows, cols), input_strides
     )
     ctx.enqueue_function[
-        _copy_with_metadata[Input.RuntimeLayout, InPlaceOutput.RuntimeLayout]
+        _copy_with_metadata[IOSpec.MutableInput, input_spec, input_spec]
     ](inplace_source, inplace, inplace_alias, grid_dim=1, block_dim=(16, 8))
     var inplace_metadata = Float32(
         6 * rows + 10 * cols + 28 * input_strides[0] + 32 * input_strides[1]

@@ -38,6 +38,22 @@
 #include <utility>
 
 extern "C" {
+void MojoHAL_DeviceBuffer_clone(MojoHALBufferBox **result,
+                                MojoHALBufferBox *source);
+bool MojoHAL_DeviceBuffer_isOpaque(MojoHALBufferBox *buf);
+const char *MojoHAL_DeviceBuffer_getOpaqueView(uint64_t *allocation,
+                                               uint64_t *offset, uint64_t *size,
+                                               MojoHALBufferBox *buf);
+const char *MojoHAL_DeviceBuffer_copyFromHost(MojoHALBufferBox *dst,
+                                              const void *src, uint64_t size);
+const char *MojoHAL_DeviceBuffer_copyToHost(void *dst, MojoHALBufferBox *src,
+                                            uint64_t offset, uint64_t size);
+const char *MojoHAL_DeviceBuffer_copy(MojoHALBufferBox *dst,
+                                      MojoHALBufferBox *src, uint64_t offset,
+                                      uint64_t size);
+const char *MojoHAL_DeviceBuffer_fill(MojoHALBufferBox *dst, uint64_t value,
+                                      uint64_t width);
+
 void MojoHAL_strfree(const char *s);
 int32_t MojoHAL_Device_numberOfDevices(const char *api);
 const char *MojoHAL_DeviceContext_create(MojoHALContextBox **out_ctx,
@@ -53,6 +69,9 @@ const char *MojoHAL_DeviceContext_createBufferOwning(MojoHALBufferBox **out_buf,
                                                      void *ptr,
                                                      uint64_t byteSize,
                                                      bool owning);
+const char *MojoHAL_DeviceContext_borrowOpaqueMemoryView(
+    MojoHALBufferBox **out_buf, MojoHALContextBox *ctx, uint64_t allocation,
+    uint64_t offset, uint64_t size);
 void MojoHAL_DeviceBuffer_release(MojoHALBufferBox *buf);
 const char *MojoHAL_DeviceBuffer_relinquishOwnership(MojoHALBufferBox *buf);
 const char *MojoHAL_DeviceContext_createHostBuffer(MojoHALBufferBox **out_buf,
@@ -198,6 +217,8 @@ Device::API mapAPI(StringRef api) {
     return Device::hipAPI;
   if (api == Device::metalAPI)
     return Device::metalAPI;
+  if (api == Device::openclAPI)
+    return Device::openclAPI;
   return Device::gpuAPI;
 }
 
@@ -205,7 +226,8 @@ Device::API mapAPI(StringRef api) {
 
 ErrorOr<DeviceRef> Device::create(StringRef api, int id) {
   if (AsyncRT::isVirtualDeviceMode() &&
-      (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI)) {
+      (api == gpuAPI || api == cudaAPI || api == hipAPI || api == metalAPI ||
+       api == openclAPI)) {
     std::string virtualAPI = AsyncRT::getVirtualDeviceAPI();
     std::string targetArch = AsyncRT::getVirtualDeviceTargetArch();
     if (virtualAPI.empty())
@@ -296,7 +318,7 @@ const std::string &Device::getAcceleratorArchOrEmpty() {
     // the caller reads "" as "no accelerator" -- `apiToVendorPrefix` would
     // otherwise hand back the plugin's own name as though it were a vendor.
     llvm::StringRef api = dev->api();
-    bool named = api == cudaAPI || api == hipAPI;
+    bool named = api == cudaAPI || api == hipAPI || api == openclAPI;
 #if MODULAR_MACOS
     named = named || api == metalAPI;
 #endif
@@ -394,6 +416,32 @@ ErrorOr<bool> Device::canAccess(const Device &other) const {
 
 // ===-- DeviceBuffer ----------------------------------------------------=== //
 
+DeviceBuffer::DeviceBuffer(MojoHALBufferBox *mojoBox, void *ptr,
+                           size_t byteSize, bool isHost, BoxKind kind,
+                           DeviceContextRef context, DeviceBufferRef parent)
+    : mojoBox_(mojoBox), ptr_(ptr),
+      opaque_(!isHost && MojoHAL_DeviceBuffer_isOpaque(mojoBox)),
+      byteSize_(byteSize), isHost_(isHost), kind_(kind),
+      context_(std::move(context)), parent_(std::move(parent)) {}
+
+void *DeviceBuffer::ptr() const {
+  if (opaque_)
+    llvm::report_fatal_error(
+        "opaque device buffers have no raw address; use an allocation view");
+  return ptr_;
+}
+
+ErrorOr<DeviceBuffer::OpaqueMemoryView>
+DeviceBuffer::getOpaqueMemoryView() const {
+  if (!opaque_)
+    return Error("buffer does not have opaque storage");
+  OpaqueMemoryView view{};
+  if (const char *error = MojoHAL_DeviceBuffer_getOpaqueView(
+          &view.allocation, &view.byteOffset, &view.byteSize, mojoBox_))
+    return takeError(error);
+  return view;
+}
+
 DeviceBuffer::~DeviceBuffer() {
   // Relinquish first: the custom destructor can drop the memory's real owner
   // (e.g. a graph arena), after which the plugin handle refers to freed memory.
@@ -438,11 +486,16 @@ ErrorOr<DeviceBufferRef> DeviceBuffer::createSubBuffer(size_t byteOffset,
   // Sub-buffer boxes are plain Mojo DeviceBuffer views regardless of what
   // backs the parent; `parent_` keeps the parent box (and any mapping) alive.
   return DeviceBufferRef::take(new DeviceBuffer(
-      buf, static_cast<char *>(ptr_) + byteOffset, byteSize, isHost_,
-      BoxKind::Device, context_.copy(), DeviceBufferRef::copy(this)));
+      buf,
+      (opaque_ || !ptr_) ? nullptr : static_cast<char *>(ptr_) + byteOffset,
+      byteSize, isHost_, BoxKind::Device, context_.copy(),
+      DeviceBufferRef::copy(this)));
 }
 
 void *DeviceBuffer::releasePtr() {
+  if (opaque_)
+    llvm::report_fatal_error(
+        "opaque device buffers cannot release a raw address");
   if (const char *err = MojoHAL_DeviceBuffer_relinquishOwnership(mojoBox_))
     MojoHAL_strfree(err); // Cannot fail in practice (plugin-side flag flip);
                           // the legacy signature is non-failing.
@@ -477,6 +530,36 @@ ErrorOrSuccess DeviceBuffer::copyTo(DeviceBuffer &dst, size_t srcByteOffset,
   DeviceBuffer &src = *this;
   const Device::API srcApi = src.context().device().api();
   const Device::API dstApi = dst.context().device().api();
+  if (srcByteOffset > src.byteSize_ ||
+      srcByteSize > src.byteSize_ - srcByteOffset ||
+      srcByteSize > dst.byteSize_)
+    return Error("buffer copy range is out of bounds");
+  if (srcByteSize == 0)
+    return {};
+  if (src.opaque_ || dst.opaque_) {
+    const char *error = nullptr;
+    if (src.opaque_ && dst.opaque_) {
+      error = MojoHAL_DeviceBuffer_copy(dst.mojoBox_, src.mojoBox_,
+                                        srcByteOffset, srcByteSize);
+    } else if (dst.opaque_ && (src.isHost() || srcApi == Device::cpuAPI)) {
+      if (auto status = src.context().synchronize(); status.isError())
+        return status;
+      error = MojoHAL_DeviceBuffer_copyFromHost(
+          dst.mojoBox_, static_cast<const char *>(src.ptr_) + srcByteOffset,
+          srcByteSize);
+    } else if (src.opaque_ && (dst.isHost() || dstApi == Device::cpuAPI)) {
+      if (auto status = dst.context().synchronize(); status.isError())
+        return status;
+      error = MojoHAL_DeviceBuffer_copyToHost(dst.ptr_, src.mojoBox_,
+                                              srcByteOffset, srcByteSize);
+    } else {
+      return Error(
+          "copy between opaque and raw-address devices requires host staging");
+    }
+    if (error)
+      return takeError(error);
+    return {};
+  }
   const uint8_t *srcAt = static_cast<const uint8_t *>(src.ptr_) + srcByteOffset;
 
   if (src.isHost() || srcApi == Device::cpuAPI) {
@@ -652,7 +735,9 @@ ErrorOr<DeviceBufferRef> DeviceContext::createHostBuffer(size_t byteSize) {
   // (isHost=false), so it can stand in for a GPU graph input (a pinned one is
   // rejected).
   if (byteSize == 0)
-    return createBufferOwning(nullptr, 0, /*owning=*/true);
+    return device_->api() == Device::openclAPI
+               ? enqueueCreateBuffer(0)
+               : createBufferOwning(nullptr, 0, /*owning=*/true);
   MojoHALBufferBox *buf = nullptr;
   void *ptr = nullptr;
   if (const char *err = MojoHAL_DeviceContext_createHostBuffer(
@@ -676,6 +761,19 @@ DeviceBufferRef DeviceContext::createBufferOwning(void *ptr, size_t byteSize,
   }
   return DeviceBufferRef::take(new DeviceBuffer(
       buf, ptr, byteSize, /*isHost=*/false, DeviceBuffer::BoxKind::Device,
+      DeviceContextRef::copy(this)));
+}
+
+ErrorOr<DeviceBufferRef> DeviceContext::borrowOpaqueMemoryView(
+    const DeviceBuffer::OpaqueMemoryView &view) {
+  if (device_->isVirtual())
+    return Error("cannot borrow memory on a virtual device");
+  MojoHALBufferBox *buf = nullptr;
+  if (const char *err = MojoHAL_DeviceContext_borrowOpaqueMemoryView(
+          &buf, mojoCtx_, view.allocation, view.byteOffset, view.byteSize))
+    return takeError(err);
+  return DeviceBufferRef::take(new DeviceBuffer(
+      buf, nullptr, view.byteSize, /*isHost=*/false, DeviceBuffer::BoxKind::Device,
       DeviceContextRef::copy(this)));
 }
 
@@ -750,6 +848,12 @@ ErrorOrSuccess DeviceContext::enqueueSetMemory(void *dst, size_t byteSize,
 
 ErrorOrSuccess DeviceContext::enqueueSetMemory(const DeviceBuffer &dst,
                                                uint64_t val, size_t valSize) {
+  if (dst.hasOpaqueStorage()) {
+    if (const char *error =
+            MojoHAL_DeviceBuffer_fill(dst.mojoBox_, val, valSize))
+      return takeError(error);
+    return {};
+  }
   auto fill = [&] {
     return enqueueSetMemory(dst.ptr(), dst.byteSize(), val, valSize);
   };
@@ -1285,4 +1389,17 @@ AsyncRT_AsyncValue_createFromDeviceBuffer(DeviceBuffer *handle) {
   AnyAsyncValueRef storage =
       AnyAsyncValueRef::createReady<DeviceBufferRef>(cpuDevice, std::move(buf));
   return storage.releasePointer();
+}
+
+MODULAR_EXPORT MojoHALBufferBox *
+AsyncRT_AsyncValue_cloneDeviceBufferBox(M::AsyncRT::AsyncValue *storage) {
+  if (!storage || !storage->isReady() || !storage->isType<DeviceBufferRef>())
+    llvm::report_fatal_error("opaque storage is not a ready device buffer");
+  auto &buffer = storage->get<DeviceBufferRef>();
+  if (!buffer || !buffer->hasOpaqueStorage())
+    llvm::report_fatal_error(
+        "storage does not contain an opaque device buffer");
+  MojoHALBufferBox *result = nullptr;
+  MojoHAL_DeviceBuffer_clone(&result, buffer->mojoBufferBox());
+  return result;
 }

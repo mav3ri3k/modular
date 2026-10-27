@@ -85,7 +85,7 @@ modular_cc_library(
         "STATIC_LIBRARY_SUFFIX='\".a\"'",
     ] + select({
         "@platforms//os:macos": ["SHARED_LIBRARY_SUFFIX='\".dylib\"'"],
-        "@platforms//os:linux": ["SHARED_LIBRARY_SUFFIX='\".so\"'"],
+        "//:elf": ["SHARED_LIBRARY_SUFFIX='\".so\"'"],
     }),
     deps = [
         ":ConcurrentAppendingVector",
@@ -1136,7 +1136,7 @@ modular_shared_library(
     # See https://github.com/llvm/llvm-project/pull/126999#issuecomment-2661526333
     # for more details and breadcrumbs.
     linkopts = select({
-        "@platforms//os:linux": [
+        "//:elf": [
             "-Wl,--undefined=_ZN4mlir6detail22FallbackTypeIDResolver22registerImplicitTypeIDEN4llvm9StringRefE",
         ],
         "@platforms//os:macos": [

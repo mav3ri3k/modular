@@ -26,6 +26,31 @@
 
 namespace M::Driver {
 
+namespace {
+/// OpenCL objects are emitted by KGEN. Vendor source compilation belongs to
+/// the target HAL at artifact load, never to the desktop compilation device.
+class OpenCLCompilationDevice final : public CompilationDevice {
+public:
+  explicit OpenCLCompilationDevice(StringRef arch)
+      : CompilationDevice("opencl", arch.str()) {}
+
+  ErrorOr<int> getApiVersion() const override {
+    return Error("OpenCL API version is unavailable in compile-only mode");
+  }
+  ErrorOr<DriverVersion &> getDriverVersion() const override {
+    return Error("OpenCL driver version is unavailable in compile-only mode");
+  }
+  ErrorOr<const char *> getArchName() const override {
+    return targetArch().c_str();
+  }
+  ErrorOr<BufferRef> compileFunction(StringRef, StringRef, int32_t,
+                                     StringRef) const override {
+    return Error("OpenCL compile-only devices do not compile vendor source. "
+                 "KGEN emits the bundle; the target HAL compiles it at load.");
+  }
+};
+} // namespace
+
 //
 // ===== DriverVersion ===== //
 //
@@ -47,6 +72,13 @@ MODULAR_CXX_EXPORT std::string DriverVersion::toString() const {
 MODULAR_CXX_EXPORT ErrorOr<std::unique_ptr<CompilationDevice>>
 CompilationDevice::create(StringRef requestedAPI, StringRef arch) {
   const StringRef api = canonicalDeviceAPI(requestedAPI);
+
+  if (api == "opencl") {
+    if (arch.empty())
+      return Error("OpenCL compile-only devices require a target architecture");
+    return std::unique_ptr<CompilationDevice>(
+        new OpenCLCompilationDevice(arch));
+  }
 
   // Branch based on the configured API (not the requested API which is often
   // generic "gpu")

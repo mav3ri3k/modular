@@ -40,7 +40,6 @@ struct BufferView(Copyable, Movable):
         return self._view.size
 
 
-@fieldwise_init
 struct Buffer[device_spec: DeviceSpec](Movable):
     """A memory allocation tied to the context it was allocated from.
 
@@ -70,6 +69,26 @@ struct Buffer[device_spec: DeviceSpec](Movable):
     ].HookFor[DeviceSpec.target[Self.device_spec]()].extensions
 
     var _extensions: Pointer[Self.HALExtensions, ImmUntrackedOrigin]
+    var _byte_offset: UInt64
+    var _is_view: Bool
+
+    def __init__(
+        out self,
+        _handle: MemoryHandle,
+        byte_size: UInt64,
+        is_host_pinned: Bool,
+        var _context: ArcPointer[Context[Self.device_spec]],
+        _extensions: Pointer[Self.HALExtensions, ImmUntrackedOrigin],
+        _byte_offset: UInt64 = 0,
+        _is_view: Bool = False,
+    ):
+        self._handle = _handle
+        self.byte_size = byte_size
+        self.is_host_pinned = is_host_pinned
+        self._context = _context^
+        self._extensions = _extensions
+        self._byte_offset = _byte_offset
+        self._is_view = _is_view
 
     def extensions(
         imm self,
@@ -89,15 +108,18 @@ struct Buffer[device_spec: DeviceSpec](Movable):
 
     def view(self) -> BufferView:
         """Returns a view over the whole allocation."""
-        return BufferView(self._handle, 0, self.byte_size)
+        return BufferView(self._handle, self._byte_offset, self.byte_size)
 
     def view(self, *, byte_offset: UInt64, byte_size: UInt64) -> BufferView:
         """Returns a view over a sub-range of the allocation."""
         debug_assert(
-            byte_offset + byte_size <= self.byte_size,
+            byte_offset <= self.byte_size
+            and byte_size <= self.byte_size - byte_offset,
             "BufferView range exceeds Buffer bounds",
         )
-        return BufferView(self._handle, byte_offset, byte_size)
+        return BufferView(
+            self._handle, self._byte_offset + byte_offset, byte_size
+        )
 
     def _device_id(self) -> Int64:
         """Returns the runtime id of the device this buffer resides on."""

@@ -12,13 +12,13 @@
 
 // CHECK-LABEL: mo.graph @addConstant
 // CHECK:       mogg.routine ({{.*}} : !mo.tensor<[8, 64], f32>) -> !mo.tensor<[8, 64], f32>
-// CHECK-NEXT:  inputs ([[IP:%[^ :,]+]])
-// CHECK-NEXT:  outputs ([[OP:%[^ :,]+]])
+// CHECK-NEXT:  inputs ([[IP:%[^ :,]+]]: !mogg.storage)
+// CHECK-NEXT:  outputs ([[OP:%[^ :,]+]]: !mogg.storage)
 // CHECK-NEXT:  context ([[CTX:%[^ :,]+]]) attributes {device = #M.device_ref<"cpu", 0>, fusionInfo = {{.*}}} {
 // CHECK-NEXT:    [[ISH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8, 64]> : !mosh.ape>
-// CHECK-NEXT:    [[IT:%[^ ]+]] = mogg.tensor.create([[IP]], [[ISH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
+// CHECK-NEXT:    [[IT:%[^ ]+]] = mogg.tensor.create([[IP]] : !mogg.storage, [[ISH]]) {{.*}}io = Input{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[OSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8, 64]> : !mosh.ape>
-// CHECK-NEXT:    [[OT:%[^ ]+]] = mogg.tensor.create([[OP]], [[OSH]]) {{.*}}io = Output{{.*}} : !mogg.tensor
+// CHECK-NEXT:    [[OT:%[^ ]+]] = mogg.tensor.create([[OP]] : !mogg.storage, [[OSH]]) {{.*}}io = Output{{.*}} : !mogg.tensor
 // CHECK-NEXT:    [[LSH:%[^ ]+]] = mogg.shape.create() <shape = #mosh<ape[8, 64]> : !mosh.ape>
 // CHECK-NEXT:    mogg.call.foreach @builtin_primitives.primitives._foreach shape([[LSH]]) context([[CTX]]) ([[IDX:%[^ :,]+]] : !map.index<2>) capturing {[[IN:%[^ :,]+]] = [[IT]] : !mogg.tensor, [[OUT:%[^ :,]+]] = [[OT]] : !mogg.tensor} device = "cpu" {
 // CHECK-NEXT:      [[CST:%[^ ]+]] = mogg.constant.scalar 2.000000e+00 : f32 : !mogg.simd<f32>
@@ -38,7 +38,7 @@ mo.graph @addConstant(%x: !mo.tensor<[8, 64], f32>) -> !mo.tensor<[8, 64], f32> 
 
 // CHECK-LABEL: mo.graph @broadcastConstant
 // CHECK:       mogg.routine () -> !mo.tensor<[8, 64], f32>
-// CHECK-NEXT:  outputs ([[OP2:%[^ :,]+]])
+// CHECK-NEXT:  outputs ([[OP2:%[^ :,]+]]: !mogg.storage)
 // CHECK:         mogg.call.foreach {{.*}} ([[IDX2:%[^ :,]+]] : !map.index<2>) capturing {[[OUT2:%[^ :,]+]] = {{[^ ]+}} : !mogg.tensor}
 // CHECK-NEXT:      [[CST2:%[^ ]+]] = mogg.constant.scalar 5.000000e-01 : f32 : !mogg.simd<f32>
 // CHECK-NEXT:      mogg.tensor.store [[OUT2]]{{\[}}[[IDX2]]] = [[CST2]] : !mogg.tensor, !map.index<2>, !mogg.simd<f32>

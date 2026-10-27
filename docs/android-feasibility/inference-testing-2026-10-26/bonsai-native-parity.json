@@ -1,0 +1,54 @@
+{
+  "prism": {
+    "max_abs": 0.3147439956665039,
+    "relative_l2": 0.007239807536640124,
+    "continuation_reference_ids": [
+      73804,
+      248046,
+      198,
+      248068,
+      198,
+      90700,
+      8340,
+      25
+    ],
+    "continuation_actual_ids": [
+      73804,
+      248046,
+      198,
+      248068,
+      198,
+      90700,
+      8340,
+      25
+    ],
+    "all_argmax_agreement": 1.0,
+    "finite": true
+  },
+  "prism-vulkan": {
+    "max_abs": 34.30315589904785,
+    "relative_l2": 0.6676335987092609,
+    "continuation_reference_ids": [
+      73804,
+      248046,
+      198,
+      248068,
+      198,
+      90700,
+      8340,
+      25
+    ],
+    "continuation_actual_ids": [
+      283,
+      15,
+      1088,
+      449,
+      357,
+      466,
+      220,
+      220
+    ],
+    "all_argmax_agreement": 0.0,
+    "finite": true
+  }
+}

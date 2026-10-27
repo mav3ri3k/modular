@@ -1,0 +1,26 @@
+INSTRUMENTATION_STATUS: class=dev.modular.mojochat.NativeEngineBenchmarkTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+dev.modular.mojochat.NativeEngineBenchmarkTest:
+INSTRUMENTATION_STATUS: test=packagedEngineGeneratesAndReportsDecodeThroughput
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: engine_answer=The capital of France is **Paris**.
+INSTRUMENTATION_STATUS: engine_decode_tok_s=79.12
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=dev.modular.mojochat.NativeEngineBenchmarkTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=packagedEngineGeneratesAndReportsDecodeThroughput
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2.17
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1

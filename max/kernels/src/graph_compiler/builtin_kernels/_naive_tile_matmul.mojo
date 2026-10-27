@@ -35,6 +35,7 @@ from layout import (
     coord_to_index_list,
     row_major,
 )
+from layout.tensor_engine import TensorEngine
 from layout.tile_tensor import stack_allocation
 from layout.tile_layout import Layout as _NewLayout
 from layout.tile_io import GenericToLocalTileCopier
@@ -132,6 +133,8 @@ struct _NaiveMatmulTileAdapter[
     b_dtype: DType,
     BLayout: TensorLayout,
     TileConsumerType: TileConsumer,
+    AEngine: TensorEngine,
+    BEngine: TensorEngine,
     //,
     c_dtype: DType,
     tile_shape: IndexList[2],
@@ -158,8 +161,12 @@ struct _NaiveMatmulTileAdapter[
     )
     comptime frag_layout = type_of(row_major[1, 1]())
 
-    var a: TileTensor[Self.a_dtype, Self.ALayout, MutUntrackedOrigin]
-    var b: TileTensor[Self.b_dtype, Self.BLayout, MutUntrackedOrigin]
+    var a: TileTensor[
+        Self.a_dtype, Self.ALayout, MutUntrackedOrigin, Engine=Self.AEngine
+    ]
+    var b: TileTensor[
+        Self.b_dtype, Self.BLayout, MutUntrackedOrigin, Engine=Self.BEngine
+    ]
     var k_dim: Int
     # The non-terminal `tile_operation`, if bound, transforms the fragment; the
     # terminal `tile_consumer` owns the store.
@@ -170,6 +177,9 @@ struct _NaiveMatmulTileAdapter[
 
     @inline(.always)
     def __call__(self):
+        comptime assert (
+            Self.AEngine.element_size == 1 and Self.BEngine.element_size == 1
+        )
         comptime TM = Self.tile_shape[0]
         comptime TN = Self.tile_shape[1]
 
@@ -186,8 +196,8 @@ struct _NaiveMatmulTileAdapter[
         var acc = Scalar[Self.c_dtype](0)
         for k in range(self.k_dim):
             acc += (
-                self.a.load((row, k)).cast[Self.c_dtype]()
-                * self.b.load((k, col)).cast[Self.c_dtype]()
+                self.a.load((row, k))[0].cast[Self.c_dtype]()
+                * self.b.load((k, col))[0].cast[Self.c_dtype]()
             )
 
         # Driver-owned per-thread output fragment, allocated in LOCAL (so the

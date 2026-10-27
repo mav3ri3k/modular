@@ -1,0 +1,58 @@
+{
+  "source_head": "378087fb5fec89841ea7d5e3ac3cc580964ee884",
+  "source_worktree_dirty": true,
+  "host": "Apple Silicon macOS",
+  "ndk": "29.0.14206865",
+  "device": {
+    "model": "SM-S721B",
+    "soc": "s5e9945",
+    "gpu": "Samsung Xclipse 940",
+    "android_api": 36,
+    "fingerprint": "samsung/r12sxins/r12s:16/BP4A.251205.006/S721BXXSEDZI1:user/release-keys"
+  },
+  "weights_on_device_sha256": {
+    "2": "ac588b263b9d12cef29595efde850e771138990e74e026d654d505f173ecd657",
+    "4": "1c33e9b3521f14025c3c6dc47a40900a23665efaa381ad1a62461777c75e86de",
+    "9": "f989b6bd549be758310855ed2f710dc44251159a9645c97aa5b757f933ba1c8d"
+  },
+  "build_sha256": {
+    "2": {
+      "model.o": "b2249314e6d91aadfa8483d1c3f31a56371d7ec2ac89358fc8f9a4cef77f8eed",
+      "OpenCLPlugin.so": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c",
+      "bench": "bdbec0a80f00ce79fe5cf38aad8e36be0b9c368fbd1440aa1d2cb5bc0a1337cd",
+      "runner": "685b7222e1175f4f1533cd25e77f7de7875e92e3181739cc83fd1084180ac2bc",
+      "model.mojo": "b0fccbb63a6349f879e72293e268ee294a1402885fdfacb273fb8f97d05b681a",
+      "kernels.mojo": "cd64ab261f63cad006e47503503c7019a8a2c2a3e69589a608a120abe973a2f7"
+    },
+    "4": {
+      "model.o": "b107f1eb3ca2495874728c9c3ee8bbb7599e8de85958345d01f368dc9b094c1c",
+      "OpenCLPlugin.so": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c",
+      "bench": "eccfb62ad34d47a59f2b3349c0bb45e59fe246d0f3bd83d5864bdd27c9f15870",
+      "runner": "b517eb2c7a524c42f3c61d57cac6d81f849e2ef6ead4cfefe5a612657a3e0c68",
+      "model.mojo": "c47275d3cef5f8d31fdc03fd25ee10931adb794298598122a173216a73136a84",
+      "kernels.mojo": "3a85c5ce181d54c658bae7f99649c4d5c47457698dbcecc2c292d2f0c76936c4"
+    },
+    "9": {
+      "model.o": "0a9af4fd7cb6bb06811e20cb339808ed9041d0a5f045413d6d65a9eef5986c53",
+      "OpenCLPlugin.so": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c",
+      "bench": "0babd493c23959794ece74db5b530d5ce112f8dd42f9469a9f4ca7421128d427",
+      "runner": "1d5d1e50d54a68e3e20c9d9fb30f991ece4f5771b22a4c2e9af97ec427d5b317",
+      "model.mojo": "52d20a77b3af21038751a867d0192a8e3ecf6291009288b7f51ad3e1effde586",
+      "kernels.mojo": "b58f5113e0bb5dd683cd124f2b3de932d83091916ea60949f405ea8d51543be5"
+    }
+  },
+  "benchmark": "tg128 and serial pp512, three separate processes, one sample per process, seed 1, no explicit flush, 10-second pause, no clock or thermal control",
+  "note": "Reused portable builds from prior Mali rebuild, 2B device weights and 4B/9B host exports. 2B capacity 2048; 4B/9B capacity 512. Short validation fixtures: 24 positions for 2B, four for 4B/9B.",
+  "source_and_compiler_sha256": {
+    "max/examples/android-llm/bonsai/model.mojo": "cec962941126d58df781bfa5e1bf9b7743c89ddeada0e9b39c834e673bec72c7",
+    "max/examples/android-llm/bonsai/kernels.mojo": "e448d2f3db0b8b313339d737035ef51c755c10b6a29aff617169c01a37f410d9",
+    "max/examples/android-llm/bonsai_portable/generate.py": "7897e06d3b46e1f7bc14b04d8711a1b7fe1685ac0ea52ffc400a20b423beb331",
+    "max/examples/android-llm/bonsai_large/generate.py": "f7bb6c0dc586e97354e4209e07e18259c234930f3a873bfbb0b3738c2ac30f0b",
+    "max/examples/android-llm/bonsai_portable/build.py": "aa36dbad545f308be01c7a7531d0b134bc592b5123b884256cf6cb5239f90b2a",
+    "max/examples/android-llm/inference_test/bench.cpp": "4cd18485f5e74cb9c3f19b5d2c1075c5a7f7fc0daa8a5984bdcadbf5665ecda2",
+    "max/examples/android-llm/engine.cpp": "5e077ec48399736a6722c9ff6c0f2be5e063fd5a433edf316acdba275beb2e90",
+    "max/examples/android-llm/runtime/model_runtime.mojo": "bca175ab545f1a4c612712f573258b69fe05fb6bd94ebb5358c323024ce6e889",
+    "Target/lib/OpenCL/OpenCLPlugin.cpp": "55e5fbd8c91754cf16eb695b2b80b4aa15096ae9c22a57be09d4ad1fc74908a2",
+    "bazel-bin/Mojo/tools/mojo/mojo": "820dfaabc3fce46f0c456359125aaa81d3df4024fef96aa8daff77b787ae467b"
+  }
+}

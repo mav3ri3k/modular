@@ -1,0 +1,20 @@
+{
+  "backend": "direct Mojo/OpenCL",
+  "projections": "original packed_linear, eight outputs per thread",
+  "token_selection": "fused GPU candidates, shared readGreedyToken",
+  "files": {
+    "/Users/REDACTED/projects/modular/max/examples/android-llm/bonsai/model.mojo": "cec962941126d58df781bfa5e1bf9b7743c89ddeada0e9b39c834e673bec72c7",
+    "/Users/REDACTED/projects/modular/max/examples/android-llm/bonsai/kernels.mojo": "e448d2f3db0b8b313339d737035ef51c755c10b6a29aff617169c01a37f410d9",
+    "/Users/REDACTED/projects/modular/max/examples/android-llm/engine.cpp": "3f663999ce047fd10368d2e89cf0fc3cfe2a614c7411629ee5e83592140f9e97",
+    "/Users/REDACTED/projects/modular/max/examples/android-llm/model_spec.h": "03d993710e0aa521bb44152bb2a4a3528a3d231f71f60cba10294bbbf428bbde",
+    "/Users/REDACTED/projects/mojo-chat/app/src/main/cpp/jni.cpp": "8048ee0728cf0df4f7d20c6ac6749136b3d4ee442c706cdae6b4c47cb9fbb6f3",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/model.o": "0fe2f832a6018ce637167354f5566de990599a377a54609cd1c03248909648fe",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/lib/libOpenCLPlugin.so": "d4d3e07c2480cae539a7d05b17aaa5197585e5b75f0dd0a73f10a0582ed4d14e",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/lib/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/lib/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/lib/libCPUPlugin.so": "de22a9c514d95bb1966a54d951d29db92ff7284a8be0d80c6d91ff5704d78816",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/lib/libKGENCompilerRTShared.so": "831d740faae00aa11b910fe7fdfa8dbcdba001d5ef84f1f18b10baeb02608568",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/plugins/arm64-v8a/libOpenCLPlugin.so": "5a67266344ef0096f07387958f0013a21389f4d1a63bdf225fc9893505447d6c",
+    "/Users/REDACTED/projects/mojo-chat/.native/engine/plugins/arm64-v8a/libCPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f"
+  }
+}

@@ -103,7 +103,7 @@ def _debug_assert_fail_format[
 def _debug_assert_fail[*Ts: Writable](*messages: *Ts, location: SourceLocation):
     """Reports a failed assertion, formatting the message if there is one."""
 
-    comptime if messages.__len__() == 0:
+    comptime if messages.__len__() == 0 or not CurrentPlugin._debug_assert_needs_message:
         _debug_assert_msg(
             _NO_MESSAGE.ptr(), _NO_MESSAGE.byte_length() + 1, location
         )

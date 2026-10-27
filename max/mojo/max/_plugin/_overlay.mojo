@@ -22,6 +22,7 @@ from ._trait import DefaultTargets, MaxPlugin
 from .cuda.targets import CudaTargets
 from .hip.targets import HipTargets
 from .metal.targets import MetalTargets
+from .opencl.targets import OpenCLTargets
 
 # Builtin targets carry their MAX plugin in their payload, so this lists none
 # of them. It serves overlay collections defined in stdlib packages, which
@@ -36,4 +37,5 @@ comptime TARGETS = TypeList.of[
     CudaTargets,
     HipTargets,
     MetalTargets,
+    OpenCLTargets,
 ]()

@@ -1,0 +1,27 @@
+KGSL counter reads enabled for this command
+0 6144x2048 original valid= True read_MB= 3.352317625 write_MB= 0.049726 ms= 0.058535
+0 6144x2048 control valid= True read_MB= 3.351922375 write_MB= 0.049708875 ms= 0.056981
+0 6144x2048 load valid= True read_MB= 3.350948625 write_MB= 0.049711875 ms= 0.055006
+0 6144x2048 winner valid= True read_MB= 3.352596875 write_MB= 0.049717875 ms= 0.055631
+0 2048x2048 original valid= True read_MB= 1.122101125 write_MB= 0.01607 ms= 0.023603
+0 2048x2048 control valid= True read_MB= 1.121990875 write_MB= 0.015514125 ms= 0.023874
+0 2048x2048 load valid= True read_MB= 1.12168625 write_MB= 0.015814 ms= 0.021271
+0 2048x2048 winner valid= True read_MB= 1.121828375 write_MB= 0.0141045 ms= 0.021847
+0 2048x6144 original valid= True read_MB= 3.361792375 write_MB= 0.0497295 ms= 0.058543
+0 2048x6144 control valid= True read_MB= 3.361861125 write_MB= 0.049725125 ms= 0.056762
+0 2048x6144 load valid= True read_MB= 3.357656625 write_MB= 0.049722375 ms= 0.054705
+0 2048x6144 winner valid= True read_MB= 3.361506125 write_MB= 0.04972975 ms= 0.055499
+1 6144x2048 winner valid= True read_MB= 3.3525795 write_MB= 0.049713 ms= 0.055695
+1 6144x2048 load valid= True read_MB= 3.351059875 write_MB= 0.0497115 ms= 0.054645
+1 6144x2048 control valid= True read_MB= 3.35182925 write_MB= 0.04972775 ms= 0.056162
+1 6144x2048 original valid= True read_MB= 3.352320625 write_MB= 0.049730125 ms= 0.058156
+1 2048x2048 winner valid= True read_MB= 1.1217745 write_MB= 0.0140255 ms= 0.021941
+1 2048x2048 load valid= True read_MB= 1.1216445 write_MB= 0.01602625 ms= 0.020862
+1 2048x2048 control valid= True read_MB= 1.121953875 write_MB= 0.015333625 ms= 0.023463
+1 2048x2048 original valid= True read_MB= 1.1220875 write_MB= 0.016073625 ms= 0.023612
+1 2048x6144 winner valid= True read_MB= 3.36152425 write_MB= 0.04972775 ms= 0.055182
+1 2048x6144 load valid= True read_MB= 3.357569125 write_MB= 0.049714125 ms= 0.054711
+1 2048x6144 control valid= True read_MB= 3.361784875 write_MB= 0.049725375 ms= 0.056345
+1 2048x6144 original valid= True read_MB= 3.36180925 write_MB= 0.049717 ms= 0.058439
+0 6144x2048 halfbits valid= True read_MB= 1249.329856 write_MB= 1548.457536 ms= 100.583496
+Restored KGSL profiling switch to 0

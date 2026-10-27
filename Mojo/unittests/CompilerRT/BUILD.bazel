@@ -6,6 +6,7 @@ modular_cc_test(
     name = "GlobalsTest",
     srcs = ["GlobalsTest.cpp"],
     deps = [
+        "//AsyncRT:Runtime",
         "//Mojo:CompilerRT",
     ],
 )

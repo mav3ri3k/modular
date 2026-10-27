@@ -1,0 +1,4 @@
+{
+  "bonsai": "LD_LIBRARY_PATH=. GGML_VK_DISABLE_ASYNC=1 GGML_VK_DISABLE_FUSION=1 ./llama-bench -m ../Ternary-Bonsai-2-2B-PTQ1_0.gguf -p 0 -n 128 -r 3 -t 4 -ngl 99 -b 1 -ub 1 -o json",
+  "qwen3": "LD_LIBRARY_PATH=. GGML_VK_DISABLE_ASYNC=1 GGML_VK_DISABLE_FUSION=1 ./llama-bench -m ../Qwen_Qwen3-1.7B-Q4_K_M.gguf -p 0 -n 128 -r 3 -t 4 -ngl 99 -b 1 -ub 1 -o json"
+}

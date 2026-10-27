@@ -1,0 +1,35 @@
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Mali-G615 MC6 (Mali-G615 MC6) | uma: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 16 | shared memory: 32768 | int dot: 0 | matrix cores: none
+----------------
+Vulkan Timings:
+ADD: 185 x 31.05 us = 5744.38 us
+CONCAT: 90 x 49.097 us = 4418.81 us
+CONT: 30 x 23.386 us = 701.6 us
+CPY: 180 x 70.02 us = 12603.7 us
+FLASH_ATTN_EXT dst(256,8,1,1),  q(256,1,8,1),  k(256,256,2,1),  v(256,256,2,1),  m(256,1,1,1): 30 x 1414.46 us = 42433.9 us (1.48265 GFLOPS/s)
+GATED_DELTA_NET: 90 x 177.544 us = 15979 us
+GET_ROWS: 190 x 74.359 us = 14128.4 us
+GLU: 210 x 1488.79 us = 312647 us
+L2_NORM: 90 x 41.844 us = 3765.96 us
+MUL: 300 x 25.278 us = 7583.56 us
+MUL_MAT_ADD MUL_MAT_VEC ptq1_0 m=2048 n=1 k=2048: 25 x 338.974 us = 8474.37 us (24.741 GFLOPS/s)
+MUL_MAT_ADD MUL_MAT_VEC ptq1_0 m=2048 n=1 k=6144: 120 x 945.664 us = 113480 us (26.6096 GFLOPS/s)
+MUL_MAT_VEC f32 m=16 n=1 k=2048: 180 x 45.042 us = 8107.69 us (1.45462 GFLOPS/s)
+MUL_MAT_VEC f32 m=512 n=4 k=512: 180 x 62.861 us = 11315.1 us (33.3289 GFLOPS/s)
+MUL_MAT_VEC ptq1_0 m=2048 n=1 k=2048: 185 x 384.394 us = 71113 us (21.8176 GFLOPS/s)
+MUL_MAT_VEC ptq1_0 m=248320 n=1 k=2048: 5 x 33364.8 us = 166824 us (30.4773 GFLOPS/s)
+MUL_MAT_VEC ptq1_0 m=4096 n=1 k=2048: 30 x 651.561 us = 19546.8 us (25.743 GFLOPS/s)
+MUL_MAT_VEC ptq1_0 m=512 n=1 k=2048: 60 x 99.398 us = 5963.9 us (21.0933 GFLOPS/s)
+MUL_MAT_VEC ptq1_0 m=6144 n=1 k=2048: 330 x 953.12 us = 314530 us (26.3972 GFLOPS/s)
+MUL_RESHAPE_MUL_MAT MUL: 310 x 68.356 us = 21190.5 us
+RMS_NORM_MUL RMS_NORM(128,16,1,1): 90 x 33.158 us = 2984.27 us
+RMS_NORM_MUL RMS_NORM(2048,1,1,1): 245 x 40.206 us = 9850.5 us
+RMS_NORM_MUL RMS_NORM(256,2,1,1): 30 x 17.315 us = 519.45 us
+RMS_NORM_MUL RMS_NORM(256,8,1,1): 30 x 32.202 us = 966.064 us
+ROPE: 60 x 24.725 us = 1483.51 us
+SCALE: 72 x 63.543 us = 4575.12 us
+SET_ROWS: 60 x 19.589 us = 1175.36 us
+SIGMOID: 120 x 20.005 us = 2400.72 us
+SOFTPLUS: 90 x 27.741 us = 2496.72 us
+SSM_CONV_SILU SSM_CONV: 90 x 27.15 us = 2443.5 us
+Total time: 1.18945e+06 us.

@@ -1,0 +1,344 @@
+{
+  "device": "DEVICE_SERIAL / Adreno840v2",
+  "forwards": 2,
+  "dispatches": 1198,
+  "launched_threads": 3852544,
+  "counter_cs_threads": 3852544,
+  "families": {
+    "Embedding": {
+      "calls": 2,
+      "read_bytes": 74368,
+      "write_bytes": 25920,
+      "context_sum": 705459,
+      "context_cycles": 356397,
+      "private_bytes": [
+        112
+      ],
+      "calls_per_token": 1.0,
+      "read_MB_per_token": 0.037184,
+      "write_MB_per_token": 0.01296,
+      "resident_contexts": 1.9794190186786085
+    },
+    "Hadamard": {
+      "calls": 196,
+      "read_bytes": 8376288,
+      "write_bytes": 4470848,
+      "context_sum": 3780186,
+      "context_cycles": 3780186,
+      "private_bytes": [
+        224,
+        368
+      ],
+      "calls_per_token": 98.0,
+      "read_MB_per_token": 4.188144,
+      "write_MB_per_token": 2.235424,
+      "resident_contexts": 1.0
+    },
+    "rowwise_warp_t1_r1_ax0_w4_bs256_a80f148d": {
+      "calls": 2,
+      "read_bytes": 58976,
+      "write_bytes": 25472,
+      "context_sum": 13244,
+      "context_cycles": 8398,
+      "private_bytes": [
+        400
+      ],
+      "calls_per_token": 1.0,
+      "read_MB_per_token": 0.029488,
+      "write_MB_per_token": 0.012736,
+      "resident_contexts": 1.577042152893546
+    },
+    "GatePartials": {
+      "calls": 36,
+      "read_bytes": 10172672,
+      "write_bytes": 310400,
+      "context_sum": 13684389,
+      "context_cycles": 10243610,
+      "private_bytes": [
+        96
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 5.086336,
+      "write_MB_per_token": 0.1552,
+      "resident_contexts": 1.3358951580546312
+    },
+    "DeltaGates": {
+      "calls": 36,
+      "read_bytes": 780608,
+      "write_bytes": 167744,
+      "context_sum": 92809,
+      "context_cycles": 92809,
+      "private_bytes": [
+        240
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 0.390304,
+      "write_MB_per_token": 0.083872,
+      "resident_contexts": 1.0
+    },
+    "PackedLinear": {
+      "calls": 300,
+      "read_bytes": 735934432,
+      "write_bytes": 87082400,
+      "context_sum": 1457246315,
+      "context_cycles": 229018999,
+      "private_bytes": [
+        512
+      ],
+      "calls_per_token": 150.0,
+      "read_MB_per_token": 367.967216,
+      "write_MB_per_token": 43.5412,
+      "resident_contexts": 6.362993120059878
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_5a45cc43": {
+      "calls": 84,
+      "read_bytes": 12083776,
+      "write_bytes": 1070304,
+      "context_sum": 2938543,
+      "context_cycles": 2938543,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 42.0,
+      "read_MB_per_token": 6.041888,
+      "write_MB_per_token": 0.535152,
+      "resident_contexts": 1.0
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_ba4c4b15": {
+      "calls": 84,
+      "read_bytes": 34093568,
+      "write_bytes": 2443872,
+      "context_sum": 13241188,
+      "context_cycles": 6740321,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 42.0,
+      "read_MB_per_token": 17.046784,
+      "write_MB_per_token": 1.221936,
+      "resident_contexts": 1.9644743922433368
+    },
+    "Convolve": {
+      "calls": 36,
+      "read_bytes": 7513920,
+      "write_bytes": 3702144,
+      "context_sum": 14566329,
+      "context_cycles": 1961612,
+      "private_bytes": [
+        128
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 3.75696,
+      "write_MB_per_token": 1.851072,
+      "resident_contexts": 7.425693256362624
+    },
+    "NormalizeQk": {
+      "calls": 36,
+      "read_bytes": 1319040,
+      "write_bytes": 1048704,
+      "context_sum": 34798023,
+      "context_cycles": 6546409,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 0.65952,
+      "write_MB_per_token": 0.524352,
+      "resident_contexts": 5.315589508690948
+    },
+    "DeltaUpdate": {
+      "calls": 36,
+      "read_bytes": 47439136,
+      "write_bytes": 38208320,
+      "context_sum": 94711299,
+      "context_cycles": 35455481,
+      "private_bytes": [
+        96
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 23.719568,
+      "write_MB_per_token": 19.10416,
+      "resident_contexts": 2.671273843386866
+    },
+    "GatedNorm": {
+      "calls": 36,
+      "read_bytes": 1069472,
+      "write_bytes": 459232,
+      "context_sum": 17914529,
+      "context_cycles": 6756141,
+      "private_bytes": [
+        96
+      ],
+      "calls_per_token": 18.0,
+      "read_MB_per_token": 0.534736,
+      "write_MB_per_token": 0.229616,
+      "resident_contexts": 2.6515919368763914
+    },
+    "rms_norm_fused_residual_gpu_block_float32_False_d0fce4cf": {
+      "calls": 96,
+      "read_bytes": 4923872,
+      "write_bytes": 2008704,
+      "context_sum": 4289926,
+      "context_cycles": 554271,
+      "private_bytes": [
+        320
+      ],
+      "calls_per_token": 48.0,
+      "read_MB_per_token": 2.461936,
+      "write_MB_per_token": 1.004352,
+      "resident_contexts": 7.739762679267002
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_a62e4959": {
+      "calls": 48,
+      "read_bytes": 20709184,
+      "write_bytes": 1404672,
+      "context_sum": 7797616,
+      "context_cycles": 3986341,
+      "private_bytes": [
+        208
+      ],
+      "calls_per_token": 24.0,
+      "read_MB_per_token": 10.354592,
+      "write_MB_per_token": 0.702336,
+      "resident_contexts": 1.9560835362554283
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_90ffbe9b": {
+      "calls": 48,
+      "read_bytes": 19748576,
+      "write_bytes": 612064,
+      "context_sum": 4791392,
+      "context_cycles": 4791392,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 24.0,
+      "read_MB_per_token": 9.874288,
+      "write_MB_per_token": 0.306032,
+      "resident_contexts": 1.0
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_a2d08b5d": {
+      "calls": 24,
+      "read_bytes": 1095072,
+      "write_bytes": 158848,
+      "context_sum": 215585,
+      "context_cycles": 215585,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 12.0,
+      "read_MB_per_token": 0.547536,
+      "write_MB_per_token": 0.079424,
+      "resident_contexts": 1.0
+    },
+    "rowwise_tiled_t0_r2_ax0_ew4_w4_bs64_22bd2693": {
+      "calls": 12,
+      "read_bytes": 3299360,
+      "write_bytes": 251264,
+      "context_sum": 891426,
+      "context_cycles": 674551,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 6.0,
+      "read_MB_per_token": 1.64968,
+      "write_MB_per_token": 0.125632,
+      "resident_contexts": 1.3215101600916759
+    },
+    "HeadRope": {
+      "calls": 48,
+      "read_bytes": 753664,
+      "write_bytes": 372288,
+      "context_sum": 14240637,
+      "context_cycles": 7097605,
+      "private_bytes": [
+        80
+      ],
+      "calls_per_token": 24.0,
+      "read_MB_per_token": 0.376832,
+      "write_MB_per_token": 0.186144,
+      "resident_contexts": 2.0064003279979654
+    },
+    "CacheKv": {
+      "calls": 12,
+      "read_bytes": 198944,
+      "write_bytes": 105664,
+      "context_sum": 74027,
+      "context_cycles": 74027,
+      "private_bytes": [
+        64
+      ],
+      "calls_per_token": 6.0,
+      "read_MB_per_token": 0.099472,
+      "write_MB_per_token": 0.052832,
+      "resident_contexts": 1.0
+    },
+    "AttentionScores": {
+      "calls": 12,
+      "read_bytes": 941088,
+      "write_bytes": 66752,
+      "context_sum": 2399475,
+      "context_cycles": 2399475,
+      "private_bytes": [
+        176
+      ],
+      "calls_per_token": 6.0,
+      "read_MB_per_token": 0.470544,
+      "write_MB_per_token": 0.033376,
+      "resident_contexts": 1.0
+    },
+    "AttentionValues": {
+      "calls": 12,
+      "read_bytes": 893088,
+      "write_bytes": 152768,
+      "context_sum": 5381997,
+      "context_cycles": 2031438,
+      "private_bytes": [
+        112
+      ],
+      "calls_per_token": 6.0,
+      "read_MB_per_token": 0.446544,
+      "write_MB_per_token": 0.076384,
+      "resident_contexts": 2.6493533152377773
+    },
+    "PackedHead": {
+      "calls": 2,
+      "read_bytes": 270291264,
+      "write_bytes": 1996160,
+      "context_sum": 392734540,
+      "context_cycles": 68391055,
+      "private_bytes": [
+        560
+      ],
+      "calls_per_token": 1.0,
+      "read_MB_per_token": 135.145632,
+      "write_MB_per_token": 0.99808,
+      "resident_contexts": 5.742484013442986
+    }
+  },
+  "artifacts": {
+    "max/graph_runner": "e2fad8b4f3be0337545eac0f049f54bee8a9440e030dedc0753346ff3668eb7c",
+    "max/bonsai.mef": "ba22df47be5118d2dc65698ab3e48dcf3b001267b705d525331aa19c1a867a90",
+    "max/libKGENCompilerRTShared.so": "831d740faae00aa11b910fe7fdfa8dbcdba001d5ef84f1f18b10baeb02608568",
+    "max/libAsyncRTRuntimeGlobals.so": "348e2175a997d8df767ac817eac3d70716abac5c6db9dd7b78cdfdaf0e0ac613",
+    "max/libMSupportGlobals.so": "1aecd6265a1bd4efc743f91b5218b96bb6c0fecdbde8cef599299de082de951b",
+    "max/CPUPlugin.so": "ea06252f28e7490e715f5b92cc2cca2f191107c3ed74c9c78ff0746ea0b3195f",
+    "max/OpenCLPlugin.so": "6cbf73d82b59da478fac524b3916003320ba2d8977c01fcee4938b0585e7c8c1",
+    "max/libHALDeviceContextMojo.so": "28d9f1e99010d7a7a0700c2e6972e4463306872ece1f0d70f191daa51541901b",
+    "max/libAsyncRTMojoBindings.so": "d172b1de5928ec17e0d700f90a160058c35d82ed085e0fed3f1f14196b461f09",
+    "max/libMGPRT.so": "5161ea44ec67005de16c8f1ce1cec6e307779d8fc899f8a982cb5dbb9b5450de",
+    "max/libmax.so": "5210efa0bd7727eb1c5d319b4d5a1b62d6cfc9eece6130e5391c91227ddf3556",
+    "max/libc++_shared.so": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+  },
+  "raw_log_sha256": {
+    "calibration-late.log": "87dd1a36beb59b6e811477867d3c0fc9b67c742bd1f0238c60d4fb11441e6e4c",
+    "calibration-early.log": "63c57f56cc7afb34c5d823518c7016893af55d232cc88df863d62c59c09f1fbf",
+    "calibration-copy-late.log": "c4f081932b445f934ab8831f11960cd45bd5b76cafbc9436694bb6298c81c181",
+    "calibration-geometry-narrow.log": "ff2be2cda38ff25e4541e60d40889087c3575aeb5964f67e4dafde17a4d75374",
+    "calibration-geometry-wide.log": "c211cf581187e48b3033a74c18099cd06ef1bc5fc7b2446b6bbe32bba72ad07b",
+    "calibration-registers-late.log": "57ea7a27c7e9d9cae5da3bef116f5749c1cd819029a5266869e63d96425f536e",
+    "calibration-latency-late.log": "e130173e4514bd75836efcb8d281479e66c090e35631fdde568344969104fd67",
+    "calibrated-model-counters-max-1.log": "d420c7de9065af72c3f4b5e4a95c5f83f769e20028d309ac281d07f044f39536",
+    "calibrated-model-counters-max-2.log": "f917876644eebf8d9bdaff7a3629f5d604df75ae82b01126c2d0db6445ace13d",
+    "calibrated-kernel-capture-max-1.log": "f9d899bd9752d918297f13f27fc70b9744d87af51252c8125cf7995e62bc6531"
+  }
+}

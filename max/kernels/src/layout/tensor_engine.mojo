@@ -383,7 +383,18 @@ trait TensorEngine:
             other: A tuple of the destination storage (modified in place)
                 and its layout.
         """
-        OtherEngine.copy_from(other, storage)
+        OtherEngine.copy_from[
+            SelfLayoutType=OtherLayoutType,
+            self_origin=other_origin,
+            self_address_space=other_address_space,
+            OtherLayoutType=SelfLayoutType,
+            other_mut=self_mut,
+            other_origin=self_origin,
+            other_address_space=self_address_space,
+            dst_dtype=dst_dtype,
+            src_dtype=src_dtype,
+            OtherEngine=Self,
+        ](other, storage)
 
 
 @inline(.always)
@@ -474,8 +485,12 @@ def _copy_from[
         SIMD[src_dtype, width]
     ]() if is_gpu() else 1
 
-    var dst_ptr = DstEngine.unsafe_ptr(dst_storage)
-    var src_ptr = OtherEngine.unsafe_ptr(src_storage)
+    var dst_ptr = DstEngine.unsafe_ptr[
+        dtype=dst_dtype, origin=self_origin, address_space=self_address_space
+    ](dst_storage)
+    var src_ptr = OtherEngine.unsafe_ptr[
+        dtype=src_dtype, origin=other_origin, address_space=other_address_space
+    ](src_storage)
 
     comptime if widen > 1:
         # Widening requires both operands to be gap-free with unit inner
@@ -589,9 +604,15 @@ def _elementwise_binary_out_with_broadcast[
     ref rhs_storage = rhs[0]
     ref rhs_layout = rhs[1]
 
-    var dst_ptr = DstEngine.unsafe_ptr(dst_storage)
-    var lhs_ptr = LhsEngine.unsafe_ptr(lhs_storage)
-    var rhs_ptr = RhsEngine.unsafe_ptr(rhs_storage)
+    var dst_ptr = DstEngine.unsafe_ptr[
+        dtype=dtype, origin=dst_origin, address_space=dst_address_space
+    ](dst_storage)
+    var lhs_ptr = LhsEngine.unsafe_ptr[
+        dtype=dtype, origin=lhs_origin, address_space=lhs_address_space
+    ](lhs_storage)
+    var rhs_ptr = RhsEngine.unsafe_ptr[
+        dtype=dtype, origin=rhs_origin, address_space=rhs_address_space
+    ](rhs_storage)
 
     comptime assert (
         width == DstEngine.element_size
@@ -725,8 +746,12 @@ def _elementwise_binary_with_broadcast[
     ref other_storage = other[0]
     ref other_layout = other[1]
 
-    var dst_ptr = DstEngine.unsafe_ptr(dst_storage)
-    var other_ptr = OtherEngine.unsafe_ptr(other_storage)
+    var dst_ptr = DstEngine.unsafe_ptr[
+        dtype=dtype, origin=self_origin, address_space=self_address_space
+    ](dst_storage)
+    var other_ptr = OtherEngine.unsafe_ptr[
+        dtype=dtype, origin=other_origin, address_space=other_address_space
+    ](other_storage)
 
     comptime assert (
         width == DstEngine.element_size and width == OtherEngine.element_size
@@ -873,8 +898,12 @@ def _elementwise_unary_out[
 
     comptime alignment = align_of[SIMD[dtype, width]]() if is_gpu() else 1
 
-    var dst_ptr = DstEngine.unsafe_ptr(dst_storage)
-    var src_ptr = SrcEngine.unsafe_ptr(src_storage)
+    var dst_ptr = DstEngine.unsafe_ptr[
+        dtype=dtype, origin=dst_origin, address_space=dst_address_space
+    ](dst_storage)
+    var src_ptr = SrcEngine.unsafe_ptr[
+        dtype=dtype, origin=src_origin, address_space=src_address_space
+    ](src_storage)
 
     comptime for i in range(type_of(dst_layout).static_product):
         var dst_idx = dst_layout(Idx[i])

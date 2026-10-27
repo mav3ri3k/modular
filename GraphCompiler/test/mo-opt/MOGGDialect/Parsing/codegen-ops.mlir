@@ -8,7 +8,7 @@
 // A `!mogg.dim` is optionally named after its source dynamic dim (`%d0` prints
 // as `!mogg.dim<D0>`); a bare `!mogg.dim` (`%dim`) carries no name. Both
 // round-trip (the named form is checked on the `shape.create` below).
-func.func @codegen_ops(%ptr: !mogg.pointer, %dim: !mogg.dim,
+func.func @codegen_ops(%ptr: !mogg.pointer, %storage: !mogg.storage, %dim: !mogg.dim,
                        %d0: !mogg.dim<D0>,
                        %ctx: !mogg.context, %ab: !mogg.async<!mgp.buffer>,
                        %ta: !mo.tensor<[2, 2], f32>) {
@@ -23,6 +23,10 @@ func.func @codegen_ops(%ptr: !mogg.pointer, %dim: !mogg.dim,
   // CHECK: mogg.tensor.create(%{{.*}}, %{{.*}}) {{.*}} : !mogg.tensor
   %t0 = mogg.tensor.create(%ptr, %s0) <device = "cpu", elementType = f32, io = Output, mut = false, shapeAttr = #mosh<ape[2, 2]> : !mosh.ape> : !mogg.tensor
   %t1 = mogg.tensor.create(%ptr, %s0) <device = "gpu", elementType = f32, io = Input, mut = true, shapeAttr = #mosh<ape[2, 2]> : !mosh.ape> : !mogg.tensor
+
+  // Borrowed storage preserves opaque allocation metadata at host boundaries.
+  // CHECK: mogg.tensor.create(%{{.*}} : !mogg.storage, %{{.*}}) {{.*}} : !mogg.tensor
+  %typed = mogg.tensor.create(%storage : !mogg.storage, %s0) <device = "gpu", elementType = f32, io = Input, mut = false, shapeAttr = #mosh<ape[2, 2]> : !mosh.ape> : !mogg.tensor
 
   // rebind: a no-op handle conversion (async buffer -> pointer).
   // CHECK: mogg.rebind %{{.*}} : !mogg.async<!mgp.buffer> to !mogg.pointer

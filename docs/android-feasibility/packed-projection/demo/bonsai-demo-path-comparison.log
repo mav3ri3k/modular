@@ -1,0 +1,32 @@
+/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-reference-96/weights.bin: 1 file pushed, 0 skipped. 55.3 MB/s (596111352 bytes in 10.287s)
+/Users/REDACTED/Library/Caches/modular-android-integration/bonsai-reference-96/prompt.txt: 1 file pushed, 0 skipped. 0.1 MB/s (118 bytes in 0.001s)
+/private/tmp/bonsai-demo-max/graph_runner: 1 file pushed, 0 skipped. 49.2 MB/s (76648 bytes in 0.001s)
+/private/tmp/bonsai-demo-max/bonsai.mef: 1 file pushed, 0 skipped. 198.5 MB/s (4551640 bytes in 0.022s)
+/private/tmp/bonsai-demo-max/runtime/libKGENCompilerRTShared.so: 1 file pushed, 0 skipped. 40.8 MB/s (3863808 bytes in 0.090s)
+/private/tmp/bonsai-demo-max/runtime/libAsyncRTRuntimeGlobals.so: 1 file pushed, 0 skipped. 63.8 MB/s (3292896 bytes in 0.049s)
+/private/tmp/bonsai-demo-max/runtime/libMSupportGlobals.so: 1 file pushed, 0 skipped. 42.2 MB/s (1055568 bytes in 0.024s)
+/private/tmp/bonsai-demo-max/hal/CPUPlugin.so: 1 file pushed, 0 skipped. 44.5 MB/s (3359888 bytes in 0.072s)
+/private/tmp/bonsai-demo-max/hal/OpenCLPlugin.so: 1 file pushed, 0 skipped. 30.7 MB/s (568256 bytes in 0.018s)
+/private/tmp/bonsai-demo-max/runtime/libHALDeviceContextMojo.so: 1 file pushed, 0 skipped. 308.5 MB/s (1146736 bytes in 0.004s)
+/private/tmp/bonsai-demo-max/runtime/libAsyncRTMojoBindings.so: 1 file pushed, 0 skipped. 47.1 MB/s (6110872 bytes in 0.124s)
+/private/tmp/bonsai-demo-max/runtime/libMGPRT.so: 1 file pushed, 0 skipped. 51.0 MB/s (183794680 bytes in 3.436s)
+/private/tmp/bonsai-demo-max/runtime/libmax.so: 1 file pushed, 0 skipped. 59.5 MB/s (538211216 bytes in 8.633s)
+/private/tmp/bonsai-demo-max/runtime/libc++_shared.so: 1 file pushed, 0 skipped. 172.3 MB/s (9290184 bytes in 0.051s)
+14 files pushed, 0 skipped. 56.2 MB/s (1351433862 bytes in 22.941s)
+/private/tmp/bonsai-projection-demo/runner: 1 file pushed, 0 skipped. 436.5 MB/s (1507128 bytes in 0.003s)
+/private/tmp/bonsai-projection-demo/runtime/libKGENCompilerRTShared.so: 1 file pushed, 0 skipped. 68.1 MB/s (3863808 bytes in 0.054s)
+/private/tmp/bonsai-projection-demo/runtime/libAsyncRTRuntimeGlobals.so: 1 file pushed, 0 skipped. 64.8 MB/s (3292896 bytes in 0.048s)
+/private/tmp/bonsai-projection-demo/runtime/libMSupportGlobals.so: 1 file pushed, 0 skipped. 41.1 MB/s (1055568 bytes in 0.025s)
+/private/tmp/bonsai-projection-demo/hal/CPUPlugin.so: 1 file pushed, 0 skipped. 44.9 MB/s (3359888 bytes in 0.071s)
+/private/tmp/bonsai-projection-demo/hal/OpenCLPlugin.so: 1 file pushed, 0 skipped. 24.6 MB/s (568256 bytes in 0.022s)
+/private/tmp/bonsai-projection-demo/runtime/libc++_shared.so: 1 file pushed, 0 skipped. 133.2 MB/s (9290184 bytes in 0.067s)
+7 files pushed, 0 skipped. 66.8 MB/s (22937728 bytes in 0.327s)
+{"variant": "mojo", "warmup": true, "forwards": 95, "seconds": 1.25, "tokens_per_second": 75.98, "log": "/tmp/bonsai-demo-path-comparison-mojo-0.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "max", "warmup": true, "forwards": 95, "seconds": 1.428, "tokens_per_second": 66.53, "log": "/tmp/bonsai-demo-path-comparison-max-1.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "mojo", "warmup": false, "forwards": 95, "seconds": 1.381, "tokens_per_second": 68.81, "log": "/tmp/bonsai-demo-path-comparison-mojo-2.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "max", "warmup": false, "forwards": 95, "seconds": 1.405, "tokens_per_second": 67.61, "log": "/tmp/bonsai-demo-path-comparison-max-3.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "max", "warmup": false, "forwards": 95, "seconds": 1.363, "tokens_per_second": 69.72, "log": "/tmp/bonsai-demo-path-comparison-max-4.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "mojo", "warmup": false, "forwards": 95, "seconds": 1.286, "tokens_per_second": 73.85, "log": "/tmp/bonsai-demo-path-comparison-mojo-5.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "mojo", "warmup": false, "forwards": 95, "seconds": 1.467, "tokens_per_second": 64.78, "log": "/tmp/bonsai-demo-path-comparison-mojo-6.log", "max_abs_error": null, "relative_l2": null}
+{"variant": "max", "warmup": false, "forwards": 95, "seconds": 1.373, "tokens_per_second": 69.2, "log": "/tmp/bonsai-demo-path-comparison-max-7.log", "max_abs_error": null, "relative_l2": null}
+Medians: {'mojo': 68.81, 'max': 69.2}

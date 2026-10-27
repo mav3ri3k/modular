@@ -13,6 +13,7 @@
 
 #include "GraphCompiler/Driver/Device/DeviceExecution.h"
 #include "AsyncRT/Runtime/Algorithms.h"
+#include "AsyncRT/Support/UnknownLocationDecoder.h"
 #include "GraphCompiler/Driver/Device/DebugAllocPoison.h"
 #include <cstring>
 
@@ -63,6 +64,23 @@ M::GraphCompiler::Driver::borrowBuffer(const DeviceContextRef &device,
   return device->createBufferOwning(ptr, byteSize, /*owning=*/false);
 }
 
+ErrorOr<DeviceBufferRef>
+M::GraphCompiler::Driver::borrowBuffer(const DeviceContextRef &device,
+                                       const TensorBufferRef &buffer) {
+#if MODULAR_HAL_DEVICE_CONTEXT
+  if (buffer.isOpaque()) {
+    const auto &view = buffer.getOpaqueView();
+    return device->borrowOpaqueMemoryView(
+        {view.allocation, view.byteOffset, view.byteSize});
+  }
+#endif
+  auto result = borrowBuffer(device, const_cast<void *>(buffer.getBuffer()),
+                             buffer.getSize());
+  if (!result)
+    return Error("cannot borrow graph buffer on this device");
+  return result;
+}
+
 // Construct an on-device buffer to hold a provided tensor.
 ErrorOr<DeviceBufferRef>
 M::GraphCompiler::Driver::constructDeviceMemoryFromTensor(
@@ -101,6 +119,16 @@ M::GraphCompiler::Driver::constructDeviceMemoryFromTensor(
     context.reset();
   };
 
+#if MODULAR_HAL_DEVICE_CONTEXT
+  if (bufferRef.isOpaque()) {
+    auto bufferOr = borrowBuffer(device, bufferRef);
+    if (bufferOr.isError())
+      return bufferOr.takeError();
+    auto buffer = bufferOr.takeValue();
+    buffer->setDestructorFn(std::move(destructor));
+    return buffer;
+  }
+#endif
   void *outputData = bufferRef.getBuffer();
 
   DeviceBufferRef buffer = device->createBufferOwning(
@@ -113,8 +141,25 @@ AnyAsyncValueRef M::GraphCompiler::Driver::prepareInput(
     CPUDevice &cpuDevice, DeviceBufferRef inputBuffer, TensorSpec inputSpec) {
   // Using the refcounted buffer as the storage handle keeps it alive exactly
   // as long as the AsyncValueRef needs it.
-  void *ptr = inputBuffer->ptr();
   size_t byteCount = inputBuffer->byteSize();
+#if MODULAR_HAL_DEVICE_CONTEXT
+  if (inputBuffer->hasOpaqueStorage()) {
+    auto viewOr = inputBuffer->getOpaqueMemoryView();
+    if (viewOr.isError())
+      return AnyAsyncValueRef::createError(
+          cpuDevice, M::AsyncRT::UnknownLocationDecoder::getDiagnostic(
+                         viewOr.takeError()));
+    auto view = viewOr.takeValue();
+    AnyAsyncValueRef storage = AnyAsyncValueRef::createReady<DeviceBufferRef>(
+        cpuDevice, std::move(inputBuffer));
+    auto tensor = Tensor(TensorBufferRef::createOpaque(
+                             {view.allocation, view.byteOffset, view.byteSize},
+                             std::move(storage)),
+                         std::move(inputSpec));
+    return AnyAsyncValueRef::createReady<Tensor>(cpuDevice, std::move(tensor));
+  }
+#endif
+  void *ptr = inputBuffer->ptr();
   AnyAsyncValueRef storageRef = AnyAsyncValueRef::createReady<DeviceBufferRef>(
       cpuDevice, std::move(inputBuffer));
   // FIXME: Get alignment of device memory.

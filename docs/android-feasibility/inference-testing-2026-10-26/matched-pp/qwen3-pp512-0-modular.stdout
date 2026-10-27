@@ -1,0 +1,2 @@
+Device allocations: 1447.22 MiB; context capacity: 1024
+RESULT {"n_prompt":512,"n_gen":0,"n_depth":0,"n_batch":1,"n_ubatch":1,"capacity":1024,"seed":1,"avg_ts":5.262816005,"stddev_ts":0.088615107,"logit_readback":true,"samples_ns":[96074080588,99182638972,96657877619]}

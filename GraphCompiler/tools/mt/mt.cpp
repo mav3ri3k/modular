@@ -14,6 +14,7 @@
 #include "AsyncRT/CompilerSupport/Context.h"
 #include "AsyncRT/Runtime/Utils.h"
 #include "Config/Version.h"
+#include "GraphCompiler/Driver/Common/CrossCompilationCLOptions.h"
 #include "GraphCompiler/Driver/Common/DriverInputFormat.h"
 #include "GraphCompiler/Driver/Common/Utils.h"
 #include "GraphCompiler/Driver/Execution/DriverCLOptions.h"
@@ -153,6 +154,7 @@ extractFrameworkArgs(int argc, char **argv,
 } // namespace
 
 int main(int argc, char **argv) {
+  CrossCompilationCLOptions crossCompilation;
   // Skip InitLLVM's signal handler; Init::Init registers ours.
   GenericDriverOptions options;
   GenericDriverCLOptions parser(argc, argv, options, /*skipInitLLVM=*/true);
@@ -160,6 +162,8 @@ int main(int argc, char **argv) {
   options.frameworkArgs = extractFrameworkArgs(argc, argv, parseArgv);
   llvm::cl::ParseCommandLineOptions(parseArgv.size(), parseArgv.data(),
                                     "Modular Tool (mt)\n");
+  if (!crossCompilation.apply())
+    return 1;
 
   struct InputInfo {
     M::BufferRef file;

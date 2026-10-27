@@ -1107,7 +1107,7 @@ def MOGG_TensorCreateOp : MOGG_Op<"tensor.create", [
     emit pick the preferred alignment without consulting the kernel stub.
   }];
   let arguments = (ins
-    MOGG_Pointer:$ptr,
+    AnyTypeOf<[MOGG_Pointer, MOGG_Storage]>:$ptr,
     MOGG_Shape:$shape,
     MOSH_ShapeAttr:$shapeAttr,
     StrAttr:$device,
@@ -1122,7 +1122,7 @@ def MOGG_TensorCreateOp : MOGG_Op<"tensor.create", [
   // resolves `Buffer` vs `Tensor` from the type alone.
   let results = (outs AnyTypeOf<[MOGG_Tensor, MOGG_Buffer]>:$tensor);
   let assemblyFormat = [{
-    `(` $ptr `,` $shape `)`
+    `(` $ptr custom<StorageOperandType>(type($ptr)) `,` $shape `)`
     `<` `device` `=` $device `,` `elementType` `=` $elementType `,`
         `io` `=` custom<IOKind>($io) `,` `mut` `=` $mut `,`
         `shapeAttr` `=` qualified($shapeAttr)
@@ -1160,7 +1160,7 @@ def MOGG_TensorCreateEpilogueOp : MOGG_Op<"tensor.create.epilogue", [
     MOGG_Shape:$shape,
     Variadic<MOGG_TensorLike>:$captures,
     Variadic<MOGG_Shape>:$shapeCaptures,
-    MOGG_Pointer:$outputPtr,
+    AnyTypeOf<[MOGG_Pointer, MOGG_Storage]>:$outputPtr,
     StrAttr:$device,
     TypeAttr:$elementType,
     BoolAttr:$mut,
@@ -1212,7 +1212,7 @@ def MOGG_TileCreateEpilogueOp : MOGG_Op<"tile.create.epilogue", [
   let arguments = (ins
     MOGG_Shape:$shape,
     Variadic<MOGG_TensorLike>:$captures,
-    MOGG_Pointer:$outputPtr,
+    AnyTypeOf<[MOGG_Pointer, MOGG_Storage]>:$outputPtr,
     MOGG_TileFusionLaneAttr:$lane,
     StrAttr:$device,
     TypeAttr:$elementType,
@@ -1229,16 +1229,16 @@ def MOGG_TensorGetPtrOp : MOGG_Op<"tensor.get_ptr", [
   Pure,
   DeclareOpInterfaceMethods<EmitsMojoInterface>,
 ]> {
-  let summary = "Extract the raw `!mogg.pointer` backing a codegen tensor.";
+  let summary = "Extract the typed `!mogg.storage` backing a codegen tensor.";
   let description = [{
-    Gives a `mogg.tensor.create.epilogue` the pointer of its store target (or
+    Gives a `mogg.tensor.create.epilogue` the storage of its store target (or
     of the pre-cast accumulation buffer for a mixed-precision accumulating
     kernel), so the fused output is built over real storage that an
     accumulating kernel can accumulate through.
   }];
   // A buffer when the epilogue stores into a fused `mo.mutable.store`.
   let arguments = (ins MOGG_TensorLike:$tensor);
-  let results = (outs MOGG_Pointer:$ptr);
+  let results = (outs MOGG_Storage:$ptr);
   let assemblyFormat = [{
     `(` $tensor `)` attr-dict `:` qualified(type($tensor))
   }];
@@ -1403,9 +1403,10 @@ def MOGG_RebindOp : MOGG_Op<"rebind", [Pure,
     DeclareOpInterfaceMethods<EmitsMojoInterface>]> {
   let summary = "A cast between an unpacked async handle and a codegen handle.";
   let description = [{
-    E.g. `!mgp.buffer` -> `!mogg.pointer`, which emits Mojo extracting the raw
-    data pointer from the `OwnedByteBuffer`; `!mogg.context` / `!mogg.dim`
-    casts emit nothing.
+    `!mgp.buffer` -> `!mogg.storage` borrows a typed byte view from the
+    `OwnedByteBuffer`, retaining opaque allocation metadata. Explicit
+    `!mogg.pointer` interop extracts a raw address and requires one to exist.
+    `!mogg.context` / `!mogg.dim` casts emit nothing.
 
     TODO: remove once `mogg.async.unpack` folds directly to the typed handle.
   }];

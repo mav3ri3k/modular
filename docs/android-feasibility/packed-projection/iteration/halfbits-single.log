@@ -1,0 +1,8 @@
+{"stage":"reference_build_begin"}
+{"stage":"candidate_build_begin"}
+{"stage":"built","reference_ms":99.332969,"candidate_ms":320.977552}
+{"stage":"resources","private_bytes":3224,"local_bytes":0,"max_workgroup":1024}
+{"stage":"first_enqueue_begin"}
+{"stage":"first_enqueue_end","ms":0.146979}
+{"stage":"validated","banks":1,"outputs":12288,"first_enqueue_ms":0.146979,"first_finish_ms":133.093593,"first_device_ms":127.398682}
+{"stage":"result","layout":"group_major","mode":"full","width":6144,"reduction":2048,"banks":1,"iterations":1,"weight_bytes":3145728,"resident_weight_bytes":3145728,"resident_scale_bytes":196608,"device_mean_ms":102.814941,"device_median_ms":102.814941,"device_p95_ms":102.814941,"device_sum_ms":102.814941,"device_span_ms":102.814941,"host_wall_ms":103.269636,"enqueue_mean_ms":0.055365,"enqueue_max_ms":0.055365,"queued_to_submit_mean_ms":0.069824,"submit_to_start_mean_ms":0.075439}

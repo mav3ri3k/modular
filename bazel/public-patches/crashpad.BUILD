@@ -1,8 +1,17 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@build_bazel_apple_support//rules:apple_genrule.bzl", "apple_genrule")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_python//python:defs.bzl", "py_binary")
+
+selects.config_setting_group(
+    name = "linux_kernel",
+    match_any = [
+        "@platforms//os:linux",
+        "@platforms//os:android",
+    ],
+)
 
 _MINI_CHROMIUM_SRCS = [
     "third_party/mini_chromium/mini_chromium/base/atomicops.h",
@@ -124,13 +133,16 @@ cc_library(
     srcs = _MINI_CHROMIUM_SRCS,
     copts = ["-std=c++14"],
     includes = ["third_party/mini_chromium/mini_chromium"],
-    target_compatible_with = ["@platforms//os:linux"],
+    target_compatible_with = select({
+        ":linux_kernel": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
 )
 
 alias(
     name = "mini_chromium",
     actual = select({
-        "@platforms//os:linux": ":mini_chromium_linux",
+        ":linux_kernel": ":mini_chromium_linux",
         "@platforms//os:macos": ":mini_chromium_macos",
     }),
 )
@@ -249,7 +261,10 @@ cc_library(
         "-Wno-nontrivial-memcall",
         "-fno-sanitize=undefined",  # Known issues
     ],
-    target_compatible_with = ["@platforms//os:linux"],
+    target_compatible_with = select({
+        ":linux_kernel": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
     textual_hdrs = ["util/misc/arm64_pac_bti.S"],
     deps = [
         ":backtrace_common",
@@ -393,7 +408,7 @@ objc_library(
 alias(
     name = "util",
     actual = select({
-        "@platforms//os:linux": ":util_linux",
+        ":linux_kernel": ":util_linux",
         "@platforms//os:macos": ":util_macos",
     }),
 )
@@ -402,7 +417,7 @@ cc_library(
     name = "compat",
     hdrs = glob(["compat/**/*.h"]),
     includes = ["compat/non_win"] + select({
-        "@platforms//os:linux": ["compat/linux"],
+        ":linux_kernel": ["compat/linux"],
         "@platforms//os:macos": [],
     }),
 )
@@ -452,7 +467,10 @@ cc_library(
     copts = [
         "-fno-sanitize=undefined",  # Known issues
     ],
-    target_compatible_with = ["@platforms//os:linux"],
+    target_compatible_with = select({
+        ":linux_kernel": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
     deps = [
         ":compat",
         ":mini_chromium",
@@ -463,7 +481,7 @@ cc_library(
 alias(
     name = "client",
     actual = select({
-        "@platforms//os:linux": ":client_linux",
+        ":linux_kernel": ":client_linux",
         "@platforms//os:macos": ":client_macos",
     }),
     visibility = ["//visibility:public"],
@@ -573,7 +591,7 @@ cc_library(
         "snapshot/unloaded_module_snapshot.cc",
         "snapshot/x86/cpuid_reader.cc",
     ] + select({
-        "@platforms//os:linux": [
+        ":linux_kernel": [
             "snapshot/crashpad_types/crashpad_info_reader.cc",
             "snapshot/elf/elf_dynamic_array_reader.cc",
             "snapshot/elf/elf_image_reader.cc",
@@ -647,7 +665,7 @@ cc_binary(
         "handler/user_stream_data_source.cc",
         "handler/user_stream_data_source.h",
     ] + select({
-        "@platforms//os:linux": [
+        ":linux_kernel": [
             "handler/linux/capture_snapshot.cc",
             "handler/linux/capture_snapshot.h",
             "handler/linux/crash_report_exception_handler.cc",

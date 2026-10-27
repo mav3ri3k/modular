@@ -21,13 +21,8 @@ The constants are resolved at compile time based on the target GPU architecture 
 are used to optimize code generation and ensure hardware compatibility.
 """
 
-from std.sys.info import (
-    CompilationTarget,
-    current_accelerator,
-    is_amd_gpu,
-    is_apple_gpu,
-    is_nvidia_gpu,
-)
+from std.sys.info import CompilationTarget
+from std.collections.string.string_span import _get_kgen_string
 
 from max._plugin import CurrentMaxPlugin
 
@@ -89,14 +84,9 @@ give a hint to the compiler about the max threads per block that's used."""
 
 
 def _resolve_max_threads_per_block_metadata() -> __mlir_type.`!kgen.string`:
-    comptime if current_accelerator().is_nvidia_gpu():
-        return "nvvm.maxntid".value
-    elif current_accelerator().is_amd_gpu():
-        return "rocdl.flat_work_group_size".value
-    elif is_apple_gpu():
-        # That attribute is used to represent Metal's [[max_total_threads_per_threadgroup(x)]]
-        return "pop.air.max_work_group_size".value
-    else:
+    comptime key = CurrentMaxPlugin.max_threads_per_block_metadata
+    comptime if key == "":
         CompilationTarget.unsupported_target_error[
             operation="MAX_THREADS_PER_BLOCK_METADATA",
         ]()
+    return _get_kgen_string[key]()
